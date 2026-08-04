@@ -1,219 +1,176 @@
-Welcome to your new TanStack Start app!
+# NetCare — Internet Support Ticket System
 
-# Getting Started
+A full-stack ticket management platform for Ethio-Tele internet support: customers report service issues, track queue position, and follow tickets from reported → assigned → in progress → resolved, while admins route work and technicians manage their queue.
 
-To run this application:
+Built with [TanStack Start](https://tanstack.com/start), [TanStack Router](https://tanstack.com/router), React 19, and Tailwind CSS v4.
+
+## Tech Stack
+
+- **Framework:** TanStack Start (SSR) + TanStack Router (file-based routing)
+- **UI:** React 19, Tailwind CSS v4 (`@tailwindcss/vite`), [motion](https://motion.dev), [lucide-react](https://lucide.dev)
+- **Data:** REST API client in `src/lib/api.ts`, `useFetch` / `useQueuePosition` hooks
+- **Auth:** JWT-based client auth context (`src/context/auth.tsx`) with role-based UI (CUSTOMER / TECHNICIAN / ADMIN)
+- **Avatars:** [DiceBear](https://www.dicebear.com)
+- **Testing:** [Vitest](https://vitest.dev) + [Testing Library](https://testing-library.com)
+- **Deploy:** [Netlify](https://www.netlify.com) (see `netlify.toml`)
+
+## Getting Started
 
 ```bash
 npm install
 npm run dev
 ```
 
-# Building For Production
+The dev server runs at `http://localhost:3000` (Netlify middleware is emulated locally).
 
-To build this application for production:
+# Clone & install the backend from
 
-```bash
-npm run build
+git clone https://github.com/theodore-digicom/ethio-telecom-rms.git
+cd ethio-telecom-rms
+npm install
+
+start the dev server
+npm run dev -- -p 8000
+
+The app runs on `http://localhost:3000` and expects the API at
+`http://localhost:8000` (see below).
+
+### Environment Variables
+
+Copy `.env` from the repo or create one with:
+
 ```
+VITE_API_URL=http://localhost:3000
+```
+
+`VITE_API_URL` is the base URL for the REST API (`src/lib/api.ts`). It falls back to `http://localhost:3000` when unset. Additional typed variables live in `src/env.ts` (via `@t3-oss/env-core` + Zod).
+
+## Scripts
+
+| Command                   | Description                            |
+| ------------------------- | -------------------------------------- |
+| `npm run dev`             | Start the Vite dev server on port 3000 |
+| `npm run build`           | Build client + server for production   |
+| `npm run preview`         | Preview the production build           |
+| `npm run test`            | Run the Vitest suite once              |
+| `npm run test:watch`      | Run Vitest in watch mode               |
+| `npm run lint`            | Lint with ESLint                       |
+| `npm run format`          | Format with Prettier + fix with ESLint |
+| `npm run check`           | Check formatting with Prettier         |
+| `npm run generate-routes` | Regenerate `src/routeTree.gen.ts`      |
+
+## Project Structure
+
+```
+src/
+├── assets/            # Images (logo, hero)
+├── components/        # UI components (HeroShowcase, StatusTrack, ...)
+├── context/           # AuthProvider / useAuth
+├── data/              # Status/priority/branch/time-slot configs
+├── hooks/             # Custom hooks
+├── lib/               # API client, types, avatars, useFetch, useQueuePosition
+├── routes/            # File-based routes (TanStack Router)
+├── router.tsx         # createRouter configuration
+├── env.ts             # Typed environment variables
+└── styles.css         # Tailwind v4 + theme tokens
+```
+
+### Routes
+
+Public pages:
+
+| Route             | Purpose                   |
+| ----------------- | ------------------------- |
+| `/`               | Landing page              |
+| `/login`          | Sign in                   |
+| `/register`       | Create an account         |
+| `/forgotPassword` | Request a password reset  |
+| `/reset-password` | Reset password with token |
+
+Authenticated dashboard (`/_dashboard` layout with sidebar):
+
+| Route                          | Purpose                        |
+| ------------------------------ | ------------------------------ |
+| `/dashboard`                   | Role-based overview            |
+| `/dashboard/profile`           | Edit profile / avatar / delete |
+| `/dashboard/queue`             | Technician pickup queue        |
+| `/dashboard/report`            | Create a new ticket            |
+| `/dashboard/technicians`       | Technician workload list       |
+| `/dashboard/tickets`           | Ticket list + filters          |
+| `/dashboard/tickets/$ticketId` | Ticket detail / status track   |
+| `/dashboard/appointments`      | User appointments              |
+| `/dashboard/appointments/new`  | Book a branch appointment      |
 
 ## Styling
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+The app uses **Tailwind CSS v4** with the `@tailwindcss/vite` plugin. Global styles and design tokens are defined in `src/styles.css`:
 
-### Removing Tailwind CSS
+```css
+@import 'tailwindcss';
 
-If you prefer not to use Tailwind CSS:
+@theme {
+  --color-primary-green: #2bb673;
+  --color-primary-blue: #0072ce;
+  --color-text-dark: #1f2937;
+  /* ... */
+}
+```
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
+Custom tokens are available as utilities like `bg-primary-green`, `text-text-secondary`, `border-border`, etc.
 
-## Linting & Formatting
+**Note:** the root route (`src/routes/__root.tsx`) renders the HTML document shell (`<html>`, `<head>` with `<HeadContent />`, `<body>` with `<Scripts />`). This is what injects the compiled stylesheet into the page — keep this structure intact when editing the layout.
 
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
+## Testing
+
+Tests use [Vitest](https://vitest.dev) with Testing Library and jsdom:
 
 ```bash
-npm run lint
-npm run format
-npm run check
+npm run test        # run once
+npm run test:watch  # watch mode
 ```
 
-## Deploy to Netlify
+Config lives in `vitest.config.ts`; jest-dom matchers are registered in `vitest.setup.ts`.
 
-This project ships with `netlify.toml` configured for a Netlify site:
+## Adding A Route
 
-1. Push this repo to GitHub
-2. Visit https://app.netlify.com/start and import the repo
-3. Netlify auto-detects the build (`vite build` → `dist/client`)
-4. Open **Site settings → Environment variables** and add anything from `.env.example` that needs a real value in production
-5. Trigger the first deploy
+Routes are file-based under `src/routes`. Add a file to create a route:
 
-Server functions and API routes run on Netlify Functions. For lower-latency request handling, see Netlify Edge Functions: https://docs.netlify.com/edge-functions/overview.
+```tsx
+// src/routes/about.tsx
+import { createFileRoute } from '@tanstack/react-router'
 
-## T3Env
+export const Route = createFileRoute('/about')({
+  component: AboutPage,
+})
 
-- You can use T3Env to add type safety to your environment variables.
-- Add Environment variables to the `src/env.mjs` file.
-- Use the environment variables in your code.
-
-### Usage
-
-```ts
-import { env } from '#/env'
-
-console.log(env.VITE_APP_TITLE)
+function AboutPage() {
+  return <h1>About</h1>
+}
 ```
 
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
+Then link to it with the `Link` component from `@tanstack/react-router`:
 
 ```tsx
 import { Link } from '@tanstack/react-router'
+
+;<Link to="/about">About</Link>
 ```
 
-Then anywhere in your JSX you can use it like so:
+Run `npm run generate-routes` to refresh `src/routeTree.gen.ts` after structural changes.
 
-```tsx
-<Link to="/about">About</Link>
-```
+## Deployment (Netlify)
 
-This will create a link that will navigate to the `/about` route.
+1. Push the repo to GitHub
+2. Import it at https://app.netlify.com/start
+3. Netlify auto-detects the build (`vite build` → `dist/client`)
+4. Add `VITE_API_URL` (and any other secrets) under **Site settings → Environment variables**
+5. Trigger the first deploy
 
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
+Server functions and API routes run on Netlify Functions. See the [Netlify docs](https://docs.netlify.com/edge-functions/overview) for Edge Functions.
 
-### Using A Layout
+## Learn More
 
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+- [TanStack Start documentation](https://tanstack.com/start)
+- [TanStack Router documentation](https://tanstack.com/router)
+- [Tailwind CSS v4](https://tailwindcss.com/docs)
+- [Vitest](https://vitest.dev)
