@@ -2,11 +2,9 @@
 
 A full-stack ticket management platform for Ethio-Tele internet support: customers report service issues, track queue position, and follow tickets from reported → assigned → in progress → resolved, while admins route work and technicians manage their queue.
 
-Built with [TanStack Start](https://tanstack.com/start), [TanStack Router](https://tanstack.com/router), React 19, and Tailwind CSS v4.
-
 ## Tech Stack
 
-- **Framework:** TanStack Start (SSR) + TanStack Router (file-based routing)
+- **Frameworks:** TanStack Start (SSR) + TanStack Router (file-based routing)
 - **UI:** React 19, Tailwind CSS v4 (`@tailwindcss/vite`), [motion](https://motion.dev), [lucide-react](https://lucide.dev)
 - **Data:** REST API client in `src/lib/api.ts`, `useFetch` / `useQueuePosition` hooks
 - **Auth:** JWT-based client auth context (`src/context/auth.tsx`) with role-based UI (CUSTOMER / TECHNICIAN / ADMIN)
@@ -173,4 +171,3 @@ Server functions and API routes run on Netlify Functions. See the [Netlify docs]
 - [TanStack Start documentation](https://tanstack.com/start)
 - [TanStack Router documentation](https://tanstack.com/router)
 - [Tailwind CSS v4](https://tailwindcss.com/docs)
-- [Vitest](https://vitest.dev)
