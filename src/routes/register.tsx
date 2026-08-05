@@ -35,7 +35,7 @@ function RegisterPage() {
     }
 
     setError('')
-    navigate({ to: '/dashboard' })
+    navigate({ to: '/login' })
   }
   return (
     <div className="min-h-[80vh] lg:min-h-screen grid grid-cols-1 lg:grid-cols-2">

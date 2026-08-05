@@ -76,3 +76,54 @@ export interface Notification {
     userId: string
     ticketId: string | null
 }
+
+export interface AdminUser {
+    id: string
+    name: string
+    email: string
+    phone: string | null
+    role: Role
+    banned: boolean
+    bannedAt: string | null
+    createdAt: string
+}
+
+export type AuditAction =
+    | 'USER_CREATED'
+    | 'USER_UPDATED'
+    | 'USER_BANNED'
+    | 'USER_UNBANNED'
+    | 'USER_DELETED'
+    | 'USER_PASSWORD_RESET'
+    | 'ROLE_CHANGED'
+    | 'LOGIN_ATTEMPT'
+    | 'LOGOUT'
+
+export type AuditResourceType = 'USER' | 'TICKET' | 'APPOINTMENT'
+
+export interface AuditLog {
+    id: string
+    action: AuditAction
+    resourceType: AuditResourceType
+    resourceId: string
+    description: string
+    changes: string | null
+    performedBy: string
+    performedByUser: {
+        id: string
+        email: string
+        name: string
+    }
+    ipAddress: string | null
+    userAgent: string | null
+    status: string
+    errorMessage: string | null
+    createdAt: string
+}
+
+export interface AuditLogPagination {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+}

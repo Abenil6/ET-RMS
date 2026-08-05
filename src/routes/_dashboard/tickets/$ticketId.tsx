@@ -196,6 +196,19 @@ function TicketDetailPage() {
     }
   }
 
+  async function handleReopen() {
+    setActionError(null)
+    setActionSuccess(null)
+    if (!confirm('Reopen this resolved ticket?')) return
+    try {
+      await api.tickets.reopen(ticket!.id)
+      setActionSuccess('Ticket reopened and moved to In Progress.')
+      await loadTicket()
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : 'Failed to reopen ticket.')
+    }
+  }
+
   async function handleAssign() {
     if (!assignToId) return
     setActionError(null)
@@ -511,6 +524,17 @@ function TicketDetailPage() {
             </motion.form>
           )}
         </AnimatePresence>
+
+        {/* Reopen: admin or assigned tech on a RESOLVED ticket */}
+        {(isAdmin || isAssignedTech) && ticket.status === 'RESOLVED' && (
+          <button
+            type="button"
+            onClick={handleReopen}
+            className="px-4 py-2 rounded-lg bg-warning text-white font-semibold hover:bg-warning/90"
+          >
+            Reopen Ticket
+          </button>
+        )}
 
         {/* Customer review when RESOLVED */}
         {isCustomer && ticket.status === 'RESOLVED' && !ticket.review && !showReviewForm && (

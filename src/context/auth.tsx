@@ -162,6 +162,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * REGISTER
+   *
+   * Creates the account but does NOT log the user in —
+   * they are sent to the login page to sign in.
    */
   const register = useCallback(
     async (data: {
@@ -171,9 +174,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       phone?: string
     }): Promise<AuthResult> => {
       try {
-        const u = await api.auth.register(data)
+        await api.auth.register(data)
 
-        setUser(withAvatar(u))
+        clearTokens()
+        setUser(null)
 
         return {
           success: true,

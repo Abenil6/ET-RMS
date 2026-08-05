@@ -94,6 +94,8 @@ Authenticated dashboard (`/_dashboard` layout with sidebar):
 | `/dashboard/queue`             | Technician pickup queue        |
 | `/dashboard/report`            | Create a new ticket            |
 | `/dashboard/technicians`       | Technician workload list       |
+| `/dashboard/admin/users`       | Admin user management          |
+| `/dashboard/admin/audit`       | Admin audit log                |
 | `/dashboard/tickets`           | Ticket list + filters          |
 | `/dashboard/tickets/$ticketId` | Ticket detail / status track   |
 | `/dashboard/appointments`      | User appointments              |

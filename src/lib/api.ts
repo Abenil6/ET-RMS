@@ -362,6 +362,11 @@ export const api = {
         }),
       }),
 
+    reopen: (id: string) =>
+      fetcher<any>(`/api/tickets/${id}/reopen`, {
+        method: 'POST',
+      }),
+
     review: (
       id: string,
       rating: number,
@@ -440,6 +445,69 @@ export const api = {
 
     getTechnicians: () =>
       fetcher<any[]>('/api/technicians'),
+
+    // Users
+    getUsers: () =>
+      fetcher<{ users: any[] }>('/api/admin/users'),
+
+    createUser: (data: {
+      name: string
+      email: string
+      role: 'ADMIN' | 'TECHNICIAN'
+    }) =>
+      fetcher<{ user: any; message: string }>('/api/admin/users', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    getUser: (id: string) =>
+      fetcher<{ user: any }>(`/api/admin/users/${id}`),
+
+    updateUser: (
+      id: string,
+      data: {
+        name?: string
+        email?: string
+        phone?: string
+        role?: 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN'
+      },
+    ) =>
+      fetcher<{ user: any }>(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+
+    deleteUser: (id: string) =>
+      fetcher<{ message: string }>(`/api/admin/users/${id}`, {
+        method: 'DELETE',
+      }),
+
+    banUser: (id: string) =>
+      fetcher<any>(`/api/admin/users/${id}/ban`, {
+        method: 'POST',
+      }),
+
+    unbanUser: (id: string) =>
+      fetcher<any>(`/api/admin/users/${id}/unban`, {
+        method: 'POST',
+      }),
+
+    resetUserPassword: (id: string) =>
+      fetcher<any>(`/api/admin/users/${id}/reset-password`, {
+        method: 'POST',
+      }),
+
+    // Audit log
+    getAuditLogs: (page = 1, limit = 25) =>
+      fetcher<{
+        logs: any[]
+        pagination: {
+          page: number
+          limit: number
+          total: number
+          totalPages: number
+        }
+      }>(`/api/admin/audit?page=${page}&limit=${limit}`),
   },
 }
 

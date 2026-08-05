@@ -18,6 +18,8 @@ import {
   Bell,
   Calendar as CalendarIcon,
   CheckCheck,
+  Users,
+  ScrollText,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import type { Notification as ApiNotification } from '../lib/types'
@@ -253,6 +255,16 @@ function DashboardLayout() {
                 </motion.div>
                 <motion.div variants={itemVariants}>
                   <SidebarLink to="/queue" icon={FileText} label="Queue" />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <SidebarLink to="/admin/users" icon={Users} label="Users" />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <SidebarLink
+                    to="/admin/audit"
+                    icon={ScrollText}
+                    label="Audit Log"
+                  />
                 </motion.div>
                 <motion.div variants={itemVariants}>
                   <SidebarLink to="/profile" icon={User} label="My Profile" />
