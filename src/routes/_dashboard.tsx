@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import type { Notification as ApiNotification } from '../lib/types'
+import logo from '../assets/Ethio-Tele.jpeg'
 
 export const Route = createFileRoute('/_dashboard')({
   component: DashboardLayout,
@@ -175,19 +176,29 @@ function DashboardLayout() {
 
   return (
     <motion.div
-      className="flex min-h-[85vh]"
+      className="flex min-h-screen"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Sidebar with slide-in animation */}
       <motion.aside
-        className="w-56 shrink-0 bg-card border-r border-border p-6 flex flex-col justify-between"
-        initial={{ x: -60, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 120, damping: 20, delay: 0.1 }}
+        className="w-56 shrink-0 bg-card border-r border-border p-6 flex flex-col justify-between sticky top-0 h-screen"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
       >
         <div>
+          <Link to="/" className="flex items-center gap-2 mb-6">
+            <img
+              src={logo}
+              alt="NetCare logo"
+              className="h-12 w-24 object-contain"
+            />
+            <span className="text-lg font-extrabold text-text-dark">
+              NetCare
+            </span>
+          </Link>
+
           <motion.p
             className="text-xxs font-bold text-text-primary uppercase tracking-wide mb-4"
             initial={{ opacity: 0, y: -10 }}
@@ -326,7 +337,7 @@ function DashboardLayout() {
               <Bell size={20} />
               {unreadCount > 0 && (
                 <motion.span
-                  className="absolute top-1 right-1 px-1.5 py-0.5 rounded-full bg-error text-[10px] font-bold text-white leading-none min-w-[16px] text-center"
+                  className="absolute top-1 right-1 px-1.5 py-0.5 rounded-full bg-error text-[10px] font-bold text-white leading-none min-w-4 text-center"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 500 }}
