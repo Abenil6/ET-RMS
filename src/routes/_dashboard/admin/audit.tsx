@@ -92,7 +92,7 @@ function AdminAuditPage() {
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
-      <div className="max-w-5xl">
+      <div className="w-full">
         <div className="flex items-start justify-between gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-text-dark mb-1">Audit Log</h1>

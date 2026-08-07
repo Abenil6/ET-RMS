@@ -22,6 +22,8 @@ export const Route = createFileRoute('/_dashboard/tickets/')({
 function TicketsPage() {
   const { user } = useAuth()
   const [statusFilter, setStatusFilter] = useState<TicketStatus | 'ALL'>('ALL')
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 10
   const [refreshing, setRefreshing] = useState(false)
   const {
     data: tickets,
@@ -48,6 +50,13 @@ function TicketsPage() {
       ? list
       : list.filter((t) => t.status === statusFilter)
 
+  const totalPages = Math.max(1, Math.ceil(filteredTickets.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pagedTickets = filteredTickets.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  )
+
   const pageTitle =
     user.role === 'CUSTOMER'
       ? 'My Tickets'
@@ -57,13 +66,13 @@ function TicketsPage() {
 
   return (
     <motion.div
-      className="max-w-3xl"
+      className="w-full"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
-      <div className="p-8 max-w-5xl mx-auto">
+      <div className="w-full">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -102,7 +111,10 @@ function TicketsPage() {
         <div className="flex items-center gap-2 mb-6 flex-wrap">
           <Filter className="w-4 h-4 text-text-secondary" />
           <button
-            onClick={() => setStatusFilter('ALL')}
+            onClick={() => {
+              setStatusFilter('ALL')
+              setPage(1)
+            }}
             className={`px-3 py-1 rounded-full text-sm font-medium transition ${
               statusFilter === 'ALL'
                 ? 'bg-primary text-black'
@@ -117,7 +129,10 @@ function TicketsPage() {
             return (
               <button
                 key={status}
-                onClick={() => setStatusFilter(status)}
+                onClick={() => {
+                  setStatusFilter(status)
+                  setPage(1)
+                }}
                 className={`px-3 py-1 rounded-full text-sm font-medium transition ${
                   statusFilter === status
                     ? 'bg-primary text-black'
@@ -151,7 +166,7 @@ function TicketsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredTickets.map((ticket) => (
+            {pagedTickets.map((ticket) => (
               <Link
                 key={ticket.id}
                 to="/tickets/$ticketId"
@@ -227,6 +242,29 @@ function TicketsPage() {
                 </div>
               </Link>
             ))}
+          </div>
+        )}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+            <p className="text-sm text-text-secondary">
+              Page {safePage} of {totalPages} · {filteredTickets.length} total
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>

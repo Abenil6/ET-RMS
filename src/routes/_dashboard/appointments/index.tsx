@@ -39,6 +39,8 @@ function AppointmentsPage() {
 
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 10
   const {
     data: appointments,
     loading,
@@ -55,6 +57,13 @@ function AppointmentsPage() {
     }
     return list
   }, [appointments, user])
+
+  const totalPages = Math.max(1, Math.ceil(displayAppointments.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pagedAppointments = displayAppointments.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  )
 
   if (!user) return null
   if (loading) return <LoadingSpinner size="lg" />
@@ -75,7 +84,7 @@ function AppointmentsPage() {
 
   return (
     <motion.div
-      className="max-w-3xl"
+      className="w-full"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -115,7 +124,7 @@ function AppointmentsPage() {
               <p className="text-text-secondary">No appointments found.</p>
             </div>
           ) : (
-            displayAppointments.map((appointment) => (
+            pagedAppointments.map((appointment) => (
               <div
                 key={appointment.id}
                 className="p-5 rounded-xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -188,6 +197,30 @@ function AppointmentsPage() {
             ))
           )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+            <p className="text-sm text-text-secondary">
+              Page {safePage} of {totalPages} · {displayAppointments.length} total
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   )

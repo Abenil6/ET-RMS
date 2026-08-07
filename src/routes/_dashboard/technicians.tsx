@@ -52,7 +52,7 @@ function TechniciansPage() {
 
   return (
     <motion.div
-      className="max-w-3xl"
+      className="w-full"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -74,9 +74,9 @@ function TechniciansPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {techs.length === 0 ? (
-            <div className="p-8 text-center rounded-xl border border-border bg-card text-text-secondary">
+            <div className="p-8 text-center rounded-xl border border-border bg-card text-text-secondary sm:col-span-2 xl:col-span-3">
               No technicians found.
             </div>
           ) : (

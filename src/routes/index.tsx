@@ -26,8 +26,8 @@ function HomePage() {
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-primary-green/20 blur-3xl" />
         <div className="absolute top-40 -left-24 h-80 w-80 rounded-full bg-primary-blue/15 blur-3xl" />
-        <div className="absolute bottom-[-8rem] right-[-6rem] h-[30rem] w-[30rem] rounded-full bg-warning/10 blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(43,182,115,0.08),_transparent_42%),radial-gradient(circle_at_right,_rgba(0,114,206,0.06),_transparent_38%)]" />
+        <div className="absolute bottom-32 right-24 h-120 w-120 rounded-full bg-warning/10 blur-3xl" />
+        <div className="absolute inset-0 bg-bg-[radial-gradient(circle_at_top,rgba(43,182,115,0.08),transparent_42%),radial-gradient(circle_at_right,rgba(0,114,206,0.06),transparent_38%)]" />
       </div>
 
       <section className="relative mx-auto max-w-7xl px-6 py-16 sm:px-8 lg:px-10 lg:py-24">
@@ -82,7 +82,7 @@ function HomePage() {
       </section>
 
       <section className="relative mx-auto max-w-7xl px-6 pb-8 sm:px-8 lg:px-10">
-        <div className="grid gap-4 rounded-[2rem] border border-border bg-card/90 p-5 shadow-sm backdrop-blur sm:grid-cols-3">
+        <div className="grid gap-4 rounded-4xl border border-border bg-card/90 p-5 shadow-sm backdrop-blur sm:grid-cols-3">
           <TrustPill
             icon={Wrench}
             title="Built for technicians"
@@ -142,7 +142,7 @@ function HomePage() {
       </section>
 
       <section className="relative mx-auto max-w-7xl px-6 pb-24 sm:px-8 lg:px-10">
-        <div className="rounded-[2rem] border border-border bg-card/90 p-6 shadow-sm sm:p-8">
+        <div className="rounded-4xl border border-border bg-card/90 p-6 shadow-sm sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-primary-green">
@@ -179,7 +179,7 @@ function HomePage() {
       </section>
 
       <section className="relative mx-auto max-w-7xl px-6 pb-24 sm:px-8 lg:px-10">
-        <div className="rounded-[2rem] bg-[linear-gradient(135deg,#2BB673_0%,#1B8F5A_45%,#116B43_100%)] px-6 py-12 text-white shadow-2xl shadow-primary-green/20 sm:px-10">
+        <div className="rounded-4xl bg-[linear-gradient(135deg,#2BB673_0%,#1B8F5A_45%,#116B43_100%)] px-6 py-12 text-white shadow-2xl shadow-primary-green/20 sm:px-10">
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.28em] text-white/80">

@@ -33,6 +33,8 @@ function QueuePage() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 10
 
   const loadQueue = async () => {
     try {
@@ -60,15 +62,19 @@ function QueuePage() {
   if (loading) return <LoadingSpinner size="lg" />
   if (error) return <ErrorMessage message={error} retry={loadQueue} />
 
+  const totalPages = Math.max(1, Math.ceil(queue.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pagedQueue = queue.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
   return (
     <motion.div
-      className="max-w-3xl"
+      className="w-full"
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
-      <div className="max-w-4xl">
+      <div className="w-full">
         <div className="flex items-start justify-between gap-3 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-text-dark mb-1">Queue Management</h1>
@@ -106,7 +112,7 @@ function QueuePage() {
                   </td>
                 </tr>
               ) : (
-                queue.map((t) => {
+                pagedQueue.map((t) => {
                   const pos = t.position ?? t.queuePosition ?? null
                   const status = STATUS_CONFIG[t.status]
                   return (
@@ -159,6 +165,30 @@ function QueuePage() {
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+            <p className="text-sm text-text-secondary">
+              Page {safePage} of {totalPages} · {queue.length} total
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   )

@@ -47,6 +47,8 @@ function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 10
   const [modal, setModal] = useState<ModalState>(null)
   const [confirm, setConfirm] = useState<{
     kind: 'ban' | 'unban' | 'reset' | 'delete'
@@ -83,6 +85,14 @@ function AdminUsersPage() {
         (u.phone ?? '').toLowerCase().includes(q),
     )
   }, [users, query])
+
+  useEffect(() => {
+    setPage(1)
+  }, [query])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pagedUsers = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   if (!user || user.role !== 'ADMIN') {
     return (
@@ -126,7 +136,7 @@ function AdminUsersPage() {
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
-      <div className="max-w-5xl">
+      <div className="w-full">
         <div className="flex items-start justify-between gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-text-dark mb-1">
@@ -206,7 +216,7 @@ function AdminUsersPage() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((u) => (
+                pagedUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-bg/50 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -295,6 +305,30 @@ function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+            <p className="text-sm text-text-secondary">
+              Page {safePage} of {totalPages} · {filtered.length} total
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {modal?.kind === 'invite' && (
