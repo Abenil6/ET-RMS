@@ -39,12 +39,8 @@ function RegisterPage() {
   }
   return (
     <div className="min-h-[80vh] lg:min-h-screen grid grid-cols-1 lg:grid-cols-2">
-      <div className="order-2 hidden items-center justify-center px-6 py-12 lg:order-1 lg:flex">
-        <HeroShowcase compact />
-      </div>
-
-      {/* Right: form */}
-      <div className="flex items-center justify-center px-4 py-12 order-1 lg:order-2">
+      {/* Left: form */}
+      <div className="flex items-center justify-center px-4 py-12 order-1 lg:order-1">
         <motion.div
           className="w-full max-w-sm p-8 rounded-xl border border-border bg-card"
           initial={{ opacity: 0, y: 20 }}
@@ -131,6 +127,11 @@ function RegisterPage() {
             </Link>
           </p>
         </motion.div>
+      </div>
+
+      {/* Right: hero */}
+      <div className="hidden items-center justify-center px-6 py-12 lg:order-2 lg:flex">
+        <HeroShowcase compact />
       </div>
     </div>
   )
