@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../context/auth'
 import { api, ApiError } from '../lib/api'
 import { getAvatarUrl } from '#/lib/avatars'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { useEffect, useState, useRef } from 'react'
 import {
   Home,
@@ -56,6 +57,8 @@ function DashboardLayout() {
   const [notifLoading, setNotifLoading] = useState(false)
   const [notifError, setNotifError] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+  const [logoutLoading, setLogoutLoading] = useState(false)
 
   const notifRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -170,8 +173,14 @@ function DashboardLayout() {
   }, [])
 
   async function handleLogout() {
-    await logout()
-    navigate({ to: '/login' })
+    setLogoutLoading(true)
+    try {
+      await logout()
+      navigate({ to: '/login' })
+    } finally {
+      setLogoutLoading(false)
+      setLogoutConfirmOpen(false)
+    }
   }
 
   if (loading) {
@@ -314,7 +323,7 @@ function DashboardLayout() {
         </div>
 
         <motion.button
-          onClick={handleLogout}
+          onClick={() => setLogoutConfirmOpen(true)}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary font-medium hover:bg-bg hover:text-error text-left transition-colors"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -479,6 +488,18 @@ function DashboardLayout() {
           <Outlet />
         </motion.main>
       </div>
+
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        onConfirm={handleLogout}
+        onCancel={() => setLogoutConfirmOpen(false)}
+        title="Log out?"
+        description="Are you sure you want to log out of your account?"
+        confirmLabel="Log Out"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={logoutLoading}
+      />
     </motion.div>
   )
 }
