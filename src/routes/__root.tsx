@@ -38,6 +38,9 @@ function NotFoundComponent() {
 
 export const Route = createRootRoute({
   head: () => ({
+    links: [
+      { rel: 'icon', href: logo },
+    ],
     meta: [
       { charSet: 'utf-8' },
       {
