@@ -15,8 +15,8 @@ A full-stack ticket management platform for Ethio-Tele internet support: custome
 ## Getting Started
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 The dev server runs at `http://localhost:3000` (Netlify middleware is emulated locally).
@@ -47,15 +47,15 @@ VITE_API_URL=http://localhost:3000
 
 | Command                   | Description                            |
 | ------------------------- | -------------------------------------- |
-| `npm run dev`             | Start the Vite dev server on port 3000 |
-| `npm run build`           | Build client + server for production   |
-| `npm run preview`         | Preview the production build           |
-| `npm run test`            | Run the Vitest suite once              |
-| `npm run test:watch`      | Run Vitest in watch mode               |
-| `npm run lint`            | Lint with ESLint                       |
-| `npm run format`          | Format with Prettier + fix with ESLint |
-| `npm run check`           | Check formatting with Prettier         |
-| `npm run generate-routes` | Regenerate `src/routeTree.gen.ts`      |
+| `pnpm dev`             | Start the Vite dev server on port 3000 |
+| `pnpm build`           | Build client + server for production   |
+| `pnpm preview`         | Preview the production build           |
+| `pnpm test`            | Run the Vitest suite once              |
+| `pnpm test:watch`      | Run Vitest in watch mode               |
+| `pnpm lint`            | Lint with ESLint                       |
+| `pnpm format`          | Format with Prettier + fix with ESLint |
+| `pnpm check`           | Check formatting with Prettier         |
+| `pnpm generate-routes` | Regenerate `src/routeTree.gen.ts`      |
 
 ## Project Structure
 
@@ -125,8 +125,8 @@ Custom tokens are available as utilities like `bg-primary-green`, `text-text-sec
 Tests use [Vitest](https://vitest.dev) with Testing Library and jsdom:
 
 ```bash
-npm run test        # run once
-npm run test:watch  # watch mode
+pnpm test        # run once
+pnpm test:watch  # watch mode
 ```
 
 Config lives in `vitest.config.ts`; jest-dom matchers are registered in `vitest.setup.ts`.
@@ -156,7 +156,7 @@ import { Link } from '@tanstack/react-router'
 ;<Link to="/about">About</Link>
 ```
 
-Run `npm run generate-routes` to refresh `src/routeTree.gen.ts` after structural changes.
+Run `pnpm generate-routes` to refresh `src/routeTree.gen.ts` after structural changes.
 
 ## Deployment (Netlify)
 
