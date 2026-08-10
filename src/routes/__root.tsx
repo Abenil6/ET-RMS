@@ -16,6 +16,7 @@ import { ChevronDown, LogOut, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { getAvatarUrl } from '#/lib/avatars'
+import ConfirmDialog from '../components/ConfirmDialog'
 import * as React from 'react'
 
 // Import CSS - Vite/TanStack will handle this properly
@@ -92,6 +93,8 @@ function Nav() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+  const [logoutLoading, setLogoutLoading] = useState(false)
   const isAuthPage = pathname === '/login' || pathname === '/register'
 
   useEffect(() => {
@@ -113,13 +116,20 @@ function Nav() {
   }, [pathname])
 
   async function handleLogout() {
-    await logout()
-    setMenuOpen(false)
-    navigate({ to: '/login' })
+    setLogoutLoading(true)
+    try {
+      await logout()
+      setMenuOpen(false)
+      navigate({ to: '/login' })
+    } finally {
+      setLogoutLoading(false)
+      setLogoutConfirmOpen(false)
+    }
   }
 
   return (
-    <nav className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-card/90 px-6 py-4 backdrop-blur sm:px-8">
+    <>
+      <nav className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-card/90 px-6 py-4 backdrop-blur sm:px-8">
       <Link to="/" className="flex items-center gap-1">
         <img src={logo} alt="NetCare logo" className="h-16 w-30 " />
         <span className="text-lg font-extrabold text-text-dark">NetCare</span>
@@ -214,7 +224,7 @@ function Nav() {
                   </motion.div>
                   <motion.button
                     type="button"
-                    onClick={handleLogout}
+                    onClick={() => setLogoutConfirmOpen(true)}
                     className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-error transition-colors hover:bg-error/10"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -231,6 +241,19 @@ function Nav() {
         </div>
       )}
     </nav>
+
+    <ConfirmDialog
+      open={logoutConfirmOpen}
+      onConfirm={handleLogout}
+      onCancel={() => setLogoutConfirmOpen(false)}
+      title="Log out?"
+      description="Are you sure you want to log out of your account?"
+      confirmLabel="Log Out"
+      cancelLabel="Cancel"
+      variant="danger"
+      loading={logoutLoading}
+    />
+    </>
   )
 }
 
