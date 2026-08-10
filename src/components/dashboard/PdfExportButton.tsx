@@ -1,7 +1,7 @@
 import { FileDown } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import logo from '../../assets/Ethio-Tele.jpeg'
+import etlogo from '../../assets/Et-logo.png'
 
 type Props = {
   filename: string
@@ -14,14 +14,17 @@ export function PdfExportButton({ filename, title, headers, rows }: Props) {
   async function handleExport() {
     const doc = new jsPDF()
 
-    const logoDataUrl = await fetch(logo)
+    const logoDataUrl = await fetch(etlogo)
       .then((res) => res.blob())
-      .then((blob) => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(blob)
-      }))
+      .then(
+        (blob) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result as string)
+            reader.onerror = reject
+            reader.readAsDataURL(blob)
+          }),
+      )
       .catch(() => '')
 
     doc.setFillColor(0, 114, 206)
@@ -32,8 +35,8 @@ export function PdfExportButton({ filename, title, headers, rows }: Props) {
     }
     doc.setTextColor(255, 255, 255)
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(16)
-    doc.text('NetCare', 46, 16)
+    doc.setFontSize(15)
+    doc.text('NetCare Ticket Report', 46, 16)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10)
     doc.text(title ?? 'Tickets Report', 46, 24)
