@@ -299,7 +299,7 @@ export function topTechnicians(
     .slice(0, limit)
 }
 
-export function ticketsToCsv(
+export function ticketsToExport(
   list: Ticket[],
   range: DateRange,
 ): { headers: string[]; rows: (string | number)[][] } {

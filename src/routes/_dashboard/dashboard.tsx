@@ -37,13 +37,13 @@ import {
   categoryBreakdown,
   repeatRate,
   topTechnicians,
-  ticketsToCsv,
+  ticketsToExport,
 } from '../../lib/dashboardStats'
 import { useDateRange } from '../../lib/useDateRange'
 import { KpiCard } from '../../components/dashboard/KpiCard'
 import { ChartCard } from '../../components/dashboard/ChartCard'
 import { DateRangePicker } from '../../components/dashboard/DateRangePicker'
-import { CsvExportButton } from '../../components/dashboard/CsvExportButton'
+import { PdfExportButton } from '../../components/dashboard/PdfExportButton'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { ErrorMessage } from '../../components/ErrorMessage'
 
@@ -78,7 +78,7 @@ function AdminOverview() {
   const categories = useMemo(() => categoryBreakdown(list, range), [list, range])
   const repeat = useMemo(() => repeatRate(list, range), [list, range])
   const techs = useMemo(() => topTechnicians(list, range), [list, range])
-  const csv = useMemo(() => ticketsToCsv(list, range), [list, range])
+  const csv = useMemo(() => ticketsToExport(list, range), [list, range])
 
   if (loading) return <LoadingSpinner />
   if (error) return <ErrorMessage message={error} retry={refresh} />
@@ -116,8 +116,9 @@ function AdminOverview() {
             onCustomChange={setCustom}
             range={range}
           />
-          <CsvExportButton
-            filename={`tickets-report-${new Date().toISOString().slice(0, 10)}.csv`}
+          <PdfExportButton
+            title="Admin Overview"
+            filename={`tickets-report-${new Date().toISOString().slice(0, 10)}.pdf`}
             headers={csv.headers}
             rows={csv.rows}
           />

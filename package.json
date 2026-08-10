@@ -26,6 +26,8 @@
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "^1.167.0",
     "@tanstack/react-start": "latest",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.28.0",
     "motion": "^12.43.0",
     "react": "^19.2.0",

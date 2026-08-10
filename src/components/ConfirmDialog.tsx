@@ -56,7 +56,7 @@ export default function ConfirmDialog({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-[100]"
+            className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-100"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -71,7 +71,7 @@ export default function ConfirmDialog({
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
             aria-describedby="confirm-dialog-desc"
-            className="fixed inset-0 z-[101] flex items-center justify-center p-4"
+            className="fixed inset-0 z-101 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -97,13 +97,19 @@ export default function ConfirmDialog({
               <div className="px-6 pt-6 pb-2 flex flex-col items-center text-center">
                 {/* Icon */}
                 <motion.div
-                  className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${isDanger
+                  className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${
+                    isDanger
                       ? 'bg-error/10 text-error'
                       : 'bg-warning/10 text-warning'
-                    }`}
+                  }`}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ type: 'spring', delay: 0.1, stiffness: 400, damping: 15 }}
+                  transition={{
+                    type: 'spring',
+                    delay: 0.1,
+                    stiffness: 400,
+                    damping: 15,
+                  }}
                 >
                   <AlertTriangle size={28} />
                 </motion.div>
@@ -148,10 +154,11 @@ export default function ConfirmDialog({
                 <button
                   onClick={onConfirm}
                   disabled={loading}
-                  className={`px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 flex items-center gap-2 ${isDanger
+                  className={`px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 flex items-center gap-2 ${
+                    isDanger
                       ? 'bg-error hover:bg-error/90 focus:ring-error'
                       : 'bg-warning hover:bg-warning/90 focus:ring-warning'
-                    }`}
+                  }`}
                 >
                   {loading && (
                     <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
