@@ -80,6 +80,10 @@ function DashboardLayout() {
   }, [loading, user, navigate])
 
   async function loadUnreadCount() {
+    if (!user) {
+      setUnreadCount(0)
+      return
+    }
     try {
       const unread = await api.notifications.getAll(true) // ?unread=1
       setUnreadCount(unread.length)
@@ -90,6 +94,12 @@ function DashboardLayout() {
   }
 
   async function loadNotifications() {
+    if (!user) {
+      setNotifications([])
+      setUnreadCount(0)
+      return
+    }
+
     try {
       setNotifLoading(true)
       setNotifError(null)
