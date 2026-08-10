@@ -376,12 +376,12 @@ function TechnicianOverview() {
         {kpis.map((kpi, i) => (
           <KpiCard
             key={kpi.key}
-            icon={[AlertCircle, CheckCircle2, Clock][i]}
+            icon={[AlertCircle, UserCheck, CheckCircle2, Clock][i]}
             label={kpi.label}
             value={kpi.value}
             delta={kpi.delta}
             unit={kpi.unit}
-            color={['warning', 'success', 'primary-green'][i] as 'warning' | 'success' | 'primary-green'}
+            color={['warning', 'primary-blue', 'success', 'primary-green'][i] as 'warning' | 'primary-blue' | 'success' | 'primary-green'}
             delay={0.1 + i * 0.1}
           />
         ))}
@@ -457,12 +457,12 @@ function CustomerOverview() {
         {kpis.map((kpi, i) => (
           <KpiCard
             key={kpi.key}
-            icon={[AlertCircle, CheckCircle2, Clock][i]}
+            icon={[AlertCircle, UserCheck, CheckCircle2, Clock][i]}
             label={kpi.label}
             value={kpi.value}
             delta={kpi.delta}
             unit={kpi.unit}
-            color={['warning', 'success', 'primary-green'][i] as 'warning' | 'success' | 'primary-green'}
+            color={['warning', 'primary-blue', 'success', 'primary-green'][i] as 'warning' | 'primary-blue' | 'success' | 'primary-green'}
             delay={0.1 + i * 0.1}
           />
         ))}
