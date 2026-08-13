@@ -28,79 +28,80 @@ export function PdfExportButton({ filename, title, headers, rows }: Props) {
       )
       .catch(() => '')
 
-    // Professional header with gradient background
-    doc.setFillColor(0, 114, 206)
-    doc.rect(0, 0, 297, 38, 'F')
+    // Professional header with green background (Ethio Telecom brand color)
+    doc.setFillColor(43, 182, 115) // #2BB673 - primary-green
+    doc.rect(0, 0, 297, 32, 'F')
 
     if (logoDataUrl) {
-      doc.addImage(logoDataUrl, 'PNG', 14, 9, 32, 20)
+      doc.addImage(logoDataUrl, 'PNG', 10, 6, 28, 18)
     }
     
     // Header text
     doc.setTextColor(255, 255, 255)
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(18)
-    doc.text('NetCare Ticket Report', 50, 18)
+    doc.setFontSize(16)
+    doc.text('NetCare Ticket Report', 42, 14)
     
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(11)
-    doc.text(title ?? 'Administrative Report', 50, 26)
+    doc.setFontSize(10)
+    doc.text(title ?? 'Administrative Report', 42, 21)
     
-    doc.setFontSize(9)
+    doc.setFontSize(8)
     const dateStr = new Date().toLocaleDateString('en-ET', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     })
-    doc.text(`Generated on ${dateStr}`, 50, 32)
+    doc.text(`Generated: ${dateStr}`, 42, 27)
     
     // Add total count on the right side
-    doc.setFontSize(10)
-    doc.text(`Total Records: ${rows.length}`, 250, 26)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`${rows.length} Records`, 265, 19, { align: 'right' })
 
-    // Intelligent column width allocation based on content
-    // Total available width in landscape: ~277mm (297 - 20mm margins)
+    // Optimized column widths - Total: 277mm available width
+    // Calculated to fit perfectly within page: 8 (left margin) + 277 (table) + 8 (right margin) = 293mm
     const columnStyles = {
-      0: { cellWidth: 22, halign: 'left' as const },      // Ticket # - fixed width
-      1: { cellWidth: 52, halign: 'left' as const },      // Subject - wider for readability
-      2: { cellWidth: 24, halign: 'center' as const },    // Status - centered
-      3: { cellWidth: 20, halign: 'center' as const },    // Priority - centered
-      4: { cellWidth: 26, halign: 'left' as const },      // Category
-      5: { cellWidth: 38, halign: 'left' as const },      // Customer - wider for names
-      6: { cellWidth: 35, halign: 'left' as const },      // Technician - wider for names
-      7: { cellWidth: 32, halign: 'left' as const },      // Created - date/time
-      8: { cellWidth: 32, halign: 'left' as const },      // Resolved - date/time
-      9: { cellWidth: 16, halign: 'center' as const },    // Rating - centered
+      0: { cellWidth: 23, halign: 'left' as const },      // Ticket # (e.g., TKT-2024-001)
+      1: { cellWidth: 55, halign: 'left' as const },      // Subject (longest text)
+      2: { cellWidth: 22, halign: 'center' as const },    // Status (OPEN, RESOLVED, etc.)
+      3: { cellWidth: 20, halign: 'center' as const },    // Priority (URGENT, HIGH, etc.)
+      4: { cellWidth: 27, halign: 'left' as const },      // Category (CONNECTIVITY, etc.)
+      5: { cellWidth: 36, halign: 'left' as const },      // Customer name
+      6: { cellWidth: 36, halign: 'left' as const },      // Technician name
+      7: { cellWidth: 31, halign: 'left' as const },      // Created date/time
+      8: { cellWidth: 31, halign: 'left' as const },      // Resolved date/time
+      9: { cellWidth: 16, halign: 'center' as const },    // Rating (1-5 or empty)
     }
 
     autoTable(doc, {
       head: [headers],
       body: rows.map((row) => row.map(String)),
-      startY: 46,
+      startY: 38, // Start closer to header - reduced from 46
       theme: 'striped',
       
       // Column configuration
       columnStyles,
       
-      // Table styling
+      // Table styling - optimized for space efficiency
       styles: {
-        fontSize: 9,
-        cellPadding: { top: 5, right: 4, bottom: 5, left: 4 },
+        fontSize: 8.5, // Slightly smaller but still readable
+        cellPadding: { top: 3.5, right: 3, bottom: 3.5, left: 3 }, // Compact but comfortable
         lineColor: [220, 220, 220],
         lineWidth: 0.1,
         textColor: [40, 40, 40],
         overflow: 'linebreak',
         valign: 'middle',
-        minCellHeight: 12, // Comfortable row height
+        minCellHeight: 10, // Reduced from 12 for more rows per page
       },
       
       // Header styling
       headStyles: {
-        fillColor: [0, 114, 206],
+        fillColor: [43, 182, 115], // Green to match theme
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 10,
-        cellPadding: { top: 6, right: 4, bottom: 6, left: 4 },
+        fontSize: 9,
+        cellPadding: { top: 4, right: 3, bottom: 4, left: 3 },
         halign: 'left',
         valign: 'middle',
       },
@@ -115,28 +116,45 @@ export function PdfExportButton({ filename, title, headers, rows }: Props) {
         fillColor: [255, 255, 255],
       },
       
-      // Margin configuration - use page space efficiently
+      // Margin configuration - optimized for maximum space usage
       margin: { 
-        top: 46, 
-        left: 10, 
-        right: 10, 
-        bottom: 20 
+        top: 38,  // Match startY
+        left: 8,  // Reduced from 10
+        right: 8, // Reduced from 10
+        bottom: 15 // Reduced from 20
       },
       
-      // Page break behavior
+      // Page break behavior - optimized
       showHead: 'everyPage', // Repeat header on every page
       pageBreak: 'auto',
       rowPageBreak: 'avoid', // Avoid splitting rows across pages
+      tableWidth: 'wrap', // Wrap to content width for precise control
       
-      // Footer with page numbers
+      // Draw header only on first page, then minimal header on subsequent pages
       didDrawPage: (data) => {
-        // Footer
         const pageCount = doc.getNumberOfPages()
         const pageSize = doc.internal.pageSize
         const pageHeight = pageSize.height || pageSize.getHeight()
         const pageWidth = pageSize.width || pageSize.getWidth()
         
-        doc.setFontSize(9)
+        // Only draw full header on first page
+        if (data.pageNumber === 1) {
+          // Already drawn above
+        } else {
+          // Minimal header for subsequent pages
+          doc.setFillColor(43, 182, 115)
+          doc.rect(0, 0, 297, 10, 'F')
+          doc.setTextColor(255, 255, 255)
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(10)
+          doc.text('NetCare Ticket Report (continued)', 10, 7)
+          doc.setFont('helvetica', 'normal')
+          doc.setFontSize(8)
+          doc.text(`${rows.length} Records`, 287, 7, { align: 'right' })
+        }
+        
+        // Footer
+        doc.setFontSize(8)
         doc.setTextColor(128, 128, 128)
         
         // Page number
@@ -144,14 +162,14 @@ export function PdfExportButton({ filename, title, headers, rows }: Props) {
         doc.text(
           pageText,
           pageWidth / 2,
-          pageHeight - 10,
+          pageHeight - 8,
           { align: 'center' }
         )
         
         // Company info
-        doc.setFontSize(8)
-        doc.text('NetCare Support System', 10, pageHeight - 10)
-        doc.text('© 2026 Ethio Telecom', pageWidth - 10, pageHeight - 10, {
+        doc.setFontSize(7)
+        doc.text('NetCare Support System', 8, pageHeight - 8)
+        doc.text('© 2026 Ethio Telecom', pageWidth - 8, pageHeight - 8, {
           align: 'right',
         })
       },
