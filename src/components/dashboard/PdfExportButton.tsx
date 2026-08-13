@@ -46,20 +46,24 @@ export function PdfExportButton({ filename, title, headers, rows }: Props) {
       head: [headers],
       body: rows.map((row) => row.map(String)),
       startY: 42,
+      tableWidth: 'auto', // Use full available width
       styles: {
-        fontSize: 8,
-        cellPadding: 2.5,
+        fontSize: 9, // Increased from 8 for better readability
+        cellPadding: 4, // Increased from 2.5 for more breathing room
         lineColor: [226, 232, 240],
         lineWidth: 0.15,
         textColor: [51, 65, 85],
+        overflow: 'linebreak', // Wrap long text instead of truncating
+        minCellHeight: 8, // Minimum row height for less cramped appearance
       },
       headStyles: {
         fillColor: [0, 114, 206],
         textColor: 255,
         fontStyle: 'bold',
+        cellPadding: 5, // Extra padding in header
       },
       alternateRowStyles: { fillColor: [248, 250, 252] },
-      margin: { left: 12, right: 12, bottom: 12 },
+      margin: { left: 8, right: 8, bottom: 12 }, // Reduced side margins for wider table
     })
 
     doc.save(filename)
