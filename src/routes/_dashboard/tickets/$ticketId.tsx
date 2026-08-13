@@ -100,7 +100,9 @@ function TicketDetailPage() {
       setDescValue(data.description || '')
       setPriorityDraft(data.priority)
     } catch (err) {
-      setLoadError(err instanceof ApiError ? err.message : 'Failed to load ticket.')
+      setLoadError(
+        err instanceof ApiError ? err.message : 'Failed to load ticket.',
+      )
     } finally {
       setLoading(false)
     }
@@ -138,7 +140,8 @@ function TicketDetailPage() {
 
   if (loading) return <LoadingSpinner size="lg" />
   if (loadError) return <ErrorMessage message={loadError} retry={loadTicket} />
-  if (!ticket || !user) return <p className="text-text-secondary">Ticket not found.</p>
+  if (!ticket || !user)
+    return <p className="text-text-secondary">Ticket not found.</p>
 
   const statusBadge = STATUS_CONFIG[ticket.status]
   const priorityBadge = PRIORITY_CONFIG[ticket.priority]
@@ -152,7 +155,9 @@ function TicketDetailPage() {
       setActionSuccess('Ticket cancelled.')
       await loadTicket()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Failed to cancel ticket.')
+      setActionError(
+        err instanceof ApiError ? err.message : 'Failed to cancel ticket.',
+      )
     }
   }
 
@@ -165,7 +170,9 @@ function TicketDetailPage() {
       setActionSuccess('Description updated.')
       await loadTicket()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Failed to update description.')
+      setActionError(
+        err instanceof ApiError ? err.message : 'Failed to update description.',
+      )
     }
   }
 
@@ -177,7 +184,9 @@ function TicketDetailPage() {
       setActionSuccess('Ticket moved to In Progress.')
       await loadTicket()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Failed to start work.')
+      setActionError(
+        err instanceof ApiError ? err.message : 'Failed to start work.',
+      )
     }
   }
 
@@ -186,13 +195,18 @@ function TicketDetailPage() {
     setActionError(null)
     setActionSuccess(null)
     try {
-      await api.tickets.resolve(ticket!.id, resolutionNotes.trim() || 'Resolved')
+      await api.tickets.resolve(
+        ticket!.id,
+        resolutionNotes.trim() || 'Resolved',
+      )
       setShowResolveForm(false)
       setResolutionNotes('')
       setActionSuccess('Ticket resolved.')
       await loadTicket()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Failed to resolve ticket.')
+      setActionError(
+        err instanceof ApiError ? err.message : 'Failed to resolve ticket.',
+      )
     }
   }
 
@@ -205,7 +219,9 @@ function TicketDetailPage() {
       setActionSuccess('Ticket reopened and moved to In Progress.')
       await loadTicket()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Failed to reopen ticket.')
+      setActionError(
+        err instanceof ApiError ? err.message : 'Failed to reopen ticket.',
+      )
     }
   }
 
@@ -219,7 +235,9 @@ function TicketDetailPage() {
       setActionSuccess('Technician assigned.')
       await loadTicket()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Failed to assign technician.')
+      setActionError(
+        err instanceof ApiError ? err.message : 'Failed to assign technician.',
+      )
     }
   }
 
@@ -234,7 +252,9 @@ function TicketDetailPage() {
       setActionSuccess('Review submitted. Ticket closed.')
       await loadTicket()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Failed to submit review.')
+      setActionError(
+        err instanceof ApiError ? err.message : 'Failed to submit review.',
+      )
     }
   }
 
@@ -247,18 +267,22 @@ function TicketDetailPage() {
       setActionSuccess('Priority updated.')
       await loadTicket()
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : 'Failed to update priority.')
+      setActionError(
+        err instanceof ApiError ? err.message : 'Failed to update priority.',
+      )
     } finally {
       setPrioritySaving(false)
     }
   }
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-auto">
       {/* Header */}
       <div className="flex items-start justify-between mb-3 gap-2 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-text-dark">{ticket.ticketNumber}</h1>
+          <h1 className="text-2xl font-bold text-text-dark">
+            {ticket.ticketNumber}
+          </h1>
           <p className="text-text-secondary font-medium">
             <span className="text-text-dark font-mono">
               Service Number: {ticket.serviceNumber}
@@ -290,10 +314,11 @@ function TicketDetailPage() {
       {/* Inline action feedback */}
       {(actionError || actionSuccess) && (
         <div
-          className={`mb-4 p-4 rounded-xl border text-sm font-semibold ${actionError
-            ? 'border-error/20 bg-error/10 text-error'
-            : 'border-success/20 bg-success/10 text-success'
-            }`}
+          className={`mb-4 p-4 rounded-xl border text-sm font-semibold ${
+            actionError
+              ? 'border-error/20 bg-error/10 text-error'
+              : 'border-success/20 bg-success/10 text-success'
+          }`}
         >
           {actionError || actionSuccess}
         </div>
@@ -303,7 +328,10 @@ function TicketDetailPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 p-5 rounded-xl border border-border bg-card">
         <InfoField label="Customer" value={ticket.customer.name} />
         <InfoField label="Customer Email" value={ticket.customer.email} />
-        <InfoField label="Assigned Technician" value={ticket.technician?.name ?? 'Unassigned'} />
+        <InfoField
+          label="Assigned Technician"
+          value={ticket.technician?.name ?? 'Unassigned'}
+        />
       </div>
 
       {/* Description + inline edit for customer while OPEN */}
@@ -373,66 +401,75 @@ function TicketDetailPage() {
       )}
 
       {/* Admin: Assign / Reassign Technician */}
-      {isAdmin && ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && ticket.status !== 'CANCELLED' && (
-        <div className="p-6 rounded-xl border border-border bg-card space-y-3 mb-6">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-bold text-text-dark uppercase tracking-wide">
-              Admin Actions
-            </h2>
-            <button
-              onClick={loadTechnicians}
-              className="text-xs text-primary-green font-semibold hover:underline"
-              type="button"
-            >
-              Refresh technicians
-            </button>
-          </div>
+      {isAdmin &&
+        ticket.status !== 'RESOLVED' &&
+        ticket.status !== 'CLOSED' &&
+        ticket.status !== 'CANCELLED' && (
+          <div className="p-6 rounded-xl border border-border bg-card space-y-3 mb-6">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-bold text-text-dark uppercase tracking-wide">
+                Admin Actions
+              </h2>
+              <button
+                onClick={loadTechnicians}
+                className="text-xs text-primary-green font-semibold hover:underline"
+                type="button"
+              >
+                Refresh technicians
+              </button>
+            </div>
 
-          <p className="text-sm text-text-secondary">
-            Current technician:{' '}
-            <span className="font-semibold text-text-dark">
-              {ticket.technician?.name ?? 'Unassigned'}
-            </span>
-          </p>
-
-          <div className="flex items-center gap-3 flex-wrap">
-            <select
-              value={assignToId}
-              onChange={(e) => setAssignToId(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-border bg-bg text-text-dark min-w-[240px]"
-              disabled={techLoading}
-            >
-              <option value="">
-                {ticket.technician ? 'Reassign to…' : 'Assign to…'}
-              </option>
-
-              {technicians.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                  {typeof t.openTickets === 'number' ? ` (open: ${t.openTickets})` : ''}
-                </option>
-              ))}
-            </select>
-
-            <button
-              onClick={handleAssign}
-              disabled={!assignToId || techLoading}
-              className="px-4 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90 disabled:opacity-40"
-              type="button"
-            >
-              {ticket.technician ? 'Reassign' : 'Assign'}
-            </button>
-          </div>
-
-          {techLoading && <p className="text-xs text-text-secondary">Loading technicians…</p>}
-
-          {!techLoading && technicians.length === 0 && (
-            <p className="text-xs text-text-secondary">
-              No technicians found. (Check seed / TECHNICIAN users)
+            <p className="text-sm text-text-secondary">
+              Current technician:{' '}
+              <span className="font-semibold text-text-dark">
+                {ticket.technician?.name ?? 'Unassigned'}
+              </span>
             </p>
-          )}
-        </div>
-      )}
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <select
+                value={assignToId}
+                onChange={(e) => setAssignToId(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-border bg-bg text-text-dark min-w-60"
+                disabled={techLoading}
+              >
+                <option value="">
+                  {ticket.technician ? 'Reassign to…' : 'Assign to…'}
+                </option>
+
+                {technicians.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                    {typeof t.openTickets === 'number'
+                      ? ` (open: ${t.openTickets})`
+                      : ''}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleAssign}
+                disabled={!assignToId || techLoading}
+                className="px-4 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90 disabled:opacity-40"
+                type="button"
+              >
+                {ticket.technician ? 'Reassign' : 'Assign'}
+              </button>
+            </div>
+
+            {techLoading && (
+              <p className="text-xs text-text-secondary">
+                Loading technicians…
+              </p>
+            )}
+
+            {!techLoading && technicians.length === 0 && (
+              <p className="text-xs text-text-secondary">
+                No technicians found. (Check seed / TECHNICIAN users)
+              </p>
+            )}
+          </div>
+        )}
 
       {/* Actions */}
       <div className="p-6 rounded-xl border border-border bg-card space-y-4">
@@ -537,15 +574,18 @@ function TicketDetailPage() {
         )}
 
         {/* Customer review when RESOLVED */}
-        {isCustomer && ticket.status === 'RESOLVED' && !ticket.review && !showReviewForm && (
-          <button
-            type="button"
-            onClick={() => setShowReviewForm(true)}
-            className="px-4 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90"
-          >
-            Leave a Review
-          </button>
-        )}
+        {isCustomer &&
+          ticket.status === 'RESOLVED' &&
+          !ticket.review &&
+          !showReviewForm && (
+            <button
+              type="button"
+              onClick={() => setShowReviewForm(true)}
+              className="px-4 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90"
+            >
+              Leave a Review
+            </button>
+          )}
 
         {isCustomer && ticket.review && (
           <p className="text-sm text-text-secondary">
@@ -612,34 +652,39 @@ function TicketDetailPage() {
         </AnimatePresence>
 
         {/* Priority update (admin or assigned tech) */}
-        {(isAdmin || isAssignedTech) && ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && ticket.status !== 'CANCELLED' && (
-          <div className="pt-3 border-t border-border">
-            <p className="text-xs font-bold uppercase text-text-secondary tracking-wide mb-2">
-              Priority
-            </p>
-            <div className="flex items-center gap-3 flex-wrap">
-              <select
-                value={priorityDraft}
-                onChange={(e) => setPriorityDraft(e.target.value as TicketPriority)}
-                className="px-3 py-2 rounded-lg border border-border bg-bg text-text-dark"
-              >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
-              </select>
+        {(isAdmin || isAssignedTech) &&
+          ticket.status !== 'RESOLVED' &&
+          ticket.status !== 'CLOSED' &&
+          ticket.status !== 'CANCELLED' && (
+            <div className="pt-3 border-t border-border">
+              <p className="text-xs font-bold uppercase text-text-secondary tracking-wide mb-2">
+                Priority
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <select
+                  value={priorityDraft}
+                  onChange={(e) =>
+                    setPriorityDraft(e.target.value as TicketPriority)
+                  }
+                  className="px-3 py-2 rounded-lg border border-border bg-bg text-text-dark"
+                >
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="URGENT">Urgent</option>
+                </select>
 
-              <button
-                type="button"
-                onClick={handleSavePriority}
-                disabled={prioritySaving || priorityDraft === ticket.priority}
-                className="px-4 py-2 rounded-lg border border-border text-text-dark font-semibold hover:bg-bg disabled:opacity-40"
-              >
-                {prioritySaving ? 'Saving…' : 'Save Priority'}
-              </button>
+                <button
+                  type="button"
+                  onClick={handleSavePriority}
+                  disabled={prioritySaving || priorityDraft === ticket.priority}
+                  className="px-4 py-2 rounded-lg border border-border text-text-dark font-semibold hover:bg-bg disabled:opacity-40"
+                >
+                  {prioritySaving ? 'Saving…' : 'Save Priority'}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         <button
           type="button"
