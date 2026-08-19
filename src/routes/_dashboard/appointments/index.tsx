@@ -1,9 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useAuth } from '../../../context/auth'
-import { api, ApiError } from '../../../lib/api'
-import { useFetch } from '../../../lib/useFetch'
-import type { Appointment } from '../../../lib/types'
+import { appointmentsApi } from '@/apis/appointments'
 import { motion } from 'motion/react'
 import { LoadingSpinner } from '../../../components/LoadingSpinner'
 import { ErrorMessage } from '../../../components/ErrorMessage'
@@ -17,20 +15,19 @@ export const Route = createFileRoute('/_dashboard/appointments/')({
 function AppointmentsPage() {
   const { user } = useAuth()
 
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
-
   const {
     data: appointments,
-    loading,
+    isLoading: loading,
+    isError,
     error,
-    refresh,
-  } = useFetch<Appointment[]>(() => api.appointments.getAll(), [])
+    refetch: refresh,
+  } = appointmentsApi.getAll.useQuery()
+
+  const { mutate: updateAppointment } = appointmentsApi.update.useMutation()
 
   const displayAppointments = useMemo(() => {
     if (!user) return []
     const list = appointments ?? []
-    // Backend already role-scopes, but keep this safe:
     if (user.role === 'CUSTOMER') {
       return list.filter((a) => a.userId === user.id)
     }
@@ -39,27 +36,21 @@ function AppointmentsPage() {
 
   if (!user) return null
   if (loading) return <LoadingSpinner size="lg" />
-  if (error) return <ErrorMessage message={error} retry={refresh} />
+  if (isError) return <ErrorMessage message={error?.message || 'Failed to load appointments'} retry={refresh} />
 
-  async function updateStatus(id: string, status: 'CANCELLED' | 'COMPLETED') {
-    try {
-      setActionLoadingId(id)
-      setActionError(null)
-      await api.appointments.update(id, status)
-      await refresh()
-    } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : 'Failed to update appointment',
-      )
-    } finally {
-      setActionLoadingId(null)
-    }
+  function handleCancel(id: string) {
+    updateAppointment({ id, data: { status: 'CANCELLED' } })
   }
 
-  const handleCancel = (id: string) => updateStatus(id, 'CANCELLED')
-  const handleComplete = (id: string) => updateStatus(id, 'COMPLETED')
+  function handleComplete(id: string) {
+    updateAppointment({ id, data: { status: 'COMPLETED' } })
+  }
 
-  const columns = createAppointmentsColumns(user.role, handleCancel, handleComplete)
+  const columns = createAppointmentsColumns(
+    user.role,
+    handleCancel,
+    handleComplete,
+  )
 
   return (
     <motion.div
@@ -69,29 +60,15 @@ function AppointmentsPage() {
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
-      <div>
+      <div className="w-full">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-text-dark mb-1">
-            Appointments
-          </h1>
+          <h1 className="text-3xl font-bold">Appointments</h1>
           <p className="text-text-secondary">
             {user.role === 'CUSTOMER'
-              ? 'Manage your branch visits.'
-              : 'Manage all customer branch visits.'}
+              ? 'View and manage your scheduled appointments'
+              : 'Manage all customer appointments'}
           </p>
         </div>
-
-        {actionError && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">
-            {actionError}
-          </div>
-        )}
-
-        {actionLoadingId && (
-          <div className="mb-4 p-3 rounded-lg bg-blue-50 text-blue-700 text-sm">
-            Updating appointment...
-          </div>
-        )}
 
         <AppointmentsDataTable columns={columns} data={displayAppointments} />
       </div>

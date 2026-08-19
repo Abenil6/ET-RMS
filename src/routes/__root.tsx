@@ -11,15 +11,14 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { AuthProvider, useAuth } from '../context/auth'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from '../apis/queryClient'
 import logo from '../assets/Ethio-Tele.jpeg'
 import { ChevronDown, LogOut, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { getAvatarUrl } from '#/lib/avatars'
-import ConfirmDialog from '../components/ConfirmDialog'
-import * as React from 'react'
 
-// Import CSS - Vite/TanStack will handle this properly
 import '../styles.css'
 
 function NotFoundComponent() {
@@ -67,21 +66,23 @@ function RootComponent() {
         <HeadContent />
       </head>
       <body>
-        <AuthProvider>
-          {!isDashboard && <Nav />}
-          <Outlet />
-          {!isDashboard && <Footer />}
-          <TanStackDevtools
-            config={{ position: 'bottom-right' }}
-            plugins={[
-              {
-                name: 'TanStack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
-        </AuthProvider>
-        <Scripts />
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            {!isDashboard && <Nav />}
+            <Outlet />
+            {!isDashboard && <Footer />}
+            <TanStackDevtools
+              config={{ position: 'bottom-right' }}
+              plugins={[
+                {
+                  name: 'TanStack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+              ]}
+            />
+          </AuthProvider>
+          <Scripts />
+        </QueryClientProvider>
       </body>
     </html>
   )
@@ -93,8 +94,6 @@ function Nav() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
-  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
-  const [logoutLoading, setLogoutLoading] = useState(false)
   const isAuthPage = pathname === '/login' || pathname === '/register'
 
   useEffect(() => {
@@ -116,195 +115,150 @@ function Nav() {
   }, [pathname])
 
   async function handleLogout() {
-    setLogoutLoading(true)
+    setMenuOpen(false)
     try {
       await logout()
-      setMenuOpen(false)
       navigate({ to: '/login' })
-    } finally {
-      setLogoutLoading(false)
-      setLogoutConfirmOpen(false)
+    } catch {
+      // Error handled by auth context
     }
   }
 
+  if (loading) return null
+
   return (
-    <>
-      <nav className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-card/90 px-6 py-4 backdrop-blur sm:px-8">
-      <Link to="/" className="flex items-center gap-1">
-        <img src={logo} alt="NetCare logo" className="h-16 w-30 " />
-        <span className="text-lg font-extrabold text-text-dark">NetCare</span>
-      </Link>
-
-      {!loading && !user && !isAuthPage && (
-        <div className="flex items-center gap-2 sm:gap-3">
-          <NavLink to="/" active={pathname === '/'}>
-            Home
-          </NavLink>
-          <a
-            href="/#features"
-            className="rounded-full px-4 py-2 text-sm font-semibold text-text-secondary transition-colors hover:bg-bg hover:text-text-dark"
-          >
-            Features
-          </a>
-          <NavLink to="/login" variant="ghost" active={pathname === '/login'}>
-            Login
-          </NavLink>
-          <NavLink
-            to="/register"
-            variant="solid"
-            active={pathname === '/register'}
-          >
-            Get Started
-          </NavLink>
-        </div>
-      )}
-
-      {!loading && user && (
-        <div className="relative" ref={menuRef}>
-          <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-3 rounded-full border border-border bg-bg px-2 py-2 pr-3 text-left shadow-sm transition-colors hover:bg-card"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-green/10 text-sm font-extrabold text-primary-green">
-              <img
-                src={getAvatarUrl(user.avatarStyle, user.avatarSeed)}
-                alt="Avatar"
-                className="w-full h-full object-cover"
-              />
+    <nav className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-b border-neutral-200">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link to="/" className="flex items-center gap-2">
+              <img src={logo} alt="Ethio Telecom" className="h-8 w-auto" />
+              <span className="text-xl font-bold text-primary-blue">NetCare</span>
+            </Link>
+            <div className="hidden md:flex items-center gap-6">
+              <a href="/#features" className="text-sm font-medium text-text-secondary hover:text-primary-blue transition-colors">
+                Features
+              </a>
+              <a href="/#pricing" className="text-sm font-medium text-text-secondary hover:text-primary-blue transition-colors">
+                Pricing
+              </a>
+              <a href="/#about" className="text-sm font-medium text-text-secondary hover:text-primary-blue transition-colors">
+                About
+              </a>
             </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-bold text-text-dark">{user.name}</p>
-              <p className="text-xs capitalize text-text-secondary">
-                {user.role}
-              </p>
-            </div>
-            <motion.div
-              animate={{ rotate: menuOpen ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChevronDown size={16} className="text-text-secondary" />
-            </motion.div>
-          </button>
-
-          <AnimatePresence>
-            {menuOpen && (
-              <motion.div
-                className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-black/10"
-                initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                transition={{ type: 'spring', duration: 0.3, bounce: 0.2 }}
-              >
-                <motion.div
-                  className="border-b border-border px-4 py-3"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 }}
+          </div>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-neutral-100 transition-colors"
                 >
-                  <p className="text-sm font-bold text-text-dark">
-                    {user.name}
-                  </p>
-                  <p className="text-xs text-text-secondary">{user.email}</p>
-                </motion.div>
-                <div className="p-2">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <Link
-                      to="/profile"
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-text-dark transition-colors hover:bg-bg"
-                      onClick={() => setMenuOpen(false)}
+                  <img
+                    src={getAvatarUrl(user.avatarStyle, user.avatarSeed, 32)}
+                    alt={user.name}
+                    className="h-8 w-8 rounded-full"
+                  />
+                  <span className="hidden sm:block">{user.name}</span>
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+                <AnimatePresence>
+                  {menuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5"
                     >
-                      <User size={16} className="text-primary-green" />
-                      My Profile
-                    </Link>
-                  </motion.div>
-                  <motion.button
-                    type="button"
-                    onClick={() => setLogoutConfirmOpen(true)}
-                    className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-error transition-colors hover:bg-error/10"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.15 }}
-                    whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                      <a
+                        href="/_dashboard/profile"
+                        className="block px-4 py-2 text-sm text-text-secondary hover:bg-neutral-50"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <User className="inline h-4 w-4 mr-2" /> Profile
+                      </a>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-neutral-50"
+                      >
+                        <LogOut className="inline h-4 w-4 mr-2" /> Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <>
+                {!isAuthPage && (
+                  <Link
+                    to="/login"
+                    className="text-sm font-medium text-text-secondary hover:text-primary-blue transition-colors"
                   >
-                    <LogOut size={16} />
-                    Log Out
-                  </motion.button>
-                </div>
-              </motion.div>
+                    Log in
+                  </Link>
+                )}
+                {!isAuthPage && (
+                  <Link
+                    to="/register"
+                    className="rounded-full bg-primary-blue px-4 py-1.5 text-sm font-medium text-white hover:bg-primary-blue/90 transition-colors"
+                  >
+                    Get Started
+                  </Link>
+                )}
+              </>
             )}
-          </AnimatePresence>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="md:hidden p-2 rounded-md text-text-secondary hover:bg-neutral-100"
+              aria-label="Toggle menu"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {menuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
-      )}
+      </div>
     </nav>
-
-    <ConfirmDialog
-      open={logoutConfirmOpen}
-      onConfirm={handleLogout}
-      onCancel={() => setLogoutConfirmOpen(false)}
-      title="Log out?"
-      description="Are you sure you want to log out of your account?"
-      confirmLabel="Log Out"
-      cancelLabel="Cancel"
-      variant="danger"
-      loading={logoutLoading}
-    />
-    </>
-  )
-}
-
-function NavLink({
-  to,
-  children,
-  active,
-  variant = 'ghost',
-}: {
-  to: '/' | '/login' | '/register'
-  children: React.ReactNode
-  active: boolean
-  variant?: 'ghost' | 'solid'
-}) {
-  const base =
-    variant === 'solid'
-      ? 'rounded-full bg-primary-green px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-green/90'
-      : 'rounded-full px-4 py-2 text-sm font-semibold transition-colors'
-  const inactive =
-    variant === 'solid'
-      ? ''
-      : 'text-text-secondary hover:bg-bg hover:text-text-dark'
-  const activeClass =
-    variant === 'solid'
-      ? 'bg-primary-green text-white'
-      : 'bg-primary-green/10 text-primary-green'
-
-  return (
-    <Link to={to} className={`${base} ${active ? activeClass : inactive}`}>
-      {children}
-    </Link>
   )
 }
 
 function Footer() {
   return (
-    <footer className="px-8 py-10 text-center text-text-secondary border-t border-border mt-10">
-      <p className="font-bold text-text-dark mb-2">NetCare</p>
-      <p className="text-sm mb-4">Internet Support Ticket System</p>
-      <div className="flex justify-center gap-6 text-sm mb-4">
-        <Link to="/" className="hover:text-text-dark">
-          Home
-        </Link>
-        <a href="#features" className="hover:text-text-dark">
-          Features
-        </a>
-        <a href="#" className="hover:text-text-dark">
-          Contact
-        </a>
+    <footer className="bg-neutral-50 border-t border-neutral-200">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="grid gap-8 md:grid-cols-4">
+          <div className="md:col-span-2">
+            <img src={logo} alt="Ethio Telecom" className="h-8 w-auto mb-4" />
+            <p className="text-text-secondary text-sm max-w-xs">
+              NetCare - Your trusted partner for internet support and ticket management.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-text-dark mb-4">Product</h3>
+            <ul className="space-y-2 text-sm text-text-secondary">
+              <li><a href="/#features" className="hover:text-primary-blue">Features</a></li>
+              <li><a href="/#pricing" className="hover:text-primary-blue">Pricing</a></li>
+              <li><a href="/#docs" className="hover:text-primary-blue">Documentation</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-text-dark mb-4">Company</h3>
+            <ul className="space-y-2 text-sm text-text-secondary">
+              <li><a href="/#about" className="hover:text-primary-blue">About</a></li>
+              <li><a href="/#blog" className="hover:text-primary-blue">Blog</a></li>
+              <li><a href="/#contact" className="hover:text-primary-blue">Contact</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-8 border-t border-neutral-200 pt-8 text-center text-sm text-text-secondary">
+          © {new Date().getFullYear()} Ethio Telecom. All rights reserved.
+        </div>
       </div>
-      <p className="text-xs">© 2026</p>
     </footer>
   )
 }

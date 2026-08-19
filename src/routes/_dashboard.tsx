@@ -5,10 +5,10 @@ import {
   useNavigate,
 } from '@tanstack/react-router'
 import { useAuth } from '../context/auth'
-import { api, ApiError } from '../lib/api'
+import { notificationsApi } from '@/apis/notifications'
 import { getAvatarUrl } from '#/lib/avatars'
 import ConfirmDialog from '../components/ConfirmDialog'
-import { useEffect, useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Home,
   FileText,
@@ -23,16 +23,12 @@ import {
   ScrollText,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
-import type { Notification as ApiNotification } from '../lib/types'
 import logo from '../assets/Ethio-Tele.jpeg'
 
 export const Route = createFileRoute('/_dashboard')({
   component: DashboardLayout,
 })
 
-export type NotificationItem = ApiNotification
-
-// Stagger animation variants for sidebar links
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
@@ -52,101 +48,34 @@ const itemVariants = {
 function DashboardLayout() {
   const { user, loading, logout } = useAuth()
   const navigate = useNavigate()
-  const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [isNotifOpen, setIsNotifOpen] = useState(false)
-  const [notifLoading, setNotifLoading] = useState(false)
-  const [notifError, setNotifError] = useState<string | null>(null)
-  const [unreadCount, setUnreadCount] = useState(0)
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [logoutLoading, setLogoutLoading] = useState(false)
 
   const notifRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    // initial badge
-    loadUnreadCount()
 
-    // optional polling every 30s (good for notifications)
-    const t = setInterval(loadUnreadCount, 30_000)
-    return () => clearInterval(t)
-  }, [])
+  const { data: notifications = [], isLoading: notifLoading, error: notifError, refetch: loadNotifications } =
+    notificationsApi.getAll.useQuery()
+
+  const { data: unreadCount = 0 } =
+    notificationsApi.getUnreadCount.useQuery()
+
+  const { mutate: markAsRead } = notificationsApi.markAsRead.useMutation()
+  const { mutate: markAllAsRead } = notificationsApi.markAllAsRead.useMutation()
 
   useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setIsNotifOpen(false)
+      }
+    }
+
     if (isNotifOpen) {
-      loadNotifications()
+      document.addEventListener('mousedown', handleClickOutside)
     }
+
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isNotifOpen])
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate({ to: '/login' })
-    }
-  }, [loading, user, navigate])
-
-  async function loadUnreadCount() {
-    if (!user) {
-      setUnreadCount(0)
-      return
-    }
-    try {
-      const unread = await api.notifications.getAll(true) // ?unread=1
-      setUnreadCount(unread.length)
-    } catch {
-      // don’t block UI if notifications fail
-      setUnreadCount(0)
-    }
-  }
-
-  async function loadNotifications() {
-    if (!user) {
-      setNotifications([])
-      setUnreadCount(0)
-      return
-    }
-
-    try {
-      setNotifLoading(true)
-      setNotifError(null)
-      const all = await api.notifications.getAll(false)
-      setNotifications(all)
-      setUnreadCount(all.filter((n) => !n.read).length)
-    } catch (err) {
-      setNotifError(
-        err instanceof ApiError ? err.message : 'Failed to load notifications',
-      )
-    } finally {
-      setNotifLoading(false)
-    }
-  }
-
-  async function markAsRead(id: string) {
-    // optimistic UI update
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    )
-    setUnreadCount((c) => Math.max(0, c - 1))
-
-    try {
-      await api.notifications.markAsRead(id)
-    } catch (err) {
-      // if it fails, refresh from server
-      await loadNotifications()
-    }
-  }
-
-  async function markAllAsRead() {
-    const unread = notifications.filter((n) => !n.read)
-    if (unread.length === 0) return
-
-    // optimistic
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-    setUnreadCount(0)
-
-    try {
-      await Promise.all(unread.map((n) => api.notifications.markAsRead(n.id)))
-    } catch {
-      await loadNotifications()
-    }
-  }
 
   function formatNotifTime(iso: string) {
     const d = new Date(iso)
@@ -155,22 +84,6 @@ function DashboardLayout() {
       timeStyle: 'short',
     })
   }
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        notifRef.current &&
-        !notifRef.current.contains(event.target as Node)
-      ) {
-        setIsNotifOpen(false)
-      }
-    }
-
-    loadNotifications()
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   async function handleLogout() {
     setLogoutLoading(true)
@@ -337,14 +250,12 @@ function DashboardLayout() {
       </motion.aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header with fade/slight slide down */}
         <motion.header
           className="h-16 shrink-0 border-b border-border bg-card flex items-center justify-end px-8 gap-4 relative"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          {/* Notifications Dropdown */}
           <div className="relative" ref={notifRef}>
             <motion.button
               onClick={() => setIsNotifOpen(!isNotifOpen)}
@@ -381,7 +292,7 @@ function DashboardLayout() {
                     </h3>
                     {unreadCount > 0 && (
                       <button
-                        onClick={markAllAsRead}
+                        onClick={() => markAllAsRead()}
                         className="text-xs text-primary-green hover:underline flex items-center gap-1 font-medium"
                       >
                         <CheckCheck size={14} />
@@ -397,10 +308,10 @@ function DashboardLayout() {
                       </p>
                     ) : notifError ? (
                       <div className="p-4 text-xs text-center text-error">
-                        {notifError}{' '}
+                        Failed to load notifications{' '}
                         <button
                           className="underline"
-                          onClick={loadNotifications}
+                          onClick={() => loadNotifications()}
                         >
                           Retry
                         </button>
@@ -419,8 +330,8 @@ function DashboardLayout() {
                           whileHover={{
                             backgroundColor: 'rgba(0, 0, 0, 0.02)',
                           }}
-                          onClick={async () => {
-                            if (!n.read) await markAsRead(n.id)
+                          onClick={() => {
+                            if (!n.read) markAsRead(n.id)
                             if (n.ticketId) {
                               navigate({
                                 to: '/tickets/$ticketId',
@@ -460,7 +371,6 @@ function DashboardLayout() {
             </AnimatePresence>
           </div>
 
-          {/* User Avatar */}
           <Link
             to="/profile"
             className="flex items-center gap-2.5 rounded-full border border-border bg-bg px-2 py-1.5 pr-3 shadow-sm transition-colors hover:bg-card"
@@ -478,7 +388,6 @@ function DashboardLayout() {
           </Link>
         </motion.header>
 
-        {/* Main content with smooth entrance */}
         <motion.main
           className="p-8 flex-1 overflow-auto"
           initial={{ opacity: 0, y: 15 }}
@@ -495,32 +404,29 @@ function DashboardLayout() {
         onCancel={() => setLogoutConfirmOpen(false)}
         title="Log out?"
         description="Are you sure you want to log out of your account?"
-        confirmLabel="Log Out"
-        cancelLabel="Cancel"
-        variant="danger"
-        loading={logoutLoading}
+        confirmLabel={logoutLoading ? 'Logging out...' : 'Log Out'}
       />
     </motion.div>
   )
 }
 
-function SidebarLink({
-  to,
-  icon: Icon,
-  label,
-}: {
+type SidebarLinkProps = {
   to: string
   icon: React.ComponentType<{ size?: number }>
   label: string
-}) {
+}
+
+function SidebarLink({ to, icon: Icon, label }: SidebarLinkProps) {
   return (
     <Link
       to={to}
-      className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary font-medium hover:bg-bg hover:text-text-dark transition-colors"
-      activeProps={{ className: 'bg-primary-green/10 text-primary-green' }}
+      className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary font-medium hover:bg-bg hover:text-text-dark text-left transition-colors [&.active]:bg-primary-green/10 [&.active]:text-primary-green"
+      activeProps={{
+        className: 'bg-primary-green/10 text-primary-green',
+      }}
     >
       <Icon size={18} />
-      <span>{label}</span>
+      {label}
     </Link>
   )
 }
