@@ -10,15 +10,16 @@ import {
   KeyRound,
   Trash2,
   RefreshCw,
-  X,
 } from 'lucide-react'
 import { useAuth } from '../../../context/auth'
 import { adminApi } from '@/apis/admin'
-import type { CreateUserPayload, UpdateUserPayload, AdminUserType } from '@/apis/admin'
+import type { AdminUserType } from '@/apis/admin'
 import type { Role } from '../../../lib/types'
 import { LoadingSpinner } from '../../../components/LoadingSpinner'
 import { ErrorMessage } from '../../../components/ErrorMessage'
 import ConfirmDialog from '../../../components/ConfirmDialog'
+import { InviteUserModal } from '@/features/admin/components/InviteUserModal'
+import { EditUserModal } from '@/features/admin/components/EditUserModal'
 
 export const Route = createFileRoute('/_dashboard/admin/users')({
   component: AdminUsersPage,
@@ -346,24 +347,18 @@ function AdminUsersPage() {
 
       {/* Invite/Edit Modal */}
       <AnimatePresence>
-        {modal && (
-          <Modal
-            onClose={() => setModal(null)}
-            title={modal.kind === 'invite' ? 'Invite User' : 'Edit User'}
-          >
-            {modal.kind === 'invite' ? (
-              <InviteForm
-                onSubmit={(data) => createUser(data)}
-                onCancel={() => setModal(null)}
-              />
-            ) : (
-              <EditForm
-                user={modal.user}
-                onSubmit={(data) => updateUser({ id: modal.user.id, data })}
-                onCancel={() => setModal(null)}
-              />
-            )}
-          </Modal>
+        {modal && modal.kind === 'invite' && (
+          <InviteUserModal
+            onSubmit={(data) => createUser(data)}
+            onCancel={() => setModal(null)}
+          />
+        )}
+        {modal && modal.kind === 'edit' && (
+          <EditUserModal
+            user={modal.user}
+            onSubmit={(data) => updateUser({ id: modal.user.id, data })}
+            onCancel={() => setModal(null)}
+          />
         )}
       </AnimatePresence>
 
@@ -437,231 +432,5 @@ function IconButton({
     >
       <Icon size={16} />
     </button>
-  )
-}
-
-function Modal({
-  onClose,
-  title,
-  children,
-}: {
-  onClose: () => void
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 20 }}
-        onClick={(e) => e.stopPropagation()}
-        className="bg-card rounded-xl border border-border p-6 w-full max-w-md shadow-xl"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-text-dark">{title}</h2>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-text-secondary hover:bg-bg transition"
-            type="button"
-          >
-            <X size={20} />
-          </button>
-        </div>
-        {children}
-      </motion.div>
-    </motion.div>
-  )
-}
-
-function InviteForm({
-  onSubmit,
-  onCancel,
-}: {
-  onSubmit: (data: CreateUserPayload) => void
-  onCancel: () => void
-}) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [role, setRole] = useState<Role>('CUSTOMER')
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    onSubmit({ name, email, password, role })
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-semibold text-text-secondary mb-2">
-          Name
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-text-secondary mb-2">
-          Email
-        </label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-text-secondary mb-2">
-          Temporary Password
-        </label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-text-secondary mb-2">
-          Role
-        </label>
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value as Role)}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-        >
-          {(Object.keys(ROLE_LABELS) as Role[]).map((r) => (
-            <option key={r} value={r}>
-              {ROLE_LABELS[r]}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex gap-2 pt-2">
-        <button
-          type="submit"
-          className="flex-1 px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition"
-        >
-          Invite
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
-  )
-}
-
-function EditForm({
-  user,
-  onSubmit,
-  onCancel,
-}: {
-  user: AdminUserType
-  onSubmit: (data: UpdateUserPayload) => void
-  onCancel: () => void
-}) {
-  const [name, setName] = useState(user.name)
-  const [email, setEmail] = useState(user.email)
-  const [phone, setPhone] = useState(user.phone || '')
-  const [role, setRole] = useState<Role>(user.role)
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const data: UpdateUserPayload = {}
-    if (name !== user.name) data.name = name
-    if (email !== user.email) data.email = email
-    if (phone !== user.phone) data.phone = phone || null as any
-    if (role !== user.role) data.role = role
-    onSubmit(data)
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-semibold text-text-secondary mb-2">
-          Name
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-text-secondary mb-2">
-          Email
-        </label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-text-secondary mb-2">
-          Phone
-        </label>
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-semibold text-text-secondary mb-2">
-          Role
-        </label>
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value as Role)}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-        >
-          {(Object.keys(ROLE_LABELS) as Role[]).map((r) => (
-            <option key={r} value={r}>
-              {ROLE_LABELS[r]}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex gap-2 pt-2">
-        <button
-          type="submit"
-          className="flex-1 px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition"
-        >
-          Save
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
   )
 }
