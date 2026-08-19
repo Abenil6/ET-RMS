@@ -29,6 +29,7 @@ export interface Ticket {
     createdAt: string
     updatedAt: string
     resolvedAt: string | null
+    resolution: string | null
     customerId: string
     technicianId: string | null
     customer: {

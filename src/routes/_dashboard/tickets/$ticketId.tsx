@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
-import { api, ApiError } from '../../../lib/api'
+import { ticketsApi } from '@/apis/tickets'
 import { useQueuePosition } from '../../../lib/useQueuePosition'
 import { useAuth } from '../../../context/auth'
-import type { Ticket, TicketPriority } from '../../../lib/types'
+import type { TicketPriority } from '../../../lib/types'
 import { LoadingSpinner } from '../../../components/LoadingSpinner'
 import { ErrorMessage } from '../../../components/ErrorMessage'
 import { InfoField } from '../../../components/InfoField'
@@ -20,28 +20,33 @@ export const Route = createFileRoute('/_dashboard/tickets/$ticketId')({
   component: TicketDetailPage,
 })
 
-type TechnicianListItem = {
-  id: string
-  name: string
-  openTickets?: number
-  activeTickets?: number
-}
-
 function TicketDetailPage() {
   const { ticketId } = Route.useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  const [ticket, setTicket] = useState<Ticket | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
+  // Fetch ticket data using TanStack Query
+  const {
+    data: ticket,
+    isLoading: loading,
+    isError,
+    error: loadError,
+    refetch: loadTicket,
+  } = ticketsApi.getById.useQuery(ticketId)
 
-  const [actionError, setActionError] = useState<string | null>(null)
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null)
+  // Fetch technicians for admin assign
+  const { data: technicians = [] } = ticketsApi.getTechnicians.useQuery()
 
   // Description edit
   const [isEditingDesc, setIsEditingDesc] = useState(false)
   const [descValue, setDescValue] = useState('')
+
+  // Update descValue when ticket loads
+  useEffect(() => {
+    if (ticket?.description) {
+      setDescValue(ticket.description)
+    }
+  }, [ticket?.description])
 
   // Review
   const [showReviewForm, setShowReviewForm] = useState(false)
@@ -53,13 +58,17 @@ function TicketDetailPage() {
   const [resolutionNotes, setResolutionNotes] = useState('')
 
   // Admin assign
-  const [technicians, setTechnicians] = useState<TechnicianListItem[]>([])
-  const [techLoading, setTechLoading] = useState(false)
   const [assignToId, setAssignToId] = useState('')
 
   // Priority update
   const [priorityDraft, setPriorityDraft] = useState<TicketPriority>('MEDIUM')
-  const [prioritySaving, setPrioritySaving] = useState(false)
+
+  // Update priorityDraft when ticket loads
+  useEffect(() => {
+    if (ticket?.priority) {
+      setPriorityDraft(ticket.priority)
+    }
+  }, [ticket?.priority])
 
   const isAdmin = !!user && user.role === 'ADMIN'
   const isCustomer =
@@ -89,611 +98,557 @@ function TicketDetailPage() {
 
   const queueInfo = liveQueue ?? ticket?.queue
 
-  async function loadTicket() {
-    try {
-      setLoading(true)
-      setLoadError(null)
-      setActionError(null)
-
-      const data = (await api.tickets.getById(ticketId)) as Ticket
-      setTicket(data)
-      setDescValue(data.description || '')
-      setPriorityDraft(data.priority)
-    } catch (err) {
-      setLoadError(
-        err instanceof ApiError ? err.message : 'Failed to load ticket.',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function loadTechnicians() {
-    if (!isAdmin) return
-    try {
-      setTechLoading(true)
-      const data = (await api.admin.getTechnicians()) as TechnicianListItem[]
-      setTechnicians(data)
-    } catch (err) {
-      // non-blocking
-      console.error(err)
-    } finally {
-      setTechLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadTicket()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketId])
-
-  useEffect(() => {
-    if (isAdmin) loadTechnicians()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin])
-
-  useEffect(() => {
-    if (!actionSuccess) return
-    const t = setTimeout(() => setActionSuccess(null), 3500)
-    return () => clearTimeout(t)
-  }, [actionSuccess])
-
-  if (loading) return <LoadingSpinner size="lg" />
-  if (loadError) return <ErrorMessage message={loadError} retry={loadTicket} />
-  if (!ticket || !user)
-    return <p className="text-text-secondary">Ticket not found.</p>
-
-  const statusBadge = STATUS_CONFIG[ticket.status]
-  const priorityBadge = PRIORITY_CONFIG[ticket.priority]
-
-  async function handleCancel() {
-    setActionError(null)
-    setActionSuccess(null)
-    if (!confirm('Cancel this ticket?')) return
-    try {
-      await api.tickets.update(ticket!.id, { status: 'CANCELLED' })
-      setActionSuccess('Ticket cancelled.')
-      await loadTicket()
-    } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : 'Failed to cancel ticket.',
-      )
-    }
-  }
-
-  async function handleSaveDescription() {
-    setActionError(null)
-    setActionSuccess(null)
-    try {
-      await api.tickets.update(ticket!.id, { description: descValue })
+  // Mutations using TanStack Query
+  const { mutate: updateTicket } = ticketsApi.update.useMutation({
+    onSuccess: () => {
+      loadTicket()
       setIsEditingDesc(false)
-      setActionSuccess('Description updated.')
-      await loadTicket()
-    } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : 'Failed to update description.',
-      )
-    }
-  }
+    },
+  })
 
-  async function handleStartWork() {
-    setActionError(null)
-    setActionSuccess(null)
-    try {
-      await api.tickets.update(ticket!.id, { status: 'IN_PROGRESS' })
-      setActionSuccess('Ticket moved to In Progress.')
-      await loadTicket()
-    } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : 'Failed to start work.',
-      )
-    }
-  }
+  const { mutate: assignTicket } = ticketsApi.assign.useMutation({
+    onSuccess: () => {
+      loadTicket()
+      setAssignToId('')
+    },
+  })
 
-  async function handleResolve(e: React.FormEvent) {
-    e.preventDefault()
-    setActionError(null)
-    setActionSuccess(null)
-    try {
-      await api.tickets.resolve(
-        ticket!.id,
-        resolutionNotes.trim() || 'Resolved',
-      )
+  const { mutate: resolveTicket } = ticketsApi.resolve.useMutation({
+    onSuccess: () => {
+      loadTicket()
       setShowResolveForm(false)
       setResolutionNotes('')
-      setActionSuccess('Ticket resolved.')
-      await loadTicket()
-    } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : 'Failed to resolve ticket.',
-      )
-    }
-  }
+    },
+  })
 
-  async function handleReopen() {
-    setActionError(null)
-    setActionSuccess(null)
-    if (!confirm('Reopen this resolved ticket?')) return
-    try {
-      await api.tickets.reopen(ticket!.id)
-      setActionSuccess('Ticket reopened and moved to In Progress.')
-      await loadTicket()
-    } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : 'Failed to reopen ticket.',
-      )
-    }
-  }
+  const { mutate: reopenTicket } = ticketsApi.reopen.useMutation({
+    onSuccess: () => {
+      loadTicket()
+    },
+  })
 
-  async function handleAssign() {
-    if (!assignToId) return
-    setActionError(null)
-    setActionSuccess(null)
-    try {
-      await api.tickets.assign(ticket!.id, assignToId)
-      setAssignToId('')
-      setActionSuccess('Technician assigned.')
-      await loadTicket()
-    } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : 'Failed to assign technician.',
-      )
-    }
-  }
-
-  async function handleSubmitReview(e: React.FormEvent) {
-    e.preventDefault()
-    setActionError(null)
-    setActionSuccess(null)
-    try {
-      await api.tickets.review(ticket!.id, rating, comment)
+  const { mutate: reviewTicket } = ticketsApi.review.useMutation({
+    onSuccess: () => {
+      loadTicket()
       setShowReviewForm(false)
+      setRating(5)
       setComment('')
-      setActionSuccess('Review submitted. Ticket closed.')
-      await loadTicket()
-    } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : 'Failed to submit review.',
-      )
-    }
+    },
+  })
+
+  // Action handlers
+  function handleCancel() {
+    updateTicket({
+      id: ticketId,
+      data: { status: 'CANCELLED' },
+    })
   }
 
-  async function handleSavePriority() {
-    setActionError(null)
-    setActionSuccess(null)
-    try {
-      setPrioritySaving(true)
-      await api.tickets.update(ticket!.id, { priority: priorityDraft })
-      setActionSuccess('Priority updated.')
-      await loadTicket()
-    } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : 'Failed to update priority.',
-      )
-    } finally {
-      setPrioritySaving(false)
-    }
+  function handleSaveDescription() {
+    updateTicket({
+      id: ticketId,
+      data: { description: descValue },
+    })
   }
+
+  function handleStartWork() {
+    updateTicket({
+      id: ticketId,
+      data: { status: 'IN_PROGRESS' },
+    })
+  }
+
+  function handleResolve(e: React.FormEvent) {
+    e.preventDefault()
+    if (!resolutionNotes.trim()) return
+    resolveTicket({
+      id: ticketId,
+      resolution: resolutionNotes,
+    })
+  }
+
+  function handleReopen() {
+    reopenTicket(ticketId)
+  }
+
+  function handleAssign() {
+    if (!assignToId) return
+    assignTicket({
+      id: ticketId,
+      technicianId: assignToId,
+    })
+  }
+
+  function handleSubmitReview(e: React.FormEvent) {
+    e.preventDefault()
+    if (!comment.trim()) return
+    reviewTicket({
+      id: ticketId,
+      rating,
+      comment,
+    })
+  }
+
+  function handleSavePriority() {
+    updateTicket({
+      id: ticketId,
+      data: { priority: priorityDraft },
+    })
+  }
+
+  if (loading) return <LoadingSpinner size="lg" />
+  if (isError)
+    return (
+      <ErrorMessage
+        message={loadError?.message || 'Failed to load ticket'}
+        retry={loadTicket}
+      />
+    )
+  if (!ticket) return <ErrorMessage message="Ticket not found" />
+
+  const statusConfig = STATUS_CONFIG[ticket.status]
+  const priorityConfig = PRIORITY_CONFIG[ticket.priority]
+  const categoryLabel = CATEGORY_LABELS[ticket.category]
+
+  const canEditDescription = isCustomer && ticket.status === 'OPEN'
+  const canCancel =
+    isCustomer &&
+    (ticket.status === 'OPEN' ||
+      ticket.status === 'ASSIGNED' ||
+      ticket.status === 'IN_PROGRESS')
+  const canStartWork =
+    isAssignedTech &&
+    (ticket.status === 'ASSIGNED' || ticket.status === 'OPEN')
+  const canResolve =
+    (isAssignedTech || isAdmin) && ticket.status === 'IN_PROGRESS'
+  const canReopen =
+    (isCustomer || isAdmin) &&
+    (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED')
+  const canReview =
+    isCustomer &&
+    (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') &&
+    !ticket.review
 
   return (
-    <div className="max-w-auto">
+    <motion.div
+      className="w-full max-w-5xl mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
       {/* Header */}
-      <div className="flex items-start justify-between mb-3 gap-2 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-text-dark">
-            {ticket.ticketNumber}
-          </h1>
-          <p className="text-text-secondary font-medium">
-            <span className="text-text-dark font-mono">
-              Service Number: {ticket.serviceNumber}
-            </span>
-            <br />
-            <span className="text-text-dark">Subject: {ticket.subject}</span>
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-bg border border-border text-text-dark">
-            {CATEGORY_LABELS[ticket.category] || ticket.category}
-          </span>
-
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${priorityBadge.bg} ${priorityBadge.color}`}
-          >
-            {priorityBadge.label} Priority
-          </span>
-
-          <span
-            className={`px-3 py-1 rounded-full text-sm font-semibold ${statusBadge.bg} ${statusBadge.color}`}
-          >
-            {statusBadge.label}
-          </span>
-        </div>
-      </div>
-
-      {/* Inline action feedback */}
-      {(actionError || actionSuccess) && (
-        <div
-          className={`mb-4 p-4 rounded-xl border text-sm font-semibold ${
-            actionError
-              ? 'border-error/20 bg-error/10 text-error'
-              : 'border-success/20 bg-success/10 text-success'
-          }`}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate({ to: '/tickets' })}
+          className="text-sm text-text-secondary hover:text-primary-blue mb-2 transition-colors"
         >
-          {actionError || actionSuccess}
-        </div>
-      )}
-
-      {/* Customer/Technician info */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 p-5 rounded-xl border border-border bg-card">
-        <InfoField label="Customer" value={ticket.customer.name} />
-        <InfoField label="Customer Email" value={ticket.customer.email} />
-        <InfoField
-          label="Assigned Technician"
-          value={ticket.technician?.name ?? 'Unassigned'}
-        />
+          ← Back to Tickets
+        </button>
+        <h1 className="text-3xl font-bold">Ticket Details</h1>
+        <p className="text-text-secondary">
+          View and manage ticket information
+        </p>
       </div>
 
-      {/* Description + inline edit for customer while OPEN */}
-      <div className="mb-6 p-4 rounded-xl border border-border bg-card">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-bold uppercase text-text-secondary tracking-wide">
-            Description
-          </span>
-
-          {isCustomer && ticket.status === 'OPEN' && !isEditingDesc && (
-            <button
-              type="button"
-              onClick={() => {
-                setDescValue(ticket.description || '')
-                setIsEditingDesc(true)
-              }}
-              className="text-xs text-primary-green font-semibold hover:underline"
-            >
-              Edit description
-            </button>
-          )}
-        </div>
-
-        {isEditingDesc ? (
-          <div className="space-y-3">
-            <textarea
-              value={descValue}
-              onChange={(e) => setDescValue(e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-green"
-            />
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleSaveDescription}
-                className="px-3 py-1.5 rounded-lg bg-primary-green text-white text-xs font-semibold hover:bg-primary-green/90"
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsEditingDesc(false)}
-                className="px-3 py-1.5 rounded-lg border border-border text-text-secondary text-xs font-semibold hover:bg-bg"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-text-dark whitespace-pre-wrap">
-            {ticket.description || 'No detailed description provided.'}
-          </p>
-        )}
-      </div>
-
-      {/* Status track (hide if cancelled) */}
-      {ticket.status !== 'CANCELLED' && <StatusTrack status={ticket.status} />}
-
-      {/* Queue info */}
-      {queueInfo && queueEnabled && (
+      {/* Queue Info */}
+      {queueEnabled && queueInfo && (
         <QueueInfoCards
-          queue={queueInfo}
+          queue={{
+            position: queueInfo.position,
+            ahead: queueInfo.ahead,
+            estimatedWaitMinutes: queueInfo.estimatedWaitMinutes,
+          }}
           updatedAt={queueUpdatedAt}
           error={queueError}
           onRefresh={refreshQueue}
         />
       )}
 
-      {/* Admin: Assign / Reassign Technician */}
-      {isAdmin &&
-        ticket.status !== 'RESOLVED' &&
-        ticket.status !== 'CLOSED' &&
-        ticket.status !== 'CANCELLED' && (
-          <div className="p-6 rounded-xl border border-border bg-card space-y-3 mb-6">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-bold text-text-dark uppercase tracking-wide">
-                Admin Actions
-              </h2>
-              <button
-                onClick={loadTechnicians}
-                className="text-xs text-primary-green font-semibold hover:underline"
-                type="button"
-              >
-                Refresh technicians
-              </button>
-            </div>
+      {/* Status Track */}
+      <div className="mb-6">
+        <StatusTrack status={ticket.status} />
+      </div>
 
-            <p className="text-sm text-text-secondary">
-              Current technician:{' '}
-              <span className="font-semibold text-text-dark">
-                {ticket.technician?.name ?? 'Unassigned'}
-              </span>
+      {/* Main Card */}
+      <div className="bg-card rounded-xl border border-border p-6 shadow-sm mb-6">
+        {/* Ticket ID & Status */}
+        <div className="flex items-start justify-between mb-6 pb-6 border-b border-border">
+          <div>
+            <p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
+              Ticket ID
             </p>
+            <p className="text-lg font-mono font-bold text-text-dark">
+              #{ticket.id.slice(0, 8)}
+            </p>
+          </div>
+          <div
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold ${statusConfig.bg} ${statusConfig.color}`}
+          >
+            {statusConfig.label}
+          </div>
+        </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
+        {/* Subject */}
+        <InfoField label="Subject" value={ticket.subject} />
+
+        {/* Service Number */}
+        <InfoField label="Service Number" value={ticket.serviceNumber} />
+
+        {/* Category */}
+        <InfoField label="Category" value={categoryLabel} />
+
+        {/* Priority with Edit */}
+        {isAdmin ? (
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-text-secondary mb-2">
+              Priority
+            </label>
+            <div className="flex items-center gap-3">
               <select
-                value={assignToId}
-                onChange={(e) => setAssignToId(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-border bg-bg text-text-dark min-w-60"
-                disabled={techLoading}
+                value={priorityDraft}
+                onChange={(e) =>
+                  setPriorityDraft(e.target.value as TicketPriority)
+                }
+                className="px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               >
-                <option value="">
-                  {ticket.technician ? 'Reassign to…' : 'Assign to…'}
-                </option>
-
-                {technicians.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                    {typeof t.openTickets === 'number'
-                      ? ` (open: ${t.openTickets})`
-                      : ''}
+                {(
+                  ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as TicketPriority[]
+                ).map((p) => (
+                  <option key={p} value={p}>
+                    {PRIORITY_CONFIG[p].label}
                   </option>
                 ))}
               </select>
-
-              <button
-                onClick={handleAssign}
-                disabled={!assignToId || techLoading}
-                className="px-4 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90 disabled:opacity-40"
-                type="button"
-              >
-                {ticket.technician ? 'Reassign' : 'Assign'}
-              </button>
+              {priorityDraft !== ticket.priority && (
+                <button
+                  onClick={handleSavePriority}
+                  className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors"
+                >
+                  Save
+                </button>
+              )}
             </div>
-
-            {techLoading && (
-              <p className="text-xs text-text-secondary">
-                Loading technicians…
-              </p>
-            )}
-
-            {!techLoading && technicians.length === 0 && (
-              <p className="text-xs text-text-secondary">
-                No technicians found. (Check seed / TECHNICIAN users)
-              </p>
-            )}
+          </div>
+        ) : (
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-text-secondary mb-2">
+              Priority
+            </p>
+            <div
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${priorityConfig.bg} ${priorityConfig.color}`}
+            >
+              {priorityConfig.label}
+            </div>
           </div>
         )}
 
-      {/* Actions */}
-      <div className="p-6 rounded-xl border border-border bg-card space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-text-dark uppercase tracking-wide">
-            Actions
-          </h2>
-          <button
-            type="button"
-            onClick={loadTicket}
-            className="text-xs text-primary-green font-semibold hover:underline"
-          >
-            Refresh
-          </button>
+        {/* Description with Edit */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold text-text-secondary">
+              Description
+            </p>
+            {canEditDescription && !isEditingDesc && (
+              <button
+                onClick={() => {
+                  setIsEditingDesc(true)
+                  setDescValue(ticket.description || '')
+                }}
+                className="text-xs text-primary-blue hover:underline"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+          {isEditingDesc ? (
+            <div className="space-y-2">
+              <textarea
+                value={descValue}
+                onChange={(e) => setDescValue(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
+                rows={4}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveDescription}
+                  className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditingDesc(false)
+                    setDescValue(ticket.description || '')
+                  }}
+                  className="px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-text-dark whitespace-pre-wrap">
+              {ticket.description}
+            </p>
+          )}
         </div>
 
-        {/* Customer: cancel while OPEN */}
-        {isCustomer && ticket.status === 'OPEN' && (
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="px-4 py-2 rounded-lg border border-error text-error font-semibold hover:bg-error/10"
-          >
-            Cancel Ticket
-          </button>
+        {/* Resolution */}
+        {ticket.resolution && (
+          <div className="mb-4 p-4 bg-success/10 rounded-lg border border-success/20">
+            <p className="text-sm font-semibold text-success mb-2">
+              Resolution
+            </p>
+            <p className="text-text-dark whitespace-pre-wrap">
+              {ticket.resolution}
+            </p>
+          </div>
         )}
 
-        {/* Technician: start work when ASSIGNED */}
-        {isAssignedTech && ticket.status === 'ASSIGNED' && (
+        {/* Technician Assignment (Admin) */}
+        {isAdmin && (
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-text-secondary mb-2">
+              Assign Technician
+            </p>
+            <div className="flex items-center gap-3">
+              <select
+                value={assignToId}
+                onChange={(e) => setAssignToId(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              >
+                <option value="">
+                  {ticket.technician?.name || 'Select Technician'}
+                </option>
+                {technicians.map((tech) => (
+                  <option key={tech.id} value={tech.id}>
+                    {tech.name} ({tech.openTickets || 0} open)
+                  </option>
+                ))}
+              </select>
+              {assignToId && assignToId !== ticket.technicianId && (
+                <button
+                  onClick={handleAssign}
+                  className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors"
+                >
+                  Assign
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Assigned Technician Display */}
+        {ticket.technician && (
+          <InfoField label="Assigned To" value={ticket.technician.name} />
+        )}
+
+        {/* Timestamps */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <p className="text-text-secondary mb-1">Created</p>
+            <p className="text-text-dark">
+              {new Date(ticket.createdAt).toLocaleString('en-ET', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              })}
+            </p>
+          </div>
+          {ticket.resolvedAt && (
+            <div>
+              <p className="text-text-secondary mb-1">Resolved</p>
+              <p className="text-text-dark">
+                {new Date(ticket.resolvedAt).toLocaleString('en-ET', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Review Section */}
+      {ticket.review ? (
+        <div className="bg-card rounded-xl border border-border p-6 shadow-sm mb-6">
+          <h3 className="text-lg font-bold mb-4">Customer Review</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span
+                  key={star}
+                  className={`text-xl ${
+                    star <= ticket.review!.rating
+                      ? 'text-warning'
+                      : 'text-gray-300'
+                  }`}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            <span className="text-sm font-semibold text-text-dark">
+              {ticket.review.rating} / 5
+            </span>
+          </div>
+          <p className="text-text-dark whitespace-pre-wrap">
+            {ticket.review.comment}
+          </p>
+        </div>
+      ) : (
+        canReview && (
+          <div className="bg-card rounded-xl border border-border p-6 shadow-sm mb-6">
+            <h3 className="text-lg font-bold mb-4">Leave a Review</h3>
+            {!showReviewForm ? (
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors"
+              >
+                Write Review
+              </button>
+            ) : (
+              <form onSubmit={handleSubmitReview} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">
+                    Rating
+                  </label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(star)}
+                        className={`text-3xl transition-colors ${
+                          star <= rating ? 'text-warning' : 'text-gray-300'
+                        } hover:text-warning`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">
+                    Comment
+                  </label>
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Share your experience..."
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
+                    rows={4}
+                    required
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors"
+                  >
+                    Submit Review
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowReviewForm(false)
+                      setRating(5)
+                      setComment('')
+                    }}
+                    className="px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-3">
+        {canStartWork && (
           <button
-            type="button"
             onClick={handleStartWork}
-            className="px-4 py-2 rounded-lg bg-primary-blue text-white font-semibold hover:bg-primary-blue/90"
+            className="px-6 py-3 rounded-lg bg-primary-blue text-white font-medium hover:bg-primary-blue/90 transition-colors"
           >
             Start Work
           </button>
         )}
 
-        {/* Resolve: assigned tech OR admin */}
-        {(isAssignedTech || isAdmin) &&
-          (ticket.status === 'IN_PROGRESS' || ticket.status === 'ASSIGNED') &&
-          !showResolveForm && (
-            <button
-              type="button"
-              onClick={() => setShowResolveForm(true)}
-              className="px-4 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90"
-            >
-              Mark Resolved
-            </button>
-          )}
-
-        <AnimatePresence>
-          {showResolveForm && (
-            <motion.form
-              onSubmit={handleResolve}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="space-y-3 overflow-hidden"
-            >
-              <div>
-                <label className="block text-sm font-medium text-text-dark mb-1">
-                  Resolution notes
-                </label>
-                <textarea
-                  value={resolutionNotes}
-                  onChange={(e) => setResolutionNotes(e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark"
-                  placeholder="What was done to resolve the issue?"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90"
+        {canResolve && (
+          <>
+            {!showResolveForm ? (
+              <button
+                onClick={() => setShowResolveForm(true)}
+                className="px-6 py-3 rounded-lg bg-success text-white font-medium hover:bg-success/90 transition-colors"
+              >
+                Mark as Resolved
+              </button>
+            ) : (
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="w-full"
                 >
-                  Confirm Resolve
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowResolveForm(false)}
-                  className="px-4 py-2 rounded-lg border border-border text-text-secondary font-semibold hover:bg-bg"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
+                  <form
+                    onSubmit={handleResolve}
+                    className="bg-card rounded-xl border border-border p-6 shadow-sm space-y-4"
+                  >
+                    <h3 className="text-lg font-bold">Resolution Notes</h3>
+                    <textarea
+                      value={resolutionNotes}
+                      onChange={(e) => setResolutionNotes(e.target.value)}
+                      placeholder="Describe how the issue was resolved..."
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
+                      rows={4}
+                      required
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        className="px-4 py-2 rounded-lg bg-success text-white text-sm font-medium hover:bg-success/90 transition-colors"
+                      >
+                        Confirm Resolution
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowResolveForm(false)
+                          setResolutionNotes('')
+                        }}
+                        className="px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              </AnimatePresence>
+            )}
+          </>
+        )}
 
-        {/* Reopen: admin or assigned tech on a RESOLVED ticket */}
-        {(isAdmin || isAssignedTech) && ticket.status === 'RESOLVED' && (
+        {canReopen && (
           <button
-            type="button"
             onClick={handleReopen}
-            className="px-4 py-2 rounded-lg bg-warning text-white font-semibold hover:bg-warning/90"
+            className="px-6 py-3 rounded-lg bg-warning text-white font-medium hover:bg-warning/90 transition-colors"
           >
             Reopen Ticket
           </button>
         )}
 
-        {/* Customer review when RESOLVED */}
-        {isCustomer &&
-          ticket.status === 'RESOLVED' &&
-          !ticket.review &&
-          !showReviewForm && (
-            <button
-              type="button"
-              onClick={() => setShowReviewForm(true)}
-              className="px-4 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90"
-            >
-              Leave a Review
-            </button>
-          )}
-
-        {isCustomer && ticket.review && (
-          <p className="text-sm text-text-secondary">
-            You rated this service {ticket.review.rating}/5
-            {ticket.review.comment ? ` — "${ticket.review.comment}"` : ''}
-          </p>
+        {canCancel && (
+          <button
+            onClick={handleCancel}
+            className="px-6 py-3 rounded-lg border border-error text-error font-medium hover:bg-error/10 transition-colors"
+          >
+            Cancel Ticket
+          </button>
         )}
-
-        <AnimatePresence>
-          {showReviewForm && (
-            <motion.form
-              onSubmit={handleSubmitReview}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="space-y-3 overflow-hidden"
-            >
-              <div>
-                <label className="block text-sm font-medium text-text-dark mb-1">
-                  Rating
-                </label>
-                <select
-                  value={rating}
-                  onChange={(e) => setRating(Number(e.target.value))}
-                  className="px-3 py-2 rounded-lg border border-border bg-bg text-text-dark"
-                >
-                  {[5, 4, 3, 2, 1].map((n) => (
-                    <option key={n} value={n}>
-                      {n} ⭐️
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-dark mb-1">
-                  Comment (optional)
-                </label>
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90"
-                >
-                  Submit Review
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowReviewForm(false)}
-                  className="px-4 py-2 rounded-lg border border-border text-text-secondary font-semibold hover:bg-bg"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
-
-        {/* Priority update (admin or assigned tech) */}
-        {(isAdmin || isAssignedTech) &&
-          ticket.status !== 'RESOLVED' &&
-          ticket.status !== 'CLOSED' &&
-          ticket.status !== 'CANCELLED' && (
-            <div className="pt-3 border-t border-border">
-              <p className="text-xs font-bold uppercase text-text-secondary tracking-wide mb-2">
-                Priority
-              </p>
-              <div className="flex items-center gap-3 flex-wrap">
-                <select
-                  value={priorityDraft}
-                  onChange={(e) =>
-                    setPriorityDraft(e.target.value as TicketPriority)
-                  }
-                  className="px-3 py-2 rounded-lg border border-border bg-bg text-text-dark"
-                >
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                  <option value="URGENT">Urgent</option>
-                </select>
-
-                <button
-                  type="button"
-                  onClick={handleSavePriority}
-                  disabled={prioritySaving || priorityDraft === ticket.priority}
-                  className="px-4 py-2 rounded-lg border border-border text-text-dark font-semibold hover:bg-bg disabled:opacity-40"
-                >
-                  {prioritySaving ? 'Saving…' : 'Save Priority'}
-                </button>
-              </div>
-            </div>
-          )}
-
-        <button
-          type="button"
-          onClick={() => navigate({ to: '/tickets' })}
-          className="text-sm text-primary-green font-semibold hover:underline"
-        >
-          ← Back to tickets
-        </button>
       </div>
-    </div>
+    </motion.div>
   )
 }
