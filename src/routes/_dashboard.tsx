@@ -3,87 +3,47 @@ import {
   createFileRoute,
   Link,
   useNavigate,
+  redirect,
 } from '@tanstack/react-router'
 import { useAuth } from '../context/auth'
-import { notificationsApi } from '@/apis/notifications'
 import { getAvatarUrl } from '#/lib/avatars'
+import { getAccessToken } from '@/apis/core'
 import ConfirmDialog from '../components/ConfirmDialog'
-import { useState, useRef, useEffect } from 'react'
-import {
-  Home,
-  FileText,
-  Ticket,
-  Wrench,
-  User,
-  LogOut,
-  Bell,
-  Calendar as CalendarIcon,
-  CheckCheck,
-  Users,
-  ScrollText,
-} from 'lucide-react'
+import { useState } from 'react'
+import { LogOut, Bell, CheckCheck } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import logo from '../assets/Ethio-Tele.jpeg'
+import { useNotifications } from '@/features/notifications/hooks/useNotifications'
+import { SidebarNav } from '@/components/layouts/Sidebar'
 
 export const Route = createFileRoute('/_dashboard')({
+  beforeLoad: () => {
+    if (!getAccessToken()) {
+      throw redirect({ to: '/login' })
+    }
+  },
   component: DashboardLayout,
 })
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.06,
-      delayChildren: 0.1,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, x: -20 },
-  show: { opacity: 1, x: 0, transition: { duration: 0.3 } },
-}
 
 function DashboardLayout() {
   const { user, loading, logout } = useAuth()
   const navigate = useNavigate()
-  const [isNotifOpen, setIsNotifOpen] = useState(false)
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [logoutLoading, setLogoutLoading] = useState(false)
 
-  const notifRef = useRef<HTMLDivElement>(null)
-
-  const { data: notifications = [], isLoading: notifLoading, error: notifError, refetch: loadNotifications } =
-    notificationsApi.getAll.useQuery()
-
-  const { data: unreadCount = 0 } =
-    notificationsApi.getUnreadCount.useQuery()
-
-  const { mutate: markAsRead } = notificationsApi.markAsRead.useMutation()
-  const { mutate: markAllAsRead } = notificationsApi.markAllAsRead.useMutation()
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
-        setIsNotifOpen(false)
-      }
-    }
-
-    if (isNotifOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isNotifOpen])
-
-  function formatNotifTime(iso: string) {
-    const d = new Date(iso)
-    return d.toLocaleString('en-ET', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    })
-  }
+  const {
+    notifRef,
+    isNotifOpen,
+    setIsNotifOpen,
+    notifications,
+    notifLoading,
+    notifError,
+    loadNotifications,
+    unreadCount,
+    markAllAsRead,
+    formatNotifTime,
+    handleNotificationClick,
+  } = useNotifications()
 
   async function handleLogout() {
     setLogoutLoading(true)
@@ -140,99 +100,7 @@ function DashboardLayout() {
             Menu
           </motion.p>
 
-          <motion.nav
-            className="flex flex-col gap-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-          >
-            {user.role === 'CUSTOMER' && (
-              <>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink to="/dashboard" icon={Home} label="Overview" />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink
-                    to="/report"
-                    icon={FileText}
-                    label="Report Issue"
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink to="/tickets" icon={Ticket} label="My Tickets" />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink
-                    to="/appointments"
-                    icon={CalendarIcon}
-                    label="Appointments"
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink to="/profile" icon={User} label="My Profile" />
-                </motion.div>
-              </>
-            )}
-
-            {user.role === 'ADMIN' && (
-              <>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink to="/dashboard" icon={Home} label="Overview" />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink
-                    to="/technicians"
-                    icon={Wrench}
-                    label="Technicians"
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink to="/tickets" icon={Ticket} label="Tickets" />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink
-                    to="/appointments"
-                    icon={CalendarIcon}
-                    label="Appointments"
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink to="/queue" icon={FileText} label="Queue" />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink to="/admin/users" icon={Users} label="Users" />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink
-                    to="/admin/audit"
-                    icon={ScrollText}
-                    label="Audit Log"
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink to="/profile" icon={User} label="My Profile" />
-                </motion.div>
-              </>
-            )}
-
-            {user.role === 'TECHNICIAN' && (
-              <>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink to="/dashboard" icon={Home} label="Overview" />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink
-                    to="/tickets"
-                    icon={Ticket}
-                    label="Assigned Tickets"
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <SidebarLink to="/profile" icon={User} label="My Profile" />
-                </motion.div>
-              </>
-            )}
-          </motion.nav>
+          <SidebarNav role={user.role} />
         </div>
 
         <motion.button
@@ -330,16 +198,7 @@ function DashboardLayout() {
                           whileHover={{
                             backgroundColor: 'rgba(0, 0, 0, 0.02)',
                           }}
-                          onClick={() => {
-                            if (!n.read) markAsRead(n.id)
-                            if (n.ticketId) {
-                              navigate({
-                                to: '/tickets/$ticketId',
-                                params: { ticketId: n.ticketId },
-                              })
-                              setIsNotifOpen(false)
-                            }
-                          }}
+                          onClick={() => handleNotificationClick(n)}
                           className={`p-3.5 text-xs transition-colors cursor-pointer ${
                             !n.read ? 'bg-primary-green/5' : ''
                           }`}
@@ -407,26 +266,5 @@ function DashboardLayout() {
         confirmLabel={logoutLoading ? 'Logging out...' : 'Log Out'}
       />
     </motion.div>
-  )
-}
-
-type SidebarLinkProps = {
-  to: string
-  icon: React.ComponentType<{ size?: number }>
-  label: string
-}
-
-function SidebarLink({ to, icon: Icon, label }: SidebarLinkProps) {
-  return (
-    <Link
-      to={to}
-      className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-secondary font-medium hover:bg-bg hover:text-text-dark text-left transition-colors [&.active]:bg-primary-green/10 [&.active]:text-primary-green"
-      activeProps={{
-        className: 'bg-primary-green/10 text-primary-green',
-      }}
-    >
-      <Icon size={18} />
-      {label}
-    </Link>
   )
 }
