@@ -124,35 +124,37 @@ async function resetPasswordFn(data: ResetPasswordPayload): Promise<{ message: s
 
 // hooks that components can use to interact with the auth API
 export const authApi = {
-  login: {
-    useMutation: (options?: UseMutationOptions<AuthTokens, Error, LoginPayload>) =>
-      useMutation({
-        mutationFn: loginFn,
-        meta: {
-          successMessage: 'Welcome back!',
-          errorMessage: 'Login failed. Please check your credentials.',
-        },
-        onSuccess: (data) => {
-          setTokens(data.accessToken, data.refreshToken)
-        },
-        ...options,
-      }),
-  },
+login: {
+  useMutation: (options?: UseMutationOptions<AuthTokens, Error, LoginPayload>) =>
+    useMutation({
+      mutationFn: loginFn,
+      meta: {
+        successMessage: 'Welcome back!',
+        errorMessage: 'Login failed. Please check your credentials.',
+      },
+      ...options,
+      onSuccess: (...args) => {
+        setTokens(args[0].accessToken, args[0].refreshToken)
+        options?.onSuccess?.(...args)
+      },
+    }),
+},
 
   register: {
-    useMutation: (options?: UseMutationOptions<AuthTokens, Error, RegisterPayload>) =>
-      useMutation({
-        mutationFn: registerFn,
-        meta: {
-          successMessage: 'Account created! Please check your email.',
-          errorMessage: 'Registration failed. Please try again.',
-        },
-        onSuccess: (data) => {
-          setTokens(data.accessToken, data.refreshToken)
-        },
-        ...options,
-      }),
-  },
+  useMutation: (options?: UseMutationOptions<AuthTokens, Error, RegisterPayload>) =>
+    useMutation({
+      mutationFn: registerFn,
+      meta: {
+        successMessage: 'Account created! Please check your email.',
+        errorMessage: 'Registration failed. Please try again.',
+      },
+      ...options,
+      onSuccess: (...args) => {
+        setTokens(args[0].accessToken, args[0].refreshToken)
+        options?.onSuccess?.(...args)
+      },
+    }),
+},
 
   logout: {
     useMutation: (options?: UseMutationOptions<void, Error, void>) =>
