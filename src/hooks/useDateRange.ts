@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { DateRange } from './dashboardStats'
+import type { DateRange } from '@/lib/dashboardStats'
 
 export type RangePreset =
   | 'today'

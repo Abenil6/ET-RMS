@@ -1,7 +1,7 @@
 import { FileDown } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import etlogo from '../../assets/Et-logo.png'
+import etlogo from '@/assets/Et-logo.png'
 
 type Props = {
   filename: string

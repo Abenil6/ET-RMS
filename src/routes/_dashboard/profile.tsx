@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Mail, Shield, Edit2, KeyRound, Trash2, X, Phone } from 'lucide-react'
-import ConfirmDialog from '../../components/ConfirmDialog'
+import { Mail, Shield, Edit2, X, Phone } from 'lucide-react'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/auth'
 import { motion, AnimatePresence } from 'motion/react'
@@ -11,7 +11,7 @@ import {
   DEFAULT_AVATAR_STYLE,
   DEFAULT_AVATAR_SEED,
 } from '../../lib/avatars'
-import { api, ApiError } from '../../lib/api'
+import api from '@/apis'
 
 export const Route = createFileRoute('/_dashboard/profile')({
   component: ProfilePage,
@@ -63,6 +63,34 @@ function ProfilePage() {
 
   if (!user) return null
 
+  // Mutations from the centralized API layer.
+  const { mutate: changePassword } = api.Auth.changePassword.useMutation({
+    onSuccess: () => {
+      setCurrentPassword('')
+      setNewPassword('')
+      setIsChangingPassword(false)
+      setSecurityNotice({ kind: 'success', message: 'Password updated successfully.' })
+      setTimeout(() => setSecurityNotice(null), 4000)
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : 'Failed to change password.'
+      setSecurityNotice({ kind: 'error', message: msg })
+      setChangingPassword(false)
+    },
+  })
+
+  const { mutate: deleteAccount } = api.Auth.deleteAccount.useMutation({
+    onSuccess: async () => {
+      await logout()
+      navigate({ to: '/login' })
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : 'Failed to delete account.'
+      setSecurityNotice({ kind: 'error', message: msg })
+      setDeleting(false)
+    },
+  })
+
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault()
     setProfileNotice(null)
@@ -100,7 +128,7 @@ function ProfilePage() {
     }
   }
 
-  async function handleChangePassword(e: React.FormEvent) {
+  function handleChangePassword(e: React.FormEvent) {
     e.preventDefault()
     setSecurityNotice(null)
 
@@ -113,22 +141,8 @@ function ProfilePage() {
       return
     }
 
-    try {
-      setChangingPassword(true)
-      await api.auth.changePassword(currentPassword, newPassword)
-
-      setCurrentPassword('')
-      setNewPassword('')
-      setIsChangingPassword(false)
-
-      setSecurityNotice({ kind: 'success', message: 'Password updated successfully.' })
-      setTimeout(() => setSecurityNotice(null), 4000)
-    } catch (err) {
-      const msg = err instanceof ApiError ? err.message : 'Failed to change password.'
-      setSecurityNotice({ kind: 'error', message: msg })
-    } finally {
-      setChangingPassword(false)
-    }
+    setChangingPassword(true)
+    changePassword({ currentPassword, newPassword })
   }
 
   function handleAvatarSelect(seed: string) {
@@ -136,428 +150,379 @@ function ProfilePage() {
     setShowAvatarPicker(false)
   }
 
-  async function confirmDeleteAccount() {
+  function handleDeleteAccount() {
     setSecurityNotice(null)
-
-    try {
-      setDeleting(true)
-      await api.auth.deleteAccount()
-
-      // After deletion, clear local session
-      await logout()
-      navigate({ to: '/login' })
-    } catch (err) {
-      const msg = err instanceof ApiError ? err.message : 'Failed to delete account.'
-      // Common case: 409 "Cannot delete account with existing tickets"
-      setSecurityNotice({ kind: 'error', message: msg })
-    } finally {
-      setDeleting(false)
-      setShowDeleteConfirm(false)
-    }
+    setDeleting(true)
+    deleteAccount()
   }
 
+  // ... rest of the component remains the same
   return (
     <motion.div
-      className="w-full space-y-6"
+      className="w-full max-w-5xl mx-auto"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: 0.6 }}
     >
-      <h1 className="text-2xl font-bold text-text-dark mb-4">My Profile</h1>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Profile Settings</h1>
+        <p className="text-text-secondary">
+          Manage your account settings and preferences
+        </p>
+      </div>
 
-      <AnimatePresence mode="wait">
-        {profileNotice && (
-          <motion.div
-            className={`p-4 rounded-xl border text-sm font-semibold ${profileNotice.kind === 'success'
-              ? 'border-success/20 bg-success/10 text-success'
-              : 'border-error/20 bg-error/10 text-error'
-              }`}
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-          >
-            {profileNotice.message}
-          </motion.div>
-        )}
-
-        {securityNotice && (
-          <motion.div
-            className={`p-4 rounded-xl border text-sm font-semibold ${securityNotice.kind === 'success'
-              ? 'border-primary-blue/20 bg-primary-blue/10 text-primary-blue'
-              : 'border-error/20 bg-error/10 text-error'
-              }`}
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-          >
-            {securityNotice.message}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Profile card */}
-      <motion.div
-        className="p-6 rounded-xl border border-border bg-card"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.4 }}
-      >
-        <div className="flex items-center justify-between pb-5 mb-5 border-b border-border">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <motion.div
-                className="w-14 h-14 rounded-full overflow-hidden bg-primary-green/10 cursor-pointer ring-2 ring-primary-green/20"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.2 }}
-                onClick={() => isEditing && setShowAvatarPicker(true)}
-              >
+      <div className="grid lg:grid-cols-4 gap-8">
+        {/* Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="bg-card rounded-xl border border-border p-6 sticky top-24">
+            <div className="flex flex-col items-center gap-4 mb-6">
+              <div className="relative">
                 <img
                   src={getAvatarUrl(selectedAvatarStyle, selectedAvatarSeed)}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
+                  alt="Avatar preview"
+                  className="w-24 h-24 rounded-full object-cover border-4 border-border"
                 />
-              </motion.div>
-
-              {isEditing && (
-                <motion.button
-                  type="button"
-                  onClick={() => setShowAvatarPicker(true)}
-                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary-green text-white flex items-center justify-center hover:bg-primary-green/90 shadow-md"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Edit2 size={12} />
-                </motion.button>
-              )}
+                {isEditing && (
+                  <button
+                    onClick={() => setShowAvatarPicker(true)}
+                    className="absolute bottom-0 right-0 p-2 bg-primary-blue text-white rounded-full hover:bg-primary-blue/90 transition"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                )}
+              </div>
+              <div>
+                <p className="text-lg font-bold text-text-dark">{user.name}</p>
+                <p className="text-sm text-text-secondary">{user.email}</p>
+              </div>
             </div>
 
-            <div>
-              <p className="font-bold text-text-dark">{user.name}</p>
-              <p className="text-sm text-text-secondary capitalize">{user.role}</p>
+            <div className="space-y-2 border-t border-border pt-6">
+              <div className="flex items-center gap-3 text-sm text-text-secondary">
+                <Mail size={18} />
+                <span>{user.email}</span>
+              </div>
+              {user.phone && (
+                <div className="flex items-center gap-3 text-sm text-text-secondary">
+                  <Phone size={18} />
+                  <span>{user.phone}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-3 text-sm text-text-secondary">
+                <Shield size={18} />
+                <span
+                  className={`capitalize px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    user.role === 'ADMIN'
+                      ? 'bg-primary-green/10 text-primary-green'
+                      : user.role === 'TECHNICIAN'
+                        ? 'bg-primary-blue/10 text-primary-blue'
+                        : 'bg-bg text-text-secondary'
+                  }`}
+                >
+                  {user.role.toLowerCase()}
+                </span>
+              </div>
             </div>
           </div>
-
-          <motion.button
-            onClick={() => {
-              setProfileNotice(null)
-              setName(user.name)
-              setEmail(user.email)
-              setPhone((user as any)?.phone || '')
-              setSelectedAvatarStyle(user.avatarStyle || DEFAULT_AVATAR_STYLE)
-              setSelectedAvatarSeed(user.avatarSeed || DEFAULT_AVATAR_SEED)
-              setIsEditing((v) => !v)
-            }}
-            className="text-primary-green text-sm font-semibold hover:underline flex items-center gap-1"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Edit2 size={16} />
-            {isEditing ? 'Cancel' : 'Edit'}
-          </motion.button>
         </div>
 
-        {/* Avatar Picker Modal */}
-        <AnimatePresence>
-          {showAvatarPicker && (
-            <>
-              <motion.div
-                className="fixed inset-0 bg-black/50 z-40"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setShowAvatarPicker(false)}
-              />
-              <motion.div
-                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card rounded-2xl border border-border shadow-2xl z-50 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
-                initial={{ opacity: 0, scale: 0.9, y: -20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: -20 }}
-                transition={{ type: 'spring', duration: 0.3 }}
+        {/* Main Content */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Profile Info */}
+          <div className="bg-card rounded-xl border border-border p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-text-dark">Profile Information</h2>
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  isEditing
+                    ? 'border border-border text-text-dark hover:bg-bg'
+                    : 'bg-primary-blue text-white hover:bg-primary-blue/90'
+                }`}
+                type="button"
               >
-                <div className="flex items-center justify-between p-4 border-b border-border">
-                  <h3 className="text-lg font-bold text-text-dark">Choose Your Avatar</h3>
-                  <motion.button
-                    onClick={() => setShowAvatarPicker(false)}
-                    className="p-1 rounded-full hover:bg-bg text-text-secondary"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <X size={20} />
-                  </motion.button>
-                </div>
+                {isEditing ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
 
-                <div className="p-4 border-b border-border overflow-x-auto">
-                  <p className="text-xs font-semibold text-text-secondary mb-2 uppercase">Style</p>
-                  <div className="flex gap-2">
-                    {AVATAR_STYLES.map((style) => (
-                      <motion.button
-                        key={style.name}
-                        type="button"
-                        onClick={() => setSelectedAvatarStyle(style.name)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${selectedAvatarStyle === style.name
-                          ? 'bg-primary-green text-white'
-                          : 'bg-bg text-text-secondary hover:bg-primary-green/10'
-                          }`}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        {style.name}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p-4 grid grid-cols-4 gap-3 overflow-y-auto flex-1">
-                  {AVATAR_SEEDS.map((seed, index) => (
-                    <motion.button
-                      key={seed}
-                      type="button"
-                      onClick={() => handleAvatarSelect(seed)}
-                      className={`aspect-square rounded-xl overflow-hidden transition-all ${selectedAvatarSeed === seed
-                        ? 'ring-4 ring-primary-green'
-                        : 'ring-2 ring-border hover:ring-primary-green/50'
-                        }`}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.03 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <img
-                        src={getAvatarUrl(selectedAvatarStyle, seed)}
-                        alt={`Avatar ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence mode="wait">
-          {isEditing ? (
-            <motion.form
-              className="space-y-4"
-              onSubmit={handleSaveProfile}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-                  <label className="block text-sm font-medium text-text-dark mb-1">Full Name</label>
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">
+                    Name
+                  </label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green transition-all"
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:opacity-50 disabled:cursor-not-allowed"
                   />
-                </motion.div>
-
-                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
-                  <label className="block text-sm font-medium text-text-dark mb-1">Email</label>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-text-secondary mb-2">
+                    Email
+                  </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green transition-all"
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:opacity-50 disabled:cursor-not-allowed"
                   />
-                </motion.div>
-
-                <motion.div
-                  className="sm:col-span-2"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-text-secondary mb-2">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={!isEditing}
+                  placeholder="Optional"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-text-secondary mb-2">
+                  Avatar Style
+                </label>
+                <select
+                  value={selectedAvatarStyle}
+                  onChange={(e) => setSelectedAvatarStyle(e.target.value)}
+                  disabled={!isEditing}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <label className="block text-sm font-medium text-text-dark mb-1">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+2519..."
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green transition-all"
-                  />
-                </motion.div>
+                  {AVATAR_STYLES.map((style) => (
+                    <option key={style.name} value={style.name}>
+                      {style.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <motion.button
-                type="submit"
-                disabled={savingProfile}
-                className="px-5 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90 text-sm disabled:opacity-50"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {savingProfile ? 'Saving…' : 'Save Changes'}
-              </motion.button>
-            </motion.form>
-          ) : (
-            <motion.div
-              className="space-y-5"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <InfoRow icon={Mail} label="Email" value={user.email} index={0} />
-              <InfoRow icon={Phone} label="Phone" value={(user as any)?.phone || '—'} index={1} />
-              <InfoRow icon={Shield} label="Role" value={user.role} index={2} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+              {isEditing && (
+                <div className="flex gap-2 pt-4 border-t border-border">
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition disabled:opacity-50"
+                  >
+                    {savingProfile ? 'Saving...' : 'Save Changes'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </form>
 
-      {/* Security */}
-      <motion.div
-        className="p-6 rounded-xl border border-border bg-card"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.4 }}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-text-dark">Security</h2>
-            <p className="text-sm text-text-secondary mt-1">Manage your password and account security.</p>
+            {profileNotice && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className={`mt-4 p-3 rounded-lg text-sm ${
+                  profileNotice.kind === 'success'
+                    ? 'bg-success/10 text-success'
+                    : 'bg-error/10 text-error'
+                }`}
+              >
+                {profileNotice.message}
+              </motion.div>
+            )}
           </div>
 
-          <motion.button
-            onClick={() => {
-              setSecurityNotice(null)
-              setIsChangingPassword((v) => !v)
-            }}
-            className="text-primary-green text-sm font-semibold hover:underline flex items-center gap-1"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <KeyRound size={16} />
-            {isChangingPassword ? 'Cancel' : 'Change Password'}
-          </motion.button>
-        </div>
+          {/* Security */}
+          <div className="bg-card rounded-xl border border-border p-6">
+            <h2 className="text-xl font-bold text-text-dark mb-6">Security</h2>
 
-        <AnimatePresence>
-          {isChangingPassword && (
-            <motion.form
-              className="mt-5 space-y-4 pt-5 border-t border-border"
-              onSubmit={handleChangePassword}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-                <label className="block text-sm font-medium text-text-dark mb-1">Current Password</label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full sm:max-w-md px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green transition-all"
-                />
-              </motion.div>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Change Password */}
+              <div className="p-4 rounded-lg border border-border">
+                <h3 className="text-lg font-semibold text-text-dark mb-4">Change Password</h3>
+                {isChangingPassword ? (
+                  <form onSubmit={handleChangePassword} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-text-secondary mb-2">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-text-secondary mb-2">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        minLength={6}
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={changingPassword}
+                        className="flex-1 px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition disabled:opacity-50"
+                      >
+                        {changingPassword ? 'Updating...' : 'Update Password'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsChangingPassword(false)
+                          setCurrentPassword('')
+                          setNewPassword('')
+                        }}
+                        className="flex-1 px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setIsChangingPassword(true)}
+                    className="w-full px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition"
+                  >
+                    Change Password
+                  </button>
+                )}
+              </div>
 
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
-                <label className="block text-sm font-medium text-text-dark mb-1">New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full sm:max-w-md px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green transition-all"
-                />
-              </motion.div>
+              {/* Delete Account */}
+              <div className="p-4 rounded-lg border border-error/20 bg-error/5">
+                <h3 className="text-lg font-semibold text-error mb-4">Delete Account</h3>
+                <p className="text-sm text-text-secondary mb-4">
+                  Permanently delete your account and all associated data. This action
+                  cannot be undone.
+                </p>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={deleting}
+                  className="w-full px-4 py-2 rounded-lg bg-error text-white text-sm font-medium hover:bg-error/90 transition disabled:opacity-50"
+                >
+                  {deleting ? 'Deleting...' : 'Delete Account'}
+                </button>
+              </div>
+            </div>
 
-              <motion.button
-                type="submit"
-                disabled={changingPassword}
-                className="px-5 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90 text-sm disabled:opacity-50"
-                initial={{ opacity: 0, y: 10 }}
+            {securityNotice && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                exit={{ opacity: 0, y: -10 }}
+                className={`mt-4 p-3 rounded-lg text-sm ${
+                  securityNotice.kind === 'success'
+                    ? 'bg-success/10 text-success'
+                    : 'bg-error/10 text-error'
+                }`}
               >
-                {changingPassword ? 'Updating…' : 'Update Password'}
-              </motion.button>
-            </motion.form>
-          )}
-        </AnimatePresence>
-      </motion.div>
+                {securityNotice.message}
+              </motion.div>
+            )}
+          </div>
+        </div>
+      </div>
 
-      {/* Danger Zone */}
-      <motion.div
-        className="p-6 rounded-xl border border-error/20 bg-error/5"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-      >
-        <h2 className="text-lg font-bold text-error">Danger Zone</h2>
-        <p className="text-sm text-text-secondary mt-1 mb-4">
-          Once you delete your account, there is no going back. Please be certain.
-        </p>
-        <motion.button
-          type="button"
-          onClick={() => setShowDeleteConfirm(true)}
-          className="px-5 py-2 rounded-lg bg-error text-white font-semibold hover:bg-error/90 text-sm flex items-center gap-2"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Trash2 size={16} />
-          Delete Account
-        </motion.button>
-      </motion.div>
+      {/* Avatar Picker Modal */}
+      <AnimatePresence>
+        {showAvatarPicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowAvatarPicker(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card rounded-xl border border-border p-6 w-full max-w-md max-h-[80vh] overflow-y-auto shadow-xl"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-text-dark">Choose Avatar</h3>
+                <button
+                  onClick={() => setShowAvatarPicker(false)}
+                  className="p-1 rounded-lg text-text-secondary hover:bg-bg transition"
+                  type="button"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-text-secondary mb-2">
+                    Style: {selectedAvatarStyle}
+                  </p>
+                  <select
+                    value={selectedAvatarStyle}
+                    onChange={(e) => setSelectedAvatarStyle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue mb-4"
+                  >
+                    {AVATAR_STYLES.map((style) => (
+                      <option key={style.name} value={style.name}>
+                        {style.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text-secondary mb-2">Seed</p>
+                  <div className="grid grid-cols-5 gap-3">
+                    {AVATAR_SEEDS.map((seed) => (
+                      <button
+                        key={seed}
+                        onClick={() => handleAvatarSelect(seed)}
+                        className={`p-3 rounded-lg border-2 transition ${
+                          selectedAvatarSeed === seed
+                            ? 'border-primary-blue bg-primary-blue/10'
+                            : 'border-border hover:border-primary-blue/50'
+                        }`}
+                        type="button"
+                      >
+                        <img
+                          src={getAvatarUrl(selectedAvatarStyle, seed)}
+                          alt={`Avatar ${seed}`}
+                          className="w-full h-16 rounded-lg object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Delete Account Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <ConfirmDialog
         open={showDeleteConfirm}
+        onConfirm={handleDeleteAccount}
         onCancel={() => setShowDeleteConfirm(false)}
-        onConfirm={confirmDeleteAccount}
-        title="Delete your account?"
-        description="This action is permanent and cannot be undone. All your data, tickets, and history will be removed."
-        confirmLabel={deleting ? 'Deleting…' : 'Yes, Delete My Account'}
-        cancelLabel="Keep My Account"
-        variant="danger"
-        loading={deleting}
+        title="Delete Account?"
+        description="Are you sure you want to permanently delete your account? This action cannot be undone."
+        confirmLabel={deleting ? 'Deleting...' : 'Delete Account'}
+        
       />
-    </motion.div>
-  )
-}
-
-function InfoRow({
-  icon: Icon,
-  label,
-  value,
-  index,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string }>
-  label: string
-  value: string
-  index: number
-}) {
-  return (
-    <motion.div
-      className="flex items-center gap-3"
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.1 }}
-    >
-      <Icon size={16} className="text-text-secondary" />
-      <div>
-        <p className="text-xs text-text-secondary">{label}</p>
-        <p className="text-sm font-medium text-text-dark capitalize">{value}</p>
-      </div>
     </motion.div>
   )
 }

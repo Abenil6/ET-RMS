@@ -4,22 +4,21 @@ import {
   Link,
   useLocation,
   useNavigate,
-  useMatches,
   HeadContent,
   Scripts,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { AuthProvider, useAuth } from '../context/auth'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from '../apis/queryClient'
 import logo from '../assets/Ethio-Tele.jpeg'
 import { ChevronDown, LogOut, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { getAvatarUrl } from '#/lib/avatars'
-import ConfirmDialog from '../components/ConfirmDialog'
-import * as React from 'react'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
-// Import CSS - Vite/TanStack will handle this properly
 import '../styles.css'
 
 function NotFoundComponent() {
@@ -58,8 +57,15 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const matches = useMatches()
-  const isDashboard = matches.some((match) => match.routeId === '/_dashboard')
+  const location = useLocation()
+  const isDashboard = location.pathname.startsWith('/dashboard') || 
+                      location.pathname.startsWith('/tickets') || 
+                      location.pathname.startsWith('/appointments') ||
+                      location.pathname.startsWith('/profile') ||
+                      location.pathname.startsWith('/report') ||
+                      location.pathname.startsWith('/queue') ||
+                      location.pathname.startsWith('/technicians') ||
+                      location.pathname.startsWith('/admin')
 
   return (
     <html lang="en">
@@ -67,21 +73,23 @@ function RootComponent() {
         <HeadContent />
       </head>
       <body>
-        <AuthProvider>
-          {!isDashboard && <Nav />}
-          <Outlet />
-          {!isDashboard && <Footer />}
-          <TanStackDevtools
-            config={{ position: 'bottom-right' }}
-            plugins={[
-              {
-                name: 'TanStack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-            ]}
-          />
-        </AuthProvider>
-        <Scripts />
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            {!isDashboard && <Nav />}
+            <Outlet />
+            {!isDashboard && <Footer />}
+            <TanStackDevtools
+              config={{ position: 'bottom-right' }}
+              plugins={[
+                {
+                  name: 'TanStack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+              ]}
+            />
+          </AuthProvider>
+          <Scripts />
+        </QueryClientProvider>
       </body>
     </html>
   )
@@ -154,7 +162,7 @@ function Nav() {
             variant="solid"
             active={pathname === '/register'}
           >
-            Get Started
+            Sign Up
           </NavLink>
         </div>
       )}
@@ -162,9 +170,8 @@ function Nav() {
       {!loading && user && (
         <div className="relative" ref={menuRef}>
           <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-3 rounded-full border border-border bg-bg px-2 py-2 pr-3 text-left shadow-sm transition-colors hover:bg-card"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex items-center gap-2 rounded-full border border-border bg-bg px-2 py-1.5 pr-3 shadow-sm transition-colors hover:bg-card"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-green/10 text-sm font-extrabold text-primary-green">
               <img
@@ -173,85 +180,57 @@ function Nav() {
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-bold text-text-dark">{user.name}</p>
-              <p className="text-xs capitalize text-text-secondary">
-                {user.role}
-              </p>
-            </div>
-            <motion.div
-              animate={{ rotate: menuOpen ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChevronDown size={16} className="text-text-secondary" />
-            </motion.div>
+            <span className="hidden text-sm font-semibold text-text-dark sm:inline">
+              {user.name}
+            </span>
+            <ChevronDown size={16} className="text-text-secondary" />
           </button>
 
           <AnimatePresence>
             {menuOpen && (
               <motion.div
-                className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-black/10"
-                initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                transition={{ type: 'spring', duration: 0.3, bounce: 0.2 }}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="absolute right-0 mt-2 w-48 rounded-xl border border-border bg-card shadow-lg overflow-hidden"
               >
-                <motion.div
-                  className="border-b border-border px-4 py-3"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 }}
-                >
-                  <p className="text-sm font-bold text-text-dark">
-                    {user.name}
-                  </p>
-                  <p className="text-xs text-text-secondary">{user.email}</p>
-                </motion.div>
                 <div className="p-2">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-text-dark transition-colors hover:bg-bg"
                   >
-                    <Link
-                      to="/profile"
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-text-dark transition-colors hover:bg-bg"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <User size={16} className="text-primary-green" />
-                      My Profile
-                    </Link>
-                  </motion.div>
-                  <motion.button
-                    type="button"
-                    onClick={() => setLogoutConfirmOpen(true)}
-                    className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-error transition-colors hover:bg-error/10"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.15 }}
-                    whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                    <User size={16} />
+                    My Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false)
+                      setLogoutConfirmOpen(true)
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-error transition-colors hover:bg-error/10"
                   >
                     <LogOut size={16} />
                     Log Out
-                  </motion.button>
+                  </button>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       )}
-    </nav>
 
+      {loading && (
+        <div className="h-10 w-32 animate-pulse rounded-full bg-bg" />
+      )}
+    </nav>
     <ConfirmDialog
       open={logoutConfirmOpen}
       onConfirm={handleLogout}
       onCancel={() => setLogoutConfirmOpen(false)}
       title="Log out?"
       description="Are you sure you want to log out of your account?"
-      confirmLabel="Log Out"
-      cancelLabel="Cancel"
-      variant="danger"
-      loading={logoutLoading}
+      confirmLabel={logoutLoading ? 'Logging out...' : 'Log Out'}
     />
     </>
   )
@@ -290,21 +269,8 @@ function NavLink({
 
 function Footer() {
   return (
-    <footer className="px-8 py-10 text-center text-text-secondary border-t border-border mt-10">
-      <p className="font-bold text-text-dark mb-2">NetCare</p>
-      <p className="text-sm mb-4">Internet Support Ticket System</p>
-      <div className="flex justify-center gap-6 text-sm mb-4">
-        <Link to="/" className="hover:text-text-dark">
-          Home
-        </Link>
-        <a href="#features" className="hover:text-text-dark">
-          Features
-        </a>
-        <a href="#" className="hover:text-text-dark">
-          Contact
-        </a>
-      </div>
-      <p className="text-xs">© 2026</p>
+    <footer className="border-t border-border bg-card px-6 py-8 text-center text-sm text-text-secondary sm:px-8">
+      <p>© {new Date().getFullYear()} Ethio Telecom. All rights reserved.</p>
     </footer>
   )
 }

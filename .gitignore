@@ -11,6 +11,8 @@ dist-ssr
 .vinxi
 __unconfig*
 todos.json
+.kilo
+
 
 # Local Netlify folder
 .netlify

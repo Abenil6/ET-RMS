@@ -1,4 +1,4 @@
-import type { QueueInfo } from '../lib/useQueuePosition'
+import type { QueueInfo } from '@/hooks/useQueuePosition'
 
 type QueueFields = Pick<QueueInfo, 'position' | 'ahead' | 'estimatedWaitMinutes'>
 

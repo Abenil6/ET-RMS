@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from '../../ui/select'
 import { STATUS_CONFIG, PRIORITY_CONFIG, CATEGORY_LABELS } from '../../../data/tickets'
-import type { TicketStatus, TicketPriority, TicketCategory } from '../../../lib/types'
 import { useAuth } from '../../../context/auth'
 import { useState } from 'react'
 
@@ -27,6 +26,14 @@ export function TicketsToolbar<TData>({
   const { user } = useAuth()
   const [refreshing, setRefreshing] = useState(false)
   const isFiltered = table.getState().columnFilters.length > 0
+  const subjectColumn = table.getColumn('subject')
+  const statusColumn = table.getColumn('status')
+  const priorityColumn = table.getColumn('priority')
+  const categoryColumn = table.getColumn('category')
+
+  if (!subjectColumn || !statusColumn || !priorityColumn || !categoryColumn) {
+    return null
+  }
 
   const handleRefresh = async () => {
     if (onRefresh) {
@@ -42,22 +49,21 @@ export function TicketsToolbar<TData>({
         <div className="flex flex-1 items-center space-x-2">
           <Input
             placeholder="Search tickets..."
-            value={(table.getColumn('subject')?.getFilterValue() as string) ?? ''}
+            value={String(subjectColumn.getFilterValue() ?? '')}
             onChange={(event) =>
-              table.getColumn('subject')?.setFilterValue(event.target.value)
+              subjectColumn.setFilterValue(event.target.value)
             }
             className="h-10 w-[200px] lg:w-[300px]"
           />
           
           {/* Status Filter */}
           <Select
-            value={(table.getColumn('status')?.getFilterValue() as string[])?.join(',') ?? ''}
+            value={(statusColumn.getFilterValue() as string[] | undefined)?.join(',') ?? ''}
             onValueChange={(value) => {
-              const column = table.getColumn('status')
               if (value) {
-                column?.setFilterValue([value])
+                statusColumn.setFilterValue([value])
               } else {
-                column?.setFilterValue(undefined)
+                statusColumn.setFilterValue(undefined)
               }
             }}
           >
@@ -75,13 +81,12 @@ export function TicketsToolbar<TData>({
 
           {/* Priority Filter */}
           <Select
-            value={(table.getColumn('priority')?.getFilterValue() as string[])?.join(',') ?? ''}
+            value={(priorityColumn.getFilterValue() as string[] | undefined)?.join(',') ?? ''}
             onValueChange={(value) => {
-              const column = table.getColumn('priority')
               if (value) {
-                column?.setFilterValue([value])
+                priorityColumn.setFilterValue([value])
               } else {
-                column?.setFilterValue(undefined)
+                priorityColumn.setFilterValue(undefined)
               }
             }}
           >
@@ -99,13 +104,12 @@ export function TicketsToolbar<TData>({
 
           {/* Category Filter */}
           <Select
-            value={(table.getColumn('category')?.getFilterValue() as string[])?.join(',') ?? ''}
+            value={(categoryColumn.getFilterValue() as string[] | undefined)?.join(',') ?? ''}
             onValueChange={(value) => {
-              const column = table.getColumn('category')
               if (value) {
-                column?.setFilterValue([value])
+                categoryColumn.setFilterValue([value])
               } else {
-                column?.setFilterValue(undefined)
+                categoryColumn.setFilterValue(undefined)
               }
             }}
           >

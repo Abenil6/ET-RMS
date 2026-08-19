@@ -1,11 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
 import { useAuth } from '../../../context/auth'
-import { api } from '../../../lib/api'
-import type { Ticket } from '../../../lib/types'
-import { useFetch } from '../../../lib/useFetch'
-import { LoadingSpinner } from '../../../components/LoadingSpinner'
-import { ErrorMessage } from '../../../components/ErrorMessage'
+import api from '@/apis'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { ErrorMessage } from '@/components/shared/ErrorMessage'
 import { motion } from 'motion/react'
 import { TicketsDataTable } from '../../../components/tables/tickets/data-table'
 import { createTicketsColumns } from '../../../components/tables/tickets/columns'
@@ -18,14 +15,15 @@ function TicketsPage() {
   const { user } = useAuth()
   const {
     data: tickets,
-    loading,
+    isLoading: loading,
+    isError,
     error,
-    refresh,
-  } = useFetch<Ticket[]>(() => api.tickets.getAll(), [])
+    refetch: refresh,
+  } = api.Tickets.getAll.useQuery()
 
   if (!user) return null
   if (loading) return <LoadingSpinner size="lg" />
-  if (error) return <ErrorMessage message={error} retry={refresh} />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
 
   const list = tickets ?? []
 
@@ -50,8 +48,12 @@ function TicketsPage() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold">{pageTitle}</h1>
-          <p className="text-text-secondary mt-1">
-            {list.length} ticket{list.length !== 1 ? 's' : ''} total
+          <p className="text-text-secondary">
+            {user.role === 'CUSTOMER'
+              ? 'Track the status of your support requests'
+              : user.role === 'TECHNICIAN'
+                ? 'Manage tickets assigned to you'
+                : 'Manage all customer support tickets'}
           </p>
         </div>
 

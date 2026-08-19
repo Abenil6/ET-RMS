@@ -1,17 +1,14 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { useAuth } from '../../context/auth'
-import { api } from '../../lib/api'
-import { useFetch } from '../../lib/useFetch'
-import { STATUS_CONFIG } from '../../data/tickets'
-import type { Ticket } from '../../lib/types'
+import api from '@/apis'
 import {
+  Activity,
   AlertCircle,
-  UserCheck,
   CheckCircle2,
   Clock,
   Star,
-  Wrench,
+  Ticket,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { motion } from 'motion/react'
@@ -39,17 +36,25 @@ import {
   topTechnicians,
   ticketsToExport,
 } from '../../lib/dashboardStats'
-import { useDateRange } from '../../lib/useDateRange'
-import { KpiCard } from '../../components/dashboard/KpiCard'
-import { ChartCard } from '../../components/dashboard/ChartCard'
-import { DateRangePicker } from '../../components/dashboard/DateRangePicker'
-import { PdfExportButton } from '../../components/dashboard/PdfExportButton'
-import { LoadingSpinner } from '../../components/LoadingSpinner'
-import { ErrorMessage } from '../../components/ErrorMessage'
+import type { KpiKey } from '../../lib/dashboardStats'
+import { useDateRange } from '@/hooks/useDateRange'
+import { KpiCard } from '@/features/dashboard/components/KpiCard'
+import { ChartCard } from '@/features/dashboard/components/ChartCard'
+import { DateRangePicker } from '@/features/dashboard/components/DateRangePicker'
+import { PdfExportButton } from '@/features/dashboard/components/PdfExportButton'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { ErrorMessage } from '@/components/shared/ErrorMessage'
 
 export const Route = createFileRoute('/_dashboard/dashboard')({
   component: DashboardPage,
 })
+
+const KPI_ICONS: Record<KpiKey, LucideIcon> = {
+  open: AlertCircle,
+  inProgress: Clock,
+  resolved: CheckCircle2,
+  avgResolution: Activity,
+}
 
 function DashboardPage() {
   const { user } = useAuth()
@@ -61,464 +66,342 @@ function DashboardPage() {
 }
 
 function AdminOverview() {
-  const {
-    data: tickets,
-    loading,
-    error,
-    refresh,
-  } = useFetch<Ticket[]>(() => api.tickets.getAll(), [])
-
+  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = api.Tickets.getAll.useQuery()
   const { preset, setPreset, custom, setCustom, range } = useDateRange()
 
-  const list = useMemo(() => tickets ?? [], [tickets])
+  const kpis = useMemo(() => computeKpis(tickets ?? [], range), [tickets, range])
+  const daily = useMemo(() => dailySeries(tickets ?? [], range), [tickets, range])
+  const weekday = useMemo(() => weekdayBuckets(tickets ?? [], range), [tickets, range])
+  const categories = useMemo(() => categoryBreakdown(tickets ?? [], range), [tickets, range])
+  const repeat = useMemo(() => repeatRate(tickets ?? [], range), [tickets, range])
+  const topTechs = useMemo(() => topTechnicians(tickets ?? [], range), [tickets, range])
+  const exportData = useMemo(() => ticketsToExport(tickets ?? [], range), [tickets, range])
 
-  const kpis = useMemo(() => computeKpis(list, range), [list, range])
-  const series = useMemo(() => dailySeries(list, range), [list, range])
-  const weekdays = useMemo(() => weekdayBuckets(list, range), [list, range])
-  const categories = useMemo(() => categoryBreakdown(list, range), [list, range])
-  const repeat = useMemo(() => repeatRate(list, range), [list, range])
-  const techs = useMemo(() => topTechnicians(list, range), [list, range])
-  const csv = useMemo(() => ticketsToExport(list, range), [list, range])
-
-  if (loading) return <LoadingSpinner />
-  if (error) return <ErrorMessage message={error} retry={refresh} />
-
-  const kpiConfig: { icon: LucideIcon; color: 'warning' | 'primary-blue' | 'success' | 'primary-green' }[] = [
-    { icon: AlertCircle, color: 'warning' },
-    { icon: UserCheck, color: 'primary-blue' },
-    { icon: CheckCircle2, color: 'success' },
-    { icon: Clock, color: 'primary-green' },
-  ]
+  if (loading) return <LoadingSpinner size="lg" />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
 
   return (
     <motion.div
       className="w-full"
       initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
     >
-      {/* Header with date range + export */}
-      <div className="flex items-start justify-between gap-3 mb-8 flex-wrap">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-dark mb-1">
-            Admin Overview
-          </h1>
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-text-secondary">
-            System-wide ticket status and trends.
+            System overview and performance metrics
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <DateRangePicker
-            preset={preset}
-            onPresetChange={setPreset}
-            custom={custom}
-            onCustomChange={setCustom}
-            range={range}
+        <div className="flex items-center gap-3">
+          <DateRangePicker 
+            preset={preset} 
+            onPresetChange={setPreset} 
+            custom={custom} 
+            onCustomChange={setCustom} 
+            range={range} 
           />
-          <PdfExportButton
-            title="Admin Overview"
-            filename={`tickets-report-${new Date().toISOString().slice(0, 10)}.pdf`}
-            headers={csv.headers}
-            rows={csv.rows}
+          <PdfExportButton 
+            filename="tickets-export.pdf"
+            title="Tickets Export"
+            headers={exportData.headers}
+            rows={exportData.rows}
           />
         </div>
       </div>
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        {kpis.map((kpi, i) => (
-          <KpiCard
-            key={kpi.key}
-            icon={kpiConfig[i].icon}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        {kpis.map((kpi, index) => (
+          <KpiCard 
+            key={kpi.key} 
+            icon={KPI_ICONS[kpi.key]}
             label={kpi.label}
             value={kpi.value}
             delta={kpi.delta}
             unit={kpi.unit}
-            color={kpiConfig[i].color}
-            delay={0.1 + i * 0.1}
+            delay={index * 0.1}
           />
         ))}
       </div>
 
-      {/* Trend + weekday charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <ChartCard
-          title="Tickets Created vs Resolved"
-          subtitle="Per day over the selected period"
-          className="lg:col-span-2"
-          delay={0.5}
-        >
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={series} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
-                minTickGap={24}
-              />
-              <YAxis
-                allowDecimals={false}
-                tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
-              />
+      <div className="grid gap-6 lg:grid-cols-2 mb-6">
+        <ChartCard title="Daily Ticket Trend">
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={daily}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
               <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Legend />
               <Line
                 type="monotone"
-                dataKey="created"
-                name="Created"
-                stroke="#0072CE"
+                dataKey="open"
+                stroke="#3b82f6"
                 strokeWidth={2}
-                dot={false}
               />
               <Line
                 type="monotone"
                 dataKey="resolved"
-                name="Resolved"
-                stroke="#2BB673"
+                stroke="#10b981"
                 strokeWidth={2}
-                dot={false}
               />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard
-          title="Most Active Day"
-          subtitle="Tickets created by weekday"
-          delay={0.6}
-        >
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={weekdays} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-              <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} />
+        <ChartCard title="Tickets by Weekday">
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={weekday}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="day" />
+              <YAxis />
               <Tooltip />
-              <Bar dataKey="created" name="Tickets" fill="#2BB673" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" fill="#3b82f6" />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
       </div>
 
-      {/* Gauge + category + technicians */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <ChartCard
-          title="Repeat Customer Rate"
-          subtitle="Customers with more than one ticket"
-          delay={0.7}
-        >
-          <div className="relative h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart
-                data={[{ name: 'repeat', value: repeat.rate }]}
-                startAngle={90}
-                endAngle={-270}
-                innerRadius="70%"
-                outerRadius="100%"
-              >
-                <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-                <RadialBar
-                  dataKey="value"
-                  fill="#2BB673"
-                  cornerRadius={8}
-                  background={{ fill: 'rgba(0, 0, 0, 0.06)' }}
-                />
-              </RadialBarChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <p className="text-3xl font-bold text-text-dark">{repeat.rate}%</p>
-              <p className="text-xs text-text-secondary">
-                Target {repeat.target}%
-              </p>
-              <p className="text-xs text-text-secondary mt-1">
-                {repeat.repeat} of {repeat.customers} customers
-              </p>
-            </div>
-          </div>
-        </ChartCard>
-
-        <ChartCard
-          title="Tickets by Category"
-          subtitle="Distribution of service requests"
-          delay={0.8}
-        >
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ChartCard title="Category Breakdown">
+          <ResponsiveContainer width="100%" height={300}>
+            <RadialBarChart
+              cx="50%"
+              cy="50%"
+              innerRadius="10%"
+              outerRadius="80%"
               data={categories}
-              layout="vertical"
-              margin={{ top: 0, right: 20, left: 10, bottom: 0 }}
+              startAngle={180}
+              endAngle={0}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
-              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }} />
-              <YAxis
-                type="category"
-                dataKey="label"
-                width={80}
-                tick={{ fontSize: 11, fill: 'var(--color-text-secondary)' }}
-              />
+              <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+              <RadialBar dataKey="percent" cornerRadius={10} />
+              <Legend iconSize={10} layout="vertical" verticalAlign="middle" />
               <Tooltip />
-              <Bar dataKey="count" name="Tickets" fill="#F59E0B" radius={[0, 4, 4, 0]} />
-            </BarChart>
+            </RadialBarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard
-          title="Top Technicians"
-          subtitle="By tickets handled in the period"
-          delay={0.9}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-text-secondary">
-                  <th className="py-2 pr-2 font-semibold">Technician</th>
-                  <th className="py-2 pr-2 font-semibold text-right">Handled</th>
-                  <th className="py-2 pr-2 font-semibold text-right">Rating</th>
-                  <th className="py-2 font-semibold text-right">Avg hrs</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {techs.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="py-6 text-center text-text-secondary">
-                      No technicians active in this period.
-                    </td>
-                  </tr>
-                ) : (
-                  techs.map((t) => (
-                    <tr key={t.id}>
-                      <td className="py-2.5 pr-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-primary-green/10 flex items-center justify-center shrink-0">
-                            <Wrench size={13} className="text-primary-green" />
-                          </div>
-                          <span className="font-semibold text-text-dark truncate max-w-28">
-                            {t.name}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-2.5 pr-2 text-right text-text-dark font-medium">
-                        {t.handled}
-                      </td>
-                      <td className="py-2.5 pr-2 text-right">
-                        <span className="inline-flex items-center gap-1 text-text-secondary">
-                          {t.avgRating > 0 ? t.avgRating : '—'}
-                          {t.avgRating > 0 && <Star size={12} className="text-warning" />}
-                        </span>
-                      </td>
-                      <td className="py-2.5 text-right text-text-secondary">
-                        {t.avgHours > 0 ? t.avgHours : '—'}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <ChartCard title="Top Technicians">
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={topTechs} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" />
+              <YAxis dataKey="name" type="category" width={100} />
+              <Tooltip />
+              <Bar dataKey="resolved" fill="#10b981" />
+            </BarChart>
+          </ResponsiveContainer>
         </ChartCard>
       </div>
 
-      {/* Recent tickets */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-text-dark">Recent Tickets</h2>
-        <Link to="/tickets" className="text-sm font-semibold text-primary-green hover:underline">
-          View all →
-        </Link>
-      </div>
-
-      <div className="rounded-xl border border-border bg-card divide-y divide-border">
-        {list.length === 0 ? (
-          <p className="p-5 text-text-secondary text-sm">No tickets yet.</p>
-        ) : (
-          list.slice(0, 5).map((t, i) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 + i * 0.08 }}
-            >
-              <TicketRow ticket={t} />
-            </motion.div>
-          ))
-        )}
+      <div className="mt-6 p-4 bg-card rounded-lg border border-border">
+        <p className="text-sm text-text-secondary">
+          <strong>Repeat Rate:</strong> {repeat.rate}% of
+          customers have multiple tickets.
+        </p>
       </div>
     </motion.div>
   )
 }
 
 function TechnicianOverview() {
-  const {
-    data: tickets,
-    loading,
-    error,
-    refresh,
-  } = useFetch<Ticket[]>(() => api.tickets.getAll(), [])
+  const { user } = useAuth()
+  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = api.Tickets.getAll.useQuery()
 
-  const list = useMemo(() => tickets ?? [], [tickets])
-  const kpis = useMemo(() => computeKpis(list, null), [list])
+  const myTickets = useMemo(
+    () => (tickets ?? []).filter((t) => t.technicianId === user?.id),
+    [tickets, user],
+  )
 
-  if (loading) return <LoadingSpinner />
-  if (error) return <ErrorMessage message={error} retry={refresh} />
+  const stats = useMemo(() => {
+    const open = myTickets.filter(
+      (t) => t.status === 'OPEN' || t.status === 'ASSIGNED',
+    ).length
+    const inProgress = myTickets.filter((t) => t.status === 'IN_PROGRESS').length
+    const resolved = myTickets.filter((t) => t.status === 'RESOLVED').length
+    
+    const ratedTickets = myTickets.filter((t) => t.review?.rating)
+    const avgRating = ratedTickets.length > 0
+      ? ratedTickets.reduce((sum, t) => sum + (t.review?.rating || 0), 0) / ratedTickets.length
+      : 0
+
+    return { open, inProgress, resolved, avgRating }
+  }, [myTickets])
+
+  if (loading) return <LoadingSpinner size="lg" />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
 
   return (
     <motion.div
       className="w-full"
       initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
     >
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-text-dark mb-1">Assigned to You</h1>
-        <p className="text-text-secondary mb-8">Tickets currently on your queue.</p>
-      </motion.div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        {kpis.map((kpi, i) => (
-          <KpiCard
-            key={kpi.key}
-            icon={[AlertCircle, UserCheck, CheckCircle2, Clock][i]}
-            label={kpi.label}
-            value={kpi.value}
-            delta={kpi.delta}
-            unit={kpi.unit}
-            color={['warning', 'primary-blue', 'success', 'primary-green'][i] as 'warning' | 'primary-blue' | 'success' | 'primary-green'}
-            delay={0.1 + i * 0.1}
-          />
-        ))}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Technician Dashboard</h1>
+        <p className="text-text-secondary">
+          Your assigned tickets and performance
+        </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-card divide-y divide-border">
-        {list.length === 0 ? (
-          <p className="p-5 text-text-secondary text-sm">No tickets assigned yet.</p>
-        ) : (
-          list.map((t, i) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.08 }}
-            >
-              <Link
-                to="/tickets/$ticketId"
-                params={{ ticketId: t.id }}
-                className="flex items-center justify-between px-5 py-4 hover:bg-bg transition"
-              >
-                <div>
-                  <p className="font-semibold text-text-dark">
-                    {t.ticketNumber} — {t.subject}
-                  </p>
-                  <p className="text-xs text-text-secondary mt-0.5">
-                    {t.customer.name} · {t.customer.email}
-                  </p>
-                </div>
-                <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_CONFIG[t.status].bg
-                    } ${STATUS_CONFIG[t.status].color}`}
-                >
-                  {STATUS_CONFIG[t.status].label}
-                </span>
-              </Link>
-            </motion.div>
-          ))
-        )}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={AlertCircle}
+          label="Open"
+          value={stats.open}
+          color="text-blue-600"
+          bgColor="bg-blue-100"
+        />
+        <StatCard
+          icon={Clock}
+          label="In Progress"
+          value={stats.inProgress}
+          color="text-yellow-600"
+          bgColor="bg-yellow-100"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label="Resolved"
+          value={stats.resolved}
+          color="text-green-600"
+          bgColor="bg-green-100"
+        />
+        <StatCard
+          icon={Star}
+          label="Avg Rating"
+          value={stats.avgRating.toFixed(1)}
+          color="text-purple-600"
+          bgColor="bg-purple-100"
+        />
+      </div>
+
+      <div className="mt-6">
+        <Link
+          to="/tickets"
+          className="inline-block px-4 py-2 bg-primary-blue text-white rounded-lg hover:bg-primary-blue/90 transition-colors"
+        >
+          View All Tickets
+        </Link>
       </div>
     </motion.div>
   )
 }
 
 function CustomerOverview() {
-  const {
-    data: tickets,
-    loading,
-    error,
-    refresh,
-  } = useFetch<Ticket[]>(() => api.tickets.getAll(), [])
+  const { user } = useAuth()
+  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = api.Tickets.getAll.useQuery()
 
-  const list = useMemo(() => tickets ?? [], [tickets])
-  const kpis = useMemo(() => computeKpis(list, null), [list])
+  const myTickets = useMemo(
+    () => (tickets ?? []).filter((t) => t.customerId === user?.id),
+    [tickets, user],
+  )
 
-  if (loading) return <LoadingSpinner />
-  if (error) return <ErrorMessage message={error} retry={refresh} />
+  const stats = useMemo(() => {
+    const open = myTickets.filter(
+      (t) => t.status === 'OPEN' || t.status === 'ASSIGNED',
+    ).length
+    const inProgress = myTickets.filter((t) => t.status === 'IN_PROGRESS').length
+    const resolved = myTickets.filter(
+      (t) => t.status === 'RESOLVED' || t.status === 'CLOSED',
+    ).length
+    const total = myTickets.length
+
+    return { open, inProgress, resolved, total }
+  }, [myTickets])
+
+  if (loading) return <LoadingSpinner size="lg" />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
 
   return (
     <motion.div
       className="w-full"
       initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
     >
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-text-dark mb-1">My Tickets</h1>
-        <p className="text-text-secondary mb-8">Track the status of your service requests.</p>
-      </motion.div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        {kpis.map((kpi, i) => (
-          <KpiCard
-            key={kpi.key}
-            icon={[AlertCircle, UserCheck, CheckCircle2, Clock][i]}
-            label={kpi.label}
-            value={kpi.value}
-            delta={kpi.delta}
-            unit={kpi.unit}
-            color={['warning', 'primary-blue', 'success', 'primary-green'][i] as 'warning' | 'primary-blue' | 'success' | 'primary-green'}
-            delay={0.1 + i * 0.1}
-          />
-        ))}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">My Dashboard</h1>
+        <p className="text-text-secondary">
+          Overview of your support tickets
+        </p>
       </div>
 
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-text-dark">Recent Tickets</h2>
-        <Link to="/tickets" className="text-sm font-semibold text-primary-green hover:underline">
-          View all →
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={Ticket}
+          label="Total Tickets"
+          value={stats.total}
+          color="text-gray-600"
+          bgColor="bg-gray-100"
+        />
+        <StatCard
+          icon={AlertCircle}
+          label="Open"
+          value={stats.open}
+          color="text-blue-600"
+          bgColor="bg-blue-100"
+        />
+        <StatCard
+          icon={Clock}
+          label="In Progress"
+          value={stats.inProgress}
+          color="text-yellow-600"
+          bgColor="bg-yellow-100"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label="Resolved"
+          value={stats.resolved}
+          color="text-green-600"
+          bgColor="bg-green-100"
+        />
+      </div>
+
+      <div className="mt-6 flex gap-4">
+        <Link
+          to="/report"
+          className="inline-block px-4 py-2 bg-primary-blue text-white rounded-lg hover:bg-primary-blue/90 transition-colors"
+        >
+          Report New Issue
         </Link>
-      </div>
-
-      <div className="rounded-xl border border-border bg-card divide-y divide-border">
-        {list.length === 0 ? (
-          <p className="p-5 text-text-secondary text-sm">No tickets yet. Click "Create Ticket" to submit a new request.</p>
-        ) : (
-          list.slice(0, 5).map((t, i) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 + i * 0.08 }}
-            >
-              <TicketRow ticket={t} />
-            </motion.div>
-          ))
-        )}
+        <Link
+          to="/tickets"
+          className="inline-block px-4 py-2 border border-border rounded-lg hover:bg-bg transition-colors"
+        >
+          View All Tickets
+        </Link>
       </div>
     </motion.div>
   )
 }
 
-function TicketRow({ ticket }: { ticket: Ticket }) {
+type StatCardProps = {
+  icon: LucideIcon
+  label: string
+  value: number | string
+  color: string
+  bgColor: string
+}
+
+function StatCard({ icon: Icon, label, value, color, bgColor }: StatCardProps) {
   return (
-    <Link
-      to="/tickets/$ticketId"
-      params={{ ticketId: ticket.id }}
-      className="flex items-center justify-between px-5 py-4 hover:bg-bg transition"
+    <motion.div
+      className="p-6 bg-card rounded-lg border border-border"
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
     >
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <p className="font-semibold text-text-dark">{ticket.ticketNumber}</p>
-          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${STATUS_CONFIG[ticket.status].bg} ${STATUS_CONFIG[ticket.status].color}`}>
-            {STATUS_CONFIG[ticket.status].label}
-          </span>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-text-secondary text-sm">{label}</p>
+          <p className="text-3xl font-bold mt-1">{value}</p>
         </div>
-        <p className="font-semibold text-text-dark">{ticket.subject}</p>
-        <p className="text-xs text-text-secondary">
-          {ticket.customer.name} · {new Date(ticket.createdAt).toLocaleString()}
-        </p>
+        <div className={`p-3 rounded-lg ${bgColor}`}>
+          <Icon className={`w-6 h-6 ${color}`} />
+        </div>
       </div>
-      <div className="text-right">
-        <p className="text-sm text-text-dark">{ticket.serviceNumber}</p>
-        <p className="text-xs text-text-secondary">Service No.</p>
-      </div>
-    </Link>
+    </motion.div>
   )
 }
