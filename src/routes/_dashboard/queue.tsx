@@ -1,12 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useAuth } from '../../context/auth'
-import { adminApi } from '@/apis/admin'
+import api from '@/apis'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorMessage } from '@/components/shared/ErrorMessage'
 import { STATUS_CONFIG } from '../../data/tickets'
 import type { TicketStatus } from '../../lib/types'
 import { motion } from 'motion/react'
-import type { AdminQueueItem } from '@/apis/admin'
+import type { AdminQueueItem } from '@/apis'
 
 export const Route = createFileRoute('/_dashboard/queue')({
   component: QueuePage,
@@ -15,7 +15,7 @@ export const Route = createFileRoute('/_dashboard/queue')({
 function QueuePage() {
   const { user } = useAuth()
 
-  const { data: queueData, isLoading: loading, isError, error, refetch: loadQueue } = adminApi.getAdminQueue.useQuery()
+  const { data: queueData, isLoading: loading, isError, error, refetch: loadQueue } = api.Admin.getAdminQueue.useQuery()
 
   const queue = queueData?.queue || []
   const total = queueData?.total || 0
@@ -25,7 +25,7 @@ function QueuePage() {
   }
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error?.message || 'Failed to load queue'} retry={() => loadQueue()} />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load queue'} retry={() => loadQueue()} />
 
   return (
     <motion.div
@@ -77,7 +77,7 @@ function QueuePage() {
                 queue.map((ticket: AdminQueueItem) => (
                   <tr key={ticket.id} className="hover:bg-bg/50 transition">
                     <td className="px-5 py-3 font-mono font-bold text-lg">
-                      {ticket.position ?? '—'}
+                      {ticket.position}
                     </td>
                     <td className="px-5 py-3">
                       <div>
@@ -88,22 +88,18 @@ function QueuePage() {
                       </div>
                     </td>
                     <td className="px-5 py-3">
-                      <p className="font-medium">{ticket.customer?.name ?? '—'}</p>
-                      <p className="text-xs text-text-secondary">{ticket.customer?.email ?? ''}</p>
+                      <p className="font-medium">{ticket.customer.name}</p>
+                      <p className="text-xs text-text-secondary">{ticket.customer.email}</p>
                     </td>
                     <td className="px-5 py-3">
-                      {ticket.status && STATUS_CONFIG[ticket.status as TicketStatus] ? (
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${STATUS_CONFIG[ticket.status as TicketStatus].bg} ${STATUS_CONFIG[ticket.status as TicketStatus].color}`}
-                        >
-                          {STATUS_CONFIG[ticket.status as TicketStatus].label}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-text-secondary">—</span>
-                      )}
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${STATUS_CONFIG[ticket.status as TicketStatus].bg} ${STATUS_CONFIG[ticket.status as TicketStatus].color}`}
+                      >
+                        {STATUS_CONFIG[ticket.status as TicketStatus].label}
+                      </span>
                     </td>
                     <td className="px-5 py-3">
-                      {ticket.priority ? (
+                      {
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
                             ticket.priority === 'CRITICAL' || ticket.priority === 'URGENT'
@@ -117,22 +113,16 @@ function QueuePage() {
                         >
                           {ticket.priority}
                         </span>
-                      ) : (
-                        <span className="text-xs text-text-secondary">—</span>
-                      )}
+                      }
                     </td>
                     <td className="px-5 py-3 text-text-secondary">
-                      {ticket.estimatedWaitMinutes !== undefined
-                        ? `${ticket.estimatedWaitMinutes} min`
-                        : '—'}
+                      {ticket.estimatedWaitMinutes} min
                     </td>
                     <td className="px-5 py-3 text-xs text-text-secondary">
-                      {ticket.createdAt
-                        ? new Date(ticket.createdAt).toLocaleString('en-ET', {
-                            dateStyle: 'short',
-                            timeStyle: 'short',
-                          })
-                        : '—'}
+                      {new Date(ticket.createdAt).toLocaleString('en-ET', {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      })}
                     </td>
                   </tr>
                 ))

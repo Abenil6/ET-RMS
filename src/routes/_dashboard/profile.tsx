@@ -11,7 +11,7 @@ import {
   DEFAULT_AVATAR_STYLE,
   DEFAULT_AVATAR_SEED,
 } from '../../lib/avatars'
-import { authApi } from '@/apis/auth'
+import api from '@/apis'
 
 export const Route = createFileRoute('/_dashboard/profile')({
   component: ProfilePage,
@@ -63,8 +63,8 @@ function ProfilePage() {
 
   if (!user) return null
 
-  // Mutations from authApi
-  const { mutate: changePassword } = authApi.changePassword.useMutation({
+  // Mutations from the centralized API layer.
+  const { mutate: changePassword } = api.Auth.changePassword.useMutation({
     onSuccess: () => {
       setCurrentPassword('')
       setNewPassword('')
@@ -79,7 +79,7 @@ function ProfilePage() {
     },
   })
 
-  const { mutate: deleteAccount } = authApi.deleteAccount.useMutation({
+  const { mutate: deleteAccount } = api.Auth.deleteAccount.useMutation({
     onSuccess: async () => {
       await logout()
       navigate({ to: '/login' })
@@ -296,8 +296,8 @@ function ProfilePage() {
                   className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {AVATAR_STYLES.map((style) => (
-                    <option key={String(style)} value={String(style)}>
-                      {String(style)}
+                    <option key={style.name} value={style.name}>
+                      {style.name}
                     </option>
                   ))}
                 </select>
@@ -478,8 +478,8 @@ function ProfilePage() {
                     className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue mb-4"
                   >
                     {AVATAR_STYLES.map((style) => (
-                      <option key={String(style)} value={String(style)}>
-                        {String(style)}
+                      <option key={style.name} value={style.name}>
+                        {style.name}
                       </option>
                     ))}
                   </select>

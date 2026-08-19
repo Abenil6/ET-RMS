@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { useAuth } from '../../../context/auth'
-import { appointmentsApi } from '@/apis/appointments'
+import api from '@/apis'
 import { motion } from 'motion/react'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorMessage } from '@/components/shared/ErrorMessage'
@@ -21,9 +21,9 @@ function AppointmentsPage() {
     isError,
     error,
     refetch: refresh,
-  } = appointmentsApi.getAll.useQuery()
+  } = api.Appointments.getAll.useQuery()
 
-  const { mutate: updateAppointment } = appointmentsApi.update.useMutation()
+  const { mutate: updateAppointment } = api.Appointments.update.useMutation()
 
   const displayAppointments = useMemo(() => {
     if (!user) return []
@@ -36,7 +36,7 @@ function AppointmentsPage() {
 
   if (!user) return null
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error?.message || 'Failed to load appointments'} retry={refresh} />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load appointments'} retry={refresh} />
 
   function handleCancel(id: string) {
     updateAppointment({ id, data: { status: 'CANCELLED' } })

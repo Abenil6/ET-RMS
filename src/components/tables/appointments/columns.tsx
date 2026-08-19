@@ -1,5 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react'
+import {
+  ArrowUpDown,
+  Calendar as CalendarIcon,
+  Clock,
+  MapPin,
+  MoreHorizontal,
+} from 'lucide-react'
 import type { Appointment, AppointmentStatus } from '../../../lib/types'
 import { Badge } from '../../ui/badge'
 import { Button } from '../../ui/button'
@@ -13,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu'
 import { cn } from '../../../lib/utils'
-import { MapPin, Calendar as CalendarIcon, Clock } from 'lucide-react'
 
 const STATUS_BADGE: Record<AppointmentStatus, string> = {
   RESERVED: 'bg-primary-blue/10 text-primary-blue',
@@ -69,7 +74,7 @@ export const createAppointmentsColumns = (
       header: 'ID',
       cell: ({ row }) => (
         <span className="font-mono text-xs">
-          #{row.getValue('id').slice(0, 8)}
+          #{row.original.id.slice(0, 8)}
         </span>
       ),
     },
@@ -77,7 +82,7 @@ export const createAppointmentsColumns = (
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const status = row.getValue('status') as AppointmentStatus
+        const status = row.original.status
         return (
           <Badge className={cn(STATUS_BADGE[status], 'border-0')}>
             {status}
@@ -115,7 +120,7 @@ export const createAppointmentsColumns = (
         )
       },
       cell: ({ row }) => {
-        const slotTime = row.getValue('slotTime') as string
+        const slotTime = row.original.slotTime
         return (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5 text-sm">
@@ -135,7 +140,7 @@ export const createAppointmentsColumns = (
       accessorKey: 'notes',
       header: 'Notes',
       cell: ({ row }) => {
-        const notes = row.getValue('notes') as string | null
+        const notes = row.original.notes
         return (
           <span className="text-sm">
             {notes || (

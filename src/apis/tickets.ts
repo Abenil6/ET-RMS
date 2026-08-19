@@ -223,7 +223,10 @@ export const ticketsApi = {
   },
 
   getQueue: {
-    useQuery: (ticketId: string, options?: UseQueryOptions<QueueInfoType, Error, QueueInfoType, string[]>) =>
+    useQuery: (
+      ticketId: string,
+      options?: Omit<UseQueryOptions<QueueInfoType, Error, QueueInfoType, string[]>, 'queryKey' | 'queryFn'>,
+    ) =>
       useQuery({
         queryKey: ['tickets', 'queue', ticketId],
         queryFn: () => getQueueFn(ticketId),

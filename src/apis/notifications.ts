@@ -13,25 +13,27 @@ export type NotificationType = Notification
 // Raw API Functions
 // ============================================================
 
-async function getNotificationsFn(): Promise<Notification[]> {
-  return fetcher<Notification[]>('/api/notifications')
+async function getNotificationsFn(unreadOnly = false): Promise<Notification[]> {
+  return fetcher<Notification[]>(
+    `/api/notifications${unreadOnly ? '?unread=1' : ''}`,
+  )
 }
 
 async function getUnreadCountFn(): Promise<number> {
-  const result = await fetcher<{ count: number }>('/api/notifications/unread-count')
-  return result.count
+  const unread = await getNotificationsFn(true)
+  return unread.length
 }
 
 async function markAsReadFn(id: string): Promise<void> {
-  return fetcher<void>(`/api/notifications/${id}/read`, {
-    method: 'POST',
+  return fetcher<void>(`/api/notifications/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ read: true }),
   })
 }
 
 async function markAllAsReadFn(): Promise<void> {
-  return fetcher<void>('/api/notifications/read-all', {
-    method: 'POST',
-  })
+  const unread = await getNotificationsFn(true)
+  await Promise.all(unread.map((notification) => markAsReadFn(notification.id)))
 }
 
 // ============================================================
@@ -43,7 +45,7 @@ export const notificationsApi = {
     useQuery: (options?: UseQueryOptions<Notification[], Error, Notification[], string[]>) =>
       useQuery({
         queryKey: ['notifications'],
-        queryFn: getNotificationsFn,
+        queryFn: () => getNotificationsFn(),
         meta: { errorMessage: 'Failed to load notifications.' },
         ...options,
       }),
@@ -67,7 +69,7 @@ export const notificationsApi = {
         meta: {
           successMessage: 'Notification marked as read.',
           errorMessage: 'Failed to mark as read.',
-          invalidateQueries: ['notifications', 'notifications', 'unread'],
+          invalidateQueries: ['notifications'],
         },
         ...options,
       }),
@@ -80,7 +82,7 @@ export const notificationsApi = {
         meta: {
           successMessage: 'All notifications marked as read.',
           errorMessage: 'Failed to mark all as read.',
-          invalidateQueries: ['notifications', 'notifications', 'unread'],
+          invalidateQueries: ['notifications'],
         },
         ...options,
       }),

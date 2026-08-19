@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Modal } from '@/components/shared/Modal'
-import type { CreateUserPayload } from '@/apis/admin'
+import type { CreateUserPayload } from '@/apis'
 import type { Role } from '@/lib/types'
 
 const ROLE_LABELS: Record<Role, string> = {

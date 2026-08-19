@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { notificationsApi } from '@/apis/notifications'
+import api from '@/apis'
 import type { Notification } from '@/lib/types'
 
 export function useNotifications() {
@@ -9,13 +9,13 @@ export function useNotifications() {
   const [isNotifOpen, setIsNotifOpen] = useState(false)
 
   const { data: notifications = [], isLoading: notifLoading, error: notifError, refetch: loadNotifications } =
-    notificationsApi.getAll.useQuery()
+    api.Notifications.getAll.useQuery()
 
   const { data: unreadCount = 0 } =
-    notificationsApi.getUnreadCount.useQuery()
+    api.Notifications.getUnreadCount.useQuery()
 
-  const { mutate: markAsRead } = notificationsApi.markAsRead.useMutation()
-  const { mutate: markAllAsRead } = notificationsApi.markAllAsRead.useMutation()
+  const { mutate: markAsRead } = api.Notifications.markAsRead.useMutation()
+  const { mutate: markAllAsRead } = api.Notifications.markAllAsRead.useMutation()
 
   // Click-outside handler
   useEffect(() => {

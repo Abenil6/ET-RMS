@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { Link } from '@tanstack/react-router'
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react'
-import type { Ticket, TicketStatus, TicketPriority } from '../../../lib/types'
+import type { Ticket } from '../../../lib/types'
 import {
   STATUS_CONFIG,
   PRIORITY_CONFIG,
@@ -73,7 +73,7 @@ export const createTicketsColumns = (
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const status = row.getValue('status') as TicketStatus
+        const status = row.original.status
         const config = STATUS_CONFIG[status]
         return (
           <Badge className={cn(config.bg, config.color, 'border-0')}>
@@ -107,7 +107,7 @@ export const createTicketsColumns = (
       accessorKey: 'priority',
       header: 'Priority',
       cell: ({ row }) => {
-        const priority = row.getValue('priority') as TicketPriority
+        const priority = row.original.priority
         const config = PRIORITY_CONFIG[priority]
         return (
           <Badge className={cn(config.bg, config.color, 'border-0')}>
@@ -122,11 +122,14 @@ export const createTicketsColumns = (
     {
       accessorKey: 'category',
       header: 'Category',
-      cell: ({ row }) => (
-        <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600">
-          {CATEGORY_LABELS[row.getValue('category')] || row.getValue('category')}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const category = row.original.category
+        return (
+          <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600">
+            {CATEGORY_LABELS[category] || category}
+          </span>
+        )
+      },
       filterFn: (row, id, value) => {
         return value.includes(row.getValue(id))
       },

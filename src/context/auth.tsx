@@ -8,7 +8,7 @@ import {
 } from 'react'
 import type { ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { authApi } from '@/apis/auth'
+import api from '@/apis'
 import { clearTokens, getAccessToken } from '@/apis/core'
 
 export interface User {
@@ -86,11 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
 
   /**
-   * Initialize authentication using authApi.me query.
-   * This replaces the manual useEffect + api.auth.me() call.
+   * Initialize authentication using the centralized API layer.
    */
   const { data: meData, isLoading: meLoading, error: meError } =
-    authApi.me.useQuery({
+    api.Auth.me.useQuery({
       enabled: !!getAccessToken(),
       retry: false,
     })
@@ -107,9 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * LOGIN
-   * Uses authApi.login.useMutation() - global error handling via meta
+   * Uses global error handling via query metadata.
    */
-  const loginMutation = authApi.login.useMutation({
+  const loginMutation = api.Auth.login.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
     },
@@ -133,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * REGISTER
    */
-  const registerMutation = authApi.register.useMutation({
+  const registerMutation = api.Auth.register.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
     },
@@ -162,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * LOGOUT
    */
-  const logoutMutation = authApi.logout.useMutation()
+  const logoutMutation = api.Auth.logout.useMutation()
 
   const logout = useCallback(async () => {
     try {
@@ -177,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * UPDATE PROFILE
    */
-  const updateProfileMutation = authApi.updateProfile.useMutation()
+  const updateProfileMutation = api.Auth.updateProfile.useMutation()
 
   const updateProfile: AuthContextType['updateProfile'] = useCallback(
     async (updated) => {

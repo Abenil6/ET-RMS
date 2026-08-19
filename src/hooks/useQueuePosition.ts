@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { ticketsApi } from '@/apis/tickets'
+import api from '@/apis'
 
 export type QueueInfo = {
   ticketNumber: string
@@ -14,8 +14,7 @@ export function useQueuePosition(
   enabled: boolean,
   intervalMs = 30000
 ) {
-  // Use the ticketsApi.getQueue hook which takes ticketId as first param
-  const { data: queueData, isError, refetch } = ticketsApi.getQueue.useQuery(
+  const { data: queueData, isError, refetch } = api.Tickets.getQueue.useQuery(
     ticketId || '',
     { 
       enabled: enabled && !!ticketId, 

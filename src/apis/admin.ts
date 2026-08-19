@@ -9,6 +9,8 @@ import type { User, Role } from '../lib/types'
 
 export type AdminUserType = User & {
   isBanned: boolean
+  banned?: boolean
+  bannedAt?: string | null
   lastLoginAt: string | null
 }
 
@@ -92,6 +94,36 @@ export interface AdminQueueResponse {
   queue: AdminQueueItem[]
 }
 
+type AdminUserApiResponse = Omit<AdminUserType, 'isBanned' | 'lastLoginAt'> & {
+  isBanned?: boolean
+  banned?: boolean
+  lastLoginAt?: string | null
+}
+
+type UserEnvelope = AdminUserApiResponse | { user: AdminUserApiResponse }
+type UsersEnvelope = AdminUserApiResponse[] | { users: AdminUserApiResponse[] }
+type PasswordResetEnvelope =
+  | { temporaryPassword: string }
+  | { temporaryPassword?: string; message?: string }
+
+function normalizeAdminUser(user: AdminUserApiResponse): AdminUserType {
+  return {
+    ...user,
+    isBanned: Boolean(user.isBanned ?? user.banned),
+    lastLoginAt: user.lastLoginAt ?? null,
+  }
+}
+
+function unwrapUser(response: UserEnvelope): AdminUserType {
+  const user = 'user' in response ? response.user : response
+  return normalizeAdminUser(user)
+}
+
+function unwrapUsers(response: UsersEnvelope): AdminUserType[] {
+  const users = Array.isArray(response) ? response : response.users
+  return users.map(normalizeAdminUser)
+}
+
 // ============================================================
 // Raw API Functions
 // ============================================================
@@ -101,29 +133,33 @@ async function getQueueFn(): Promise<QueueStatsType> {
 }
 
 async function getTechniciansFn(): Promise<TechnicianType[]> {
-  return fetcher<TechnicianType[]>('/api/admin/technicians')
+  return fetcher<TechnicianType[]>('/api/technicians')
 }
 
 async function getUsersFn(): Promise<AdminUserType[]> {
-  return fetcher<AdminUserType[]>('/api/admin/users')
+  const response = await fetcher<UsersEnvelope>('/api/admin/users')
+  return unwrapUsers(response)
 }
 
 async function createUserFn(data: CreateUserPayload): Promise<AdminUserType> {
-  return fetcher<AdminUserType>('/api/admin/users', {
+  const response = await fetcher<UserEnvelope>('/api/admin/users', {
     method: 'POST',
     body: JSON.stringify(data),
   })
+  return unwrapUser(response)
 }
 
 async function getUserFn(id: string): Promise<AdminUserType> {
-  return fetcher<AdminUserType>(`/api/admin/users/${id}`)
+  const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}`)
+  return unwrapUser(response)
 }
 
 async function updateUserFn(id: string, data: UpdateUserPayload): Promise<AdminUserType> {
-  return fetcher<AdminUserType>(`/api/admin/users/${id}`, {
+  const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   })
+  return unwrapUser(response)
 }
 
 async function deleteUserFn(id: string): Promise<void> {
@@ -133,19 +169,21 @@ async function deleteUserFn(id: string): Promise<void> {
 }
 
 async function banUserFn(id: string): Promise<AdminUserType> {
-  return fetcher<AdminUserType>(`/api/admin/users/${id}/ban`, {
+  const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}/ban`, {
     method: 'POST',
   })
+  return unwrapUser(response)
 }
 
 async function unbanUserFn(id: string): Promise<AdminUserType> {
-  return fetcher<AdminUserType>(`/api/admin/users/${id}/unban`, {
+  const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}/unban`, {
     method: 'POST',
   })
+  return unwrapUser(response)
 }
 
-async function resetUserPasswordFn(id: string): Promise<{ temporaryPassword: string }> {
-  return fetcher<{ temporaryPassword: string }>(`/api/admin/users/${id}/reset-password`, {
+async function resetUserPasswordFn(id: string): Promise<PasswordResetEnvelope> {
+  return fetcher<PasswordResetEnvelope>(`/api/admin/users/${id}/reset-password`, {
     method: 'POST',
   })
 }
@@ -280,7 +318,7 @@ export const adminApi = {
   },
 
   resetUserPassword: {
-    useMutation: (options?: UseMutationOptions<{ temporaryPassword: string }, Error, string>) =>
+    useMutation: (options?: UseMutationOptions<PasswordResetEnvelope, Error, string>) =>
       useMutation({
         mutationFn: resetUserPasswordFn,
         meta: {

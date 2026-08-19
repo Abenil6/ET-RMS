@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useAuth } from '../../../context/auth'
-import { ticketsApi } from '@/apis/tickets'
+import api from '@/apis'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorMessage } from '@/components/shared/ErrorMessage'
 import { motion } from 'motion/react'
@@ -19,11 +19,11 @@ function TicketsPage() {
     isError,
     error,
     refetch: refresh,
-  } = ticketsApi.getAll.useQuery()
+  } = api.Tickets.getAll.useQuery()
 
   if (!user) return null
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error?.message || 'Failed to load tickets'} retry={refresh} />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
 
   const list = tickets ?? []
 

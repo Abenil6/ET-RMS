@@ -1,3 +1,9 @@
+import { authApi } from './auth'
+import { ticketsApi } from './tickets'
+import { appointmentsApi } from './appointments'
+import { notificationsApi } from './notifications'
+import { adminApi } from './admin'
+
 export { queryClient } from './queryClient'
 export { fetcher, ApiError, getAccessToken, setTokens, clearTokens } from './core'
 
@@ -43,13 +49,6 @@ export type {
   AdminQueueItem,
   AdminQueueResponse,
 } from './admin'
-
-
-import { authApi } from './auth'
-import { ticketsApi } from './tickets'
-import { appointmentsApi } from './appointments'
-import { notificationsApi } from './notifications'
-import { adminApi } from './admin'
 
 export const api = {
   Auth: authApi,

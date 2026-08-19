@@ -12,8 +12,8 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { useAuth } from '../../../context/auth'
-import { adminApi } from '@/apis/admin'
-import type { AdminUserType } from '@/apis/admin'
+import api from '@/apis'
+import type { AdminUserType } from '@/apis'
 import type { Role } from '../../../lib/types'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorMessage } from '@/components/shared/ErrorMessage'
@@ -52,7 +52,7 @@ function AdminUsersPage() {
     isError,
     error,
     refetch: loadUsers,
-  } = adminApi.getUsers.useQuery()
+  } = api.Admin.getUsers.useQuery()
 
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
@@ -64,42 +64,42 @@ function AdminUsersPage() {
   } | null>(null)
 
   // Mutations using TanStack Query
-  const { mutate: createUser } = adminApi.createUser.useMutation({
+  const { mutate: createUser } = api.Admin.createUser.useMutation({
     onSuccess: () => {
       loadUsers()
       setModal(null)
     },
   })
 
-  const { mutate: updateUser } = adminApi.updateUser.useMutation({
+  const { mutate: updateUser } = api.Admin.updateUser.useMutation({
     onSuccess: () => {
       loadUsers()
       setModal(null)
     },
   })
 
-  const { mutate: banUser } = adminApi.banUser.useMutation({
+  const { mutate: banUser } = api.Admin.banUser.useMutation({
     onSuccess: () => {
       loadUsers()
       setConfirm(null)
     },
   })
 
-  const { mutate: unbanUser } = adminApi.unbanUser.useMutation({
+  const { mutate: unbanUser } = api.Admin.unbanUser.useMutation({
     onSuccess: () => {
       loadUsers()
       setConfirm(null)
     },
   })
 
-  const { mutate: resetPassword } = adminApi.resetUserPassword.useMutation({
+  const { mutate: resetPassword } = api.Admin.resetUserPassword.useMutation({
     onSuccess: () => {
       loadUsers()
       setConfirm(null)
     },
   })
 
-  const { mutate: deleteUser } = adminApi.deleteUser.useMutation({
+  const { mutate: deleteUser } = api.Admin.deleteUser.useMutation({
     onSuccess: () => {
       loadUsers()
       setConfirm(null)
@@ -130,7 +130,7 @@ function AdminUsersPage() {
   }
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error?.message || 'Failed to load users'} retry={loadUsers} />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load users'} retry={loadUsers} />
 
   return (
     <motion.div

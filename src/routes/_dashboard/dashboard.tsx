@@ -1,13 +1,14 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { useAuth } from '../../context/auth'
-import { ticketsApi } from '@/apis/tickets'
+import api from '@/apis'
 import {
+  Activity,
   AlertCircle,
   CheckCircle2,
   Clock,
   Star,
-  Activity,
+  Ticket,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { motion } from 'motion/react'
@@ -43,7 +44,6 @@ import { DateRangePicker } from '@/features/dashboard/components/DateRangePicker
 import { PdfExportButton } from '@/features/dashboard/components/PdfExportButton'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorMessage } from '@/components/shared/ErrorMessage'
-import { Ticket } from 'lucide-react'
 
 export const Route = createFileRoute('/_dashboard/dashboard')({
   component: DashboardPage,
@@ -66,7 +66,7 @@ function DashboardPage() {
 }
 
 function AdminOverview() {
-  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = ticketsApi.getAll.useQuery()
+  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = api.Tickets.getAll.useQuery()
   const { preset, setPreset, custom, setCustom, range } = useDateRange()
 
   const kpis = useMemo(() => computeKpis(tickets ?? [], range), [tickets, range])
@@ -78,7 +78,7 @@ function AdminOverview() {
   const exportData = useMemo(() => ticketsToExport(tickets ?? [], range), [tickets, range])
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error?.message || 'Failed to load tickets'} retry={refresh} />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
 
   return (
     <motion.div
@@ -208,7 +208,7 @@ function AdminOverview() {
 
 function TechnicianOverview() {
   const { user } = useAuth()
-  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = ticketsApi.getAll.useQuery()
+  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = api.Tickets.getAll.useQuery()
 
   const myTickets = useMemo(
     () => (tickets ?? []).filter((t) => t.technicianId === user?.id),
@@ -231,7 +231,7 @@ function TechnicianOverview() {
   }, [myTickets])
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error?.message || 'Failed to load tickets'} retry={refresh} />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
 
   return (
     <motion.div
@@ -292,7 +292,7 @@ function TechnicianOverview() {
 
 function CustomerOverview() {
   const { user } = useAuth()
-  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = ticketsApi.getAll.useQuery()
+  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = api.Tickets.getAll.useQuery()
 
   const myTickets = useMemo(
     () => (tickets ?? []).filter((t) => t.customerId === user?.id),
@@ -313,7 +313,7 @@ function CustomerOverview() {
   }, [myTickets])
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error?.message || 'Failed to load tickets'} retry={refresh} />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
 
   return (
     <motion.div

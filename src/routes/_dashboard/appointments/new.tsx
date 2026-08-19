@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { BRANCHES, TIME_SLOTS } from '../../../data/appointments'
 import { motion } from 'motion/react'
-import { appointmentsApi } from '@/apis/appointments'
+import api from '@/apis'
 import { useAuth } from '../../../context/auth'
 
 export const Route = createFileRoute('/_dashboard/appointments/new')({
@@ -47,7 +47,7 @@ function NewAppointmentPage() {
 
   const canBook = useMemo(() => user?.role === 'CUSTOMER', [user])
 
-  const { mutate: createAppointment, isPending: submitting } = appointmentsApi.create.useMutation({
+  const { mutate: createAppointment, isPending: submitting } = api.Appointments.create.useMutation({
     onSuccess: () => {
       navigate({ to: '/appointments' })
     },

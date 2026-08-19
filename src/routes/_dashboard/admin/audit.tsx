@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { motion } from 'motion/react'
 import { RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../../context/auth'
-import { adminApi } from '@/apis/admin'
-import type { AuditLogType } from '@/apis/admin'
+import api from '@/apis'
+import type { AuditLogType } from '@/apis'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorMessage } from '@/components/shared/ErrorMessage'
 
@@ -43,7 +43,7 @@ function AdminAuditPage() {
 
   const [page, setPage] = useState(1)
 
-  const { data: auditData, isLoading: loading, isError, error, refetch: loadLogs } = adminApi.getAuditLogs.usePaginated(page, PAGE_SIZE)
+  const { data: auditData, isLoading: loading, isError, error, refetch: loadLogs } = api.Admin.getAuditLogs.usePaginated(page, PAGE_SIZE)
 
   const logs = auditData?.logs || []
   const pagination = auditData?.pagination
@@ -57,7 +57,7 @@ function AdminAuditPage() {
   }
 
   if (loading && logs.length === 0) return <LoadingSpinner size="lg" />
-  if (isError && logs.length === 0) return <ErrorMessage message={error?.message || 'Failed to load audit log'} retry={() => loadLogs()} />
+  if (isError && logs.length === 0) return <ErrorMessage message={error.message || 'Failed to load audit log'} retry={() => loadLogs()} />
 
   const total = pagination?.total ?? 0
   const totalPages = pagination?.totalPages ?? 1
@@ -116,8 +116,8 @@ function AdminAuditPage() {
                       })}
                     </td>
                     <td className="px-5 py-3">
-                      <p className="font-medium">{log.user?.name ?? '—'}</p>
-                      <p className="text-xs text-text-secondary">{log.user?.email ?? ''}</p>
+                      <p className="font-medium">{log.user.name}</p>
+                      <p className="text-xs text-text-secondary">{log.user.email}</p>
                     </td>
                     <td className="px-5 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${ACTION_STYLES[log.action] ?? 'bg-bg text-text-secondary'}`}>

@@ -3,7 +3,7 @@ import { ArrowLeft, MailCheck } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { HeroShowcase } from '../components/HeroShowcase'
-import { authApi } from '@/apis/auth'
+import api from '@/apis'
 
 export const Route = createFileRoute('/forgotPassword')({
   component: ForgotPasswordPage,
@@ -13,7 +13,7 @@ function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
-  const { mutate: forgotPassword, isPending: loading } = authApi.forgotPassword.useMutation({
+  const { mutate: forgotPassword, isPending: loading } = api.Auth.forgotPassword.useMutation({
     onSuccess: () => {
       setSubmitted(true)
     },

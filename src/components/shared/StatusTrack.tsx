@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import type { TicketStatus } from '../lib/types'
+import type { TicketStatus } from '@/lib/types'
 
 const STAGES: { status: TicketStatus; label: string }[] = [
   { status: 'OPEN', label: 'Open' },

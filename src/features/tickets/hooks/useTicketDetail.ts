@@ -1,8 +1,6 @@
-import { useEffect } from 'react'
-import { ticketsApi } from '@/apis/tickets'
+import api from '@/apis'
 import { useQueuePosition } from '@/hooks/useQueuePosition'
 import { useAuth } from '@/context/auth'
-import type { Ticket } from '@/lib/types'
 
 export function useTicketDetail(ticketId: string) {
   const { user } = useAuth()
@@ -14,10 +12,10 @@ export function useTicketDetail(ticketId: string) {
     isError,
     error: loadError,
     refetch: loadTicket,
-  } = ticketsApi.getById.useQuery(ticketId)
+  } = api.Tickets.getById.useQuery(ticketId)
 
   // Fetch technicians for admin assign
-  const { data: technicians = [] } = ticketsApi.getTechnicians.useQuery()
+  const { data: technicians = [] } = api.Tickets.getTechnicians.useQuery()
 
   // Compute permissions
   const isAdmin = !!user && user.role === 'ADMIN'
@@ -50,28 +48,26 @@ export function useTicketDetail(ticketId: string) {
   const queueInfo = liveQueue ?? ticket?.queue
 
   // Compute action permissions
-  const canEditDescription = isCustomer && ticket?.status === 'OPEN'
+  const ticketStatus = ticket?.status
+  const hasReview = Boolean(ticket?.review)
+  const canEditDescription = isCustomer && ticketStatus === 'OPEN'
   const canCancel =
     isCustomer &&
-    ticket &&
-    (ticket.status === 'OPEN' ||
-      ticket.status === 'ASSIGNED' ||
-      ticket.status === 'IN_PROGRESS')
+    (ticketStatus === 'OPEN' ||
+      ticketStatus === 'ASSIGNED' ||
+      ticketStatus === 'IN_PROGRESS')
   const canStartWork =
     isAssignedTech &&
-    ticket &&
-    (ticket.status === 'ASSIGNED' || ticket.status === 'OPEN')
+    (ticketStatus === 'ASSIGNED' || ticketStatus === 'OPEN')
   const canResolve =
-    (isAssignedTech || isAdmin) && ticket?.status === 'IN_PROGRESS'
+    (isAssignedTech || isAdmin) && ticketStatus === 'IN_PROGRESS'
   const canReopen =
     (isCustomer || isAdmin) &&
-    ticket &&
-    (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED')
+    (ticketStatus === 'RESOLVED' || ticketStatus === 'CLOSED')
   const canReview =
     isCustomer &&
-    ticket &&
-    (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') &&
-    !ticket.review
+    (ticketStatus === 'RESOLVED' || ticketStatus === 'CLOSED') &&
+    !hasReview
 
   return {
     ticket,

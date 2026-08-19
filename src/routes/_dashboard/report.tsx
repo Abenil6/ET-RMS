@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { useEffect, useState } from 'react'
-import { ticketsApi } from '@/apis/tickets'
+import api from '@/apis'
 import { useAuth } from '../../context/auth'
 import type { TicketCategory, TicketPriority } from '../../lib/types'
 
@@ -44,7 +44,7 @@ function ReportPage() {
     setPrimaryMobile(user.phone || '')
   }, [user])
 
-  const { mutate: createTicket, isPending: submitting } = ticketsApi.create.useMutation({
+  const { mutate: createTicket, isPending: submitting } = api.Tickets.create.useMutation({
     onSuccess: (created) => {
       // Go to ticket detail page
       navigate({ to: '/tickets/$ticketId', params: { ticketId: created.id } })

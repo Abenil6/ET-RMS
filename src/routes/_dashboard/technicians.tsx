@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { Wrench } from 'lucide-react'
 import { useAuth } from '../../context/auth'
-import { adminApi } from '@/apis/admin'
+import api from '@/apis'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorMessage } from '@/components/shared/ErrorMessage'
 
@@ -14,14 +14,14 @@ export const Route = createFileRoute('/_dashboard/technicians')({
 function TechniciansPage() {
   const { user } = useAuth()
 
-  const { data: techs = [], isLoading: loading, isError, error, refetch: loadTechs } = adminApi.getTechnicians.useQuery()
+  const { data: techs = [], isLoading: loading, isError, error, refetch: loadTechs } = api.Admin.getTechnicians.useQuery()
 
   if (!user || user.role !== 'ADMIN') {
     return <div className="p-8 text-center text-text-secondary">Unauthorized access.</div>
   }
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error?.message || 'Failed to load technicians'} retry={loadTechs} />
+  if (isError) return <ErrorMessage message={error.message || 'Failed to load technicians'} retry={loadTechs} />
 
   return (
     <motion.div

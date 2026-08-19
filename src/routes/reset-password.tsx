@@ -3,7 +3,7 @@ import { KeyRound } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { HeroShowcase } from '../components/HeroShowcase'
-import { authApi } from '@/apis/auth'
+import api from '@/apis'
 
 type ResetPasswordSearch = {
   token?: string
@@ -28,7 +28,7 @@ function ResetPasswordPage() {
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
 
-  const { mutate: resetPassword, isPending: loading } = authApi.resetPassword.useMutation({
+  const { mutate: resetPassword, isPending: loading } = api.Auth.resetPassword.useMutation({
     onSuccess: () => {
       setSubmitted(true)
       setTimeout(() => {

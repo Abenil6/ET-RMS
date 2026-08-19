@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ticketsApi } from '@/apis/tickets'
+import api from '@/apis'
 import type { TicketPriority } from '@/lib/types'
 
 export function useTicketActions(ticketId: string, onSuccess?: () => void) {
@@ -23,21 +23,21 @@ export function useTicketActions(ticketId: string, onSuccess?: () => void) {
   const [priorityDraft, setPriorityDraft] = useState<TicketPriority>('MEDIUM')
 
   // Mutations
-  const { mutate: updateTicket, isPending: isUpdating } = ticketsApi.update.useMutation({
+  const { mutate: updateTicket, isPending: isUpdating } = api.Tickets.update.useMutation({
     onSuccess: () => {
       onSuccess?.()
       setIsEditingDesc(false)
     },
   })
 
-  const { mutate: assignTicket, isPending: isAssigning } = ticketsApi.assign.useMutation({
+  const { mutate: assignTicket, isPending: isAssigning } = api.Tickets.assign.useMutation({
     onSuccess: () => {
       onSuccess?.()
       setAssignToId('')
     },
   })
 
-  const { mutate: resolveTicket, isPending: isResolving } = ticketsApi.resolve.useMutation({
+  const { mutate: resolveTicket, isPending: isResolving } = api.Tickets.resolve.useMutation({
     onSuccess: () => {
       onSuccess?.()
       setShowResolveForm(false)
@@ -45,13 +45,13 @@ export function useTicketActions(ticketId: string, onSuccess?: () => void) {
     },
   })
 
-  const { mutate: reopenTicket, isPending: isReopening } = ticketsApi.reopen.useMutation({
+  const { mutate: reopenTicket, isPending: isReopening } = api.Tickets.reopen.useMutation({
     onSuccess: () => {
       onSuccess?.()
     },
   })
 
-  const { mutate: reviewTicket, isPending: isReviewing } = ticketsApi.review.useMutation({
+  const { mutate: reviewTicket, isPending: isReviewing } = api.Tickets.review.useMutation({
     onSuccess: () => {
       onSuccess?.()
       setShowReviewForm(false)
