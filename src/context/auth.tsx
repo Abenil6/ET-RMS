@@ -9,7 +9,7 @@ import {
 import type { ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { authApi } from '@/apis/auth'
-import { clearTokens } from '@/apis/core'
+import { clearTokens, getAccessToken } from '@/apis/core'
 
 export interface User {
   id: string
@@ -90,7 +90,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * This replaces the manual useEffect + api.auth.me() call.
    */
   const { data: meData, isLoading: meLoading, error: meError } =
-    authApi.me.useQuery()
+    authApi.me.useQuery({
+      enabled: !!getAccessToken(), // Only fetch if token exists
+      retry: false, // Don't retry on 401
+    })
 
   useEffect(() => {
     if (meData) {
