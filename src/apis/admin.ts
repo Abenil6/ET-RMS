@@ -43,6 +43,18 @@ export interface AuditLogType {
   }
 }
 
+export interface AuditLogPagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+}
+
+export interface AuditLogsResponse {
+  logs: AuditLogType[]
+  pagination: AuditLogPagination
+}
+
 export interface QueueStatsType {
   total: number
   open: number
@@ -57,6 +69,27 @@ export interface TechnicianType {
   email: string
   openTickets?: number
   activeTickets?: number
+}
+
+// Queue management types
+export interface AdminQueueItem {
+  id: string
+  ticketNumber: string
+  subject: string
+  status: string
+  priority: string
+  createdAt: string
+  customer: {
+    name: string
+    email: string
+  }
+  position: number
+  estimatedWaitMinutes: number
+}
+
+export interface AdminQueueResponse {
+  total: number
+  queue: AdminQueueItem[]
 }
 
 // ============================================================
@@ -117,8 +150,12 @@ async function resetUserPasswordFn(id: string): Promise<{ temporaryPassword: str
   })
 }
 
-async function getAuditLogsFn(): Promise<AuditLogType[]> {
-  return fetcher<AuditLogType[]>('/api/admin/audit-logs')
+async function getAuditLogsFn(page = 1, limit = 25): Promise<AuditLogsResponse> {
+  return fetcher<AuditLogsResponse>(`/api/admin/audit?page=${page}&limit=${limit}`)
+}
+
+async function getAdminQueueFn(): Promise<AdminQueueResponse> {
+  return fetcher<AdminQueueResponse>('/api/admin/queue')
 }
 
 // ============================================================
@@ -132,6 +169,16 @@ export const adminApi = {
         queryKey: ['admin', 'queue'],
         queryFn: getQueueFn,
         meta: { errorMessage: 'Failed to load queue stats.' },
+        ...options,
+      }),
+  },
+
+  getAdminQueue: {
+    useQuery: (options?: UseQueryOptions<AdminQueueResponse, Error, AdminQueueResponse, string[]>) =>
+      useQuery({
+        queryKey: ['admin', 'admin-queue'],
+        queryFn: getAdminQueueFn,
+        meta: { errorMessage: 'Failed to load admin queue.' },
         ...options,
       }),
   },
@@ -172,7 +219,7 @@ export const adminApi = {
   getUser: {
     useQuery: (id: string, options?: UseQueryOptions<AdminUserType, Error, AdminUserType, string[]>) =>
       useQuery({
-        queryKey: ['admin', 'users', id],
+        queryKey: ['admin', 'user', id],
         queryFn: () => getUserFn(id),
         meta: { errorMessage: 'Failed to load user.' },
         enabled: !!id,
@@ -185,7 +232,7 @@ export const adminApi = {
       useMutation({
         mutationFn: ({ id, data }) => updateUserFn(id, data),
         meta: {
-          successMessage: 'User updated.',
+          successMessage: 'User updated successfully.',
           errorMessage: 'Failed to update user.',
           invalidateQueries: ['admin', 'users'],
         },
@@ -198,7 +245,7 @@ export const adminApi = {
       useMutation({
         mutationFn: deleteUserFn,
         meta: {
-          successMessage: 'User deleted.',
+          successMessage: 'User deleted successfully.',
           errorMessage: 'Failed to delete user.',
           invalidateQueries: ['admin', 'users'],
         },
@@ -211,7 +258,7 @@ export const adminApi = {
       useMutation({
         mutationFn: banUserFn,
         meta: {
-          successMessage: 'User banned.',
+          successMessage: 'User banned successfully.',
           errorMessage: 'Failed to ban user.',
           invalidateQueries: ['admin', 'users'],
         },
@@ -224,7 +271,7 @@ export const adminApi = {
       useMutation({
         mutationFn: unbanUserFn,
         meta: {
-          successMessage: 'User unbanned.',
+          successMessage: 'User unbanned successfully.',
           errorMessage: 'Failed to unban user.',
           invalidateQueries: ['admin', 'users'],
         },
@@ -245,10 +292,18 @@ export const adminApi = {
   },
 
   getAuditLogs: {
-    useQuery: (options?: UseQueryOptions<AuditLogType[], Error, AuditLogType[], string[]>) =>
+    useQuery: (options?: UseQueryOptions<AuditLogsResponse, Error, AuditLogsResponse, string[]>) =>
       useQuery({
-        queryKey: ['admin', 'audit'],
-        queryFn: getAuditLogsFn,
+        queryKey: ['admin', 'audit-logs', '1', '25'],
+        queryFn: () => getAuditLogsFn(1, 25),
+        meta: { errorMessage: 'Failed to load audit logs.' },
+        ...options,
+      }),
+
+    usePaginated: (page: number, limit: number, options?: UseQueryOptions<AuditLogsResponse, Error, AuditLogsResponse, string[]>) =>
+      useQuery({
+        queryKey: ['admin', 'audit-logs', String(page), String(limit)],
+        queryFn: () => getAuditLogsFn(page, limit),
         meta: { errorMessage: 'Failed to load audit logs.' },
         ...options,
       }),

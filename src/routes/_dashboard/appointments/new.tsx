@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { BRANCHES, TIME_SLOTS } from '../../../data/appointments'
 import { motion } from 'motion/react'
-import { api, ApiError } from '../../../lib/api'
+import { appointmentsApi } from '@/apis/appointments'
 import { useAuth } from '../../../context/auth'
 
 export const Route = createFileRoute('/_dashboard/appointments/new')({
@@ -10,19 +10,15 @@ export const Route = createFileRoute('/_dashboard/appointments/new')({
 })
 
 function parseStartTimeTo24h(timeSlot: string): string {
-  // Accepts formats like:
-  // "09:00", "09:00 - 10:00", "9:00 AM - 10:00 AM", "2:30 PM"
   const start = timeSlot.split('-')[0]?.trim() ?? timeSlot.trim()
 
   const ampm = start.match(/(AM|PM)$/i)
   if (!ampm) {
-    // maybe already "HH:MM"
     const hm = start.match(/^(\d{1,2}):(\d{2})$/)
     if (hm) {
       const hh = hm[1].padStart(2, '0')
       return `${hh}:${hm[2]}`
     }
-    // fallback
     return '09:00'
   }
 
@@ -47,10 +43,18 @@ function NewAppointmentPage() {
   const [date, setDate] = useState('')
   const [timeSlot, setTimeSlot] = useState('')
   const [reason, setReason] = useState('')
-  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const canBook = useMemo(() => user?.role === 'CUSTOMER', [user])
+
+  const { mutate: createAppointment, isPending: submitting } = appointmentsApi.create.useMutation({
+    onSuccess: () => {
+      navigate({ to: '/appointments' })
+    },
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : 'Failed to create appointment.')
+    },
+  })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -61,26 +65,11 @@ function NewAppointmentPage() {
       return
     }
 
-    try {
-      setSubmitting(true)
+    const hhmm = parseStartTimeTo24h(timeSlot)
+    const localDate = new Date(`${date}T${hhmm}:00`)
+    const slotTime = localDate.toISOString()
 
-      const hhmm = parseStartTimeTo24h(timeSlot)
-      const localDate = new Date(`${date}T${hhmm}:00`)
-      const slotTime = localDate.toISOString()
-
-      await api.appointments.create({
-        branch,
-        slotTime,
-        notes: reason || undefined,
-      })
-
-      navigate({ to: '/appointments' })
-    } catch (err) {
-      // Backend messages should already be good; show them directly.
-      setError(err instanceof ApiError ? err.message : 'Failed to create appointment.')
-    } finally {
-      setSubmitting(false)
-    }
+    createAppointment({ branch, slotTime, notes: reason || undefined })
   }
 
   return (
@@ -103,93 +92,81 @@ function NewAppointmentPage() {
           </div>
         )}
 
-        <div className="p-6 rounded-xl border border-border bg-card">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-text-dark mb-1">Select Branch</label>
-              <select
-                value={branch}
-                onChange={(e) => setBranch(e.target.value)}
-                required
-                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green"
-              >
-                <option value="" disabled>
-                  Choose a branch
+        <div className="space-y-5">
+          <div>
+            <label htmlFor="branch" className="block text-sm font-semibold text-text-secondary mb-2">
+              Branch
+            </label>
+            <select
+              id="branch"
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+            >
+              <option value="">Select a branch</option>
+              {BRANCHES.map((b) => (
+                <option key={b} value={b}>
+                  {b}
                 </option>
-                {BRANCHES.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-            </div>
+              ))}
+            </select>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-text-dark mb-1">Date</label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green"
-                />
-              </div>
+          <div>
+            <label htmlFor="date" className="block text-sm font-semibold text-text-secondary mb-2">
+              Date
+            </label>
+            <input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+            />
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-text-dark mb-1">Time Slot</label>
-                <select
-                  value={timeSlot}
-                  onChange={(e) => setTimeSlot(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green"
-                >
-                  <option value="" disabled>
-                    Choose a time
-                  </option>
-                  {TIME_SLOTS.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          <div>
+            <label htmlFor="timeSlot" className="block text-sm font-semibold text-text-secondary mb-2">
+              Time Slot
+            </label>
+            <select
+              id="timeSlot"
+              value={timeSlot}
+              onChange={(e) => setTimeSlot(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+            >
+              <option value="">Select a time slot</option>
+              {TIME_SLOTS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-text-dark mb-1">Reason for Visit</label>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                required
-                rows={3}
-                placeholder="E.g. New Fiber Installation Inquiry"
-                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green"
-              />
-            </div>
+          <div>
+            <label htmlFor="reason" className="block text-sm font-semibold text-text-secondary mb-2">
+              Reason (optional)
+            </label>
+            <textarea
+              id="reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              placeholder="Describe the issue or service needed..."
+              className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
+            />
+          </div>
 
-            <div className="pt-4 flex gap-3">
-              <button
-                type="button"
-                onClick={() => navigate({ to: '/appointments' })}
-                className="px-6 py-2 rounded-lg border border-border text-text-dark font-semibold hover:bg-bg"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-6 py-2 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90 disabled:opacity-50"
-              >
-                {submitting ? 'Booking…' : 'Confirm Booking'}
-              </button>
-            </div>
-
-            <p className="text-xs text-text-secondary">
-              Notes: booking the same slot twice should return a 409 conflict. Selecting a past slot should return 422.
-            </p>
-          </form>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            disabled={submitting || !branch || !date || !timeSlot}
+            className="w-full py-2.5 px-4 rounded-lg bg-primary-blue text-white font-medium hover:bg-primary-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {submitting ? 'Booking...' : 'Book Appointment'}
+          </button>
         </div>
       </div>
     </motion.div>

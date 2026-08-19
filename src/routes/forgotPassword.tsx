@@ -3,7 +3,7 @@ import { ArrowLeft, MailCheck } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { HeroShowcase } from '../components/HeroShowcase'
-import { api, ApiError } from '../lib/api'
+import { authApi } from '@/apis/auth'
 
 export const Route = createFileRoute('/forgotPassword')({
   component: ForgotPasswordPage,
@@ -12,30 +12,27 @@ export const Route = createFileRoute('/forgotPassword')({
 function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+
+  const { mutate: forgotPassword, isPending: loading } = authApi.forgotPassword.useMutation({
+    onSuccess: () => {
+      setSubmitted(true)
+    },
+    onError: (err) => {
+      // For network/server issues, it's okay to show an error
+      const message = err instanceof Error ? err.message : 'Failed to send reset link. Please try again.'
+      // We could set an error state here if needed, but the spec says to always show success
+      console.error('Forgot password error:', message)
+    },
+  })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
 
     if (!email.trim()) {
-      setError('Please enter your email.')
       return
     }
 
-    try {
-      setLoading(true)
-      await api.auth.forgotPassword(email.trim())
-
-      // Always show success message (don’t leak whether email exists)
-      setSubmitted(true)
-    } catch (err) {
-      // For network/server issues, it’s okay to show an error
-      setError(err instanceof ApiError ? err.message : 'Failed to send reset link. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    forgotPassword({ email: email.trim() })
   }
 
   return (
@@ -47,89 +44,70 @@ function ForgotPasswordPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
-          <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-green/10 text-primary-green">
-            <MailCheck size={22} />
+          <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-primary-green/10">
+            <MailCheck size={24} className="text-primary-green" />
           </div>
 
-          <h1 className="text-2xl font-bold text-text-dark mb-1">
-            Reset your password
+          <h1 className="text-2xl font-bold text-text-dark mb-2">
+            Forgot Password?
           </h1>
 
-          <p className="text-sm text-text-secondary mb-6">
-            {submitted
-              ? 'We sent a reset link if the email exists in our system.'
-              : 'Enter your email and we’ll send you a reset link.'}
-          </p>
-
-          {error && (
-            <div className="mb-4 rounded-lg bg-error/10 p-3 text-sm text-error">
-              {error}
+          {!submitted ? (
+            <p className="text-text-secondary mb-6">
+              Enter your email address and we'll send you a link to reset your
+              password.
+            </p>
+          ) : (
+            <div className="mb-6 p-4 bg-success/10 text-success rounded-lg text-sm">
+              If an account with that email exists, you will receive a password
+              reset link shortly.
             </div>
           )}
 
-          {submitted ? (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-success/20 bg-success/10 p-4">
-                <p className="text-sm font-semibold text-success">Reset link sent</p>
-                <p className="mt-1 text-sm text-text-secondary">
-                  Check <span className="font-semibold text-text-dark">{email}</span> for the next step.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSubmitted(false)
-                  setError(null)
-                }}
-                className="w-full rounded-lg border border-border bg-bg py-2.5 font-semibold text-text-dark hover:bg-card"
-              >
-                Send another link
-              </button>
-            </div>
-          ) : (
-            <form className="space-y-4" onSubmit={handleSubmit}>
+          {!submitted && (
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-text-dark mb-1">
-                  Email
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-semibold text-text-secondary mb-2"
+                >
+                  Email Address
                 </label>
                 <input
+                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green"
                   required
+                  autoComplete="email"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-primary-green py-2.5 font-semibold text-white hover:bg-primary-green/90 disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-lg bg-primary-blue text-white font-medium hover:bg-primary-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Sending…' : 'Send Reset Link'}
+                {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
             </form>
           )}
 
-          <div className="mt-6 flex items-center justify-between gap-3 text-sm">
+          <div className="mt-6">
             <Link
               to="/login"
-              className="inline-flex items-center gap-2 font-semibold text-primary-green hover:underline"
+              className="flex items-center justify-center gap-2 text-sm text-text-secondary hover:text-primary-blue transition-colors"
             >
               <ArrowLeft size={16} />
-              Back to login
+              Back to Login
             </Link>
-            <span className="text-text-secondary">
-              Support team will help if needed
-            </span>
           </div>
         </motion.div>
       </div>
 
-      <div className="hidden items-center justify-center px-6 py-12 lg:flex">
-        <HeroShowcase compact />
+      <div className="hidden lg:block relative">
+        <HeroShowcase />
       </div>
     </div>
   )

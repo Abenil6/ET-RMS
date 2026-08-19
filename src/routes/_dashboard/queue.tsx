@@ -1,70 +1,31 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
 import { useAuth } from '../../context/auth'
-import { api, ApiError } from '../../lib/api'
+import { adminApi } from '@/apis/admin'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { ErrorMessage } from '../../components/ErrorMessage'
 import { STATUS_CONFIG } from '../../data/tickets'
 import type { TicketStatus } from '../../lib/types'
 import { motion } from 'motion/react'
+import type { AdminQueueItem } from '@/apis/admin'
 
 export const Route = createFileRoute('/_dashboard/queue')({
   component: QueuePage,
 })
 
-type QueueTicket = {
-  id: string
-  ticketNumber?: string
-  subject?: string
-  status: TicketStatus
-  priority?: string
-  createdAt?: string
-  customer?: { name?: string; email?: string }
-  // queue fields (may be named differently depending on backend)
-  position?: number
-  queuePosition?: number
-  estimatedWaitMinutes?: number
-}
-
 function QueuePage() {
   const { user } = useAuth()
 
-  const [queue, setQueue] = useState<QueueTicket[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [page, setPage] = useState(1)
-  const PAGE_SIZE = 10
+  const { data: queueData, isLoading: loading, isError, error, refetch: loadQueue } = adminApi.getAdminQueue.useQuery()
 
-  const loadQueue = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await api.admin.getQueue()
-      setTotal(data.total)
-      setQueue(data.queue as QueueTicket[])
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load queue')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (user?.role !== 'ADMIN') return
-    loadQueue()
-  }, [user])
+  const queue = queueData?.queue || []
+  const total = queueData?.total || 0
 
   if (!user || user.role !== 'ADMIN') {
     return <div className="p-8 text-center text-text-secondary">Unauthorized access.</div>
   }
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (error) return <ErrorMessage message={error} retry={loadQueue} />
-
-  const totalPages = Math.max(1, Math.ceil(queue.length / PAGE_SIZE))
-  const safePage = Math.min(page, totalPages)
-  const pagedQueue = queue.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  if (isError) return <ErrorMessage message={error?.message || 'Failed to load queue'} retry={() => loadQueue()} />
 
   return (
     <motion.div
@@ -84,7 +45,7 @@ function QueuePage() {
           </div>
 
           <button
-            onClick={loadQueue}
+            onClick={() => loadQueue()}
             className="px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-semibold hover:bg-bg"
             type="button"
           >
@@ -100,95 +61,85 @@ function QueuePage() {
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Ticket</th>
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Customer</th>
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Status</th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Priority</th>
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Est. Wait</th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Created</th>
               </tr>
             </thead>
-
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border text-text-dark">
               {queue.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-text-secondary">
-                    Queue is empty. All caught up!
+                  <td colSpan={7} className="px-5 py-8 text-center text-text-secondary">
+                    Queue is empty
                   </td>
                 </tr>
               ) : (
-                pagedQueue.map((t) => {
-                  const pos = t.position ?? t.queuePosition ?? null
-                  const status = STATUS_CONFIG[t.status]
-                  return (
-                    <tr key={t.id} className="hover:bg-bg/50 transition-colors">
-                      <td className="px-5 py-4">
-                        {pos ? (
-                          <span className="w-8 h-8 rounded-full bg-primary-blue/10 text-primary-blue font-bold flex items-center justify-center">
-                            {pos}
-                          </span>
-                        ) : (
-                          <span className="text-text-secondary">-</span>
-                        )}
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <Link
-                          to="/tickets/$ticketId"
-                          params={{ ticketId: t.id }}
-                          className="font-semibold text-text-dark hover:underline hover:text-primary-green block"
+                queue.map((ticket: AdminQueueItem) => (
+                  <tr key={ticket.id} className="hover:bg-bg/50 transition">
+                    <td className="px-5 py-3 font-mono font-bold text-lg">
+                      {ticket.position ?? '—'}
+                    </td>
+                    <td className="px-5 py-3">
+                      <div>
+                        <p className="font-medium">#{ticket.ticketNumber}</p>
+                        <p className="text-xs text-text-secondary line-clamp-1">
+                          {ticket.subject}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3">
+                      <p className="font-medium">{ticket.customer?.name ?? '—'}</p>
+                      <p className="text-xs text-text-secondary">{ticket.customer?.email ?? ''}</p>
+                    </td>
+                    <td className="px-5 py-3">
+                      {ticket.status && STATUS_CONFIG[ticket.status as TicketStatus] ? (
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${STATUS_CONFIG[ticket.status as TicketStatus].bg} ${STATUS_CONFIG[ticket.status as TicketStatus].color}`}
                         >
-                          {t.ticketNumber ?? `#${t.id.slice(0, 8)}`}
-                        </Link>
-                        <span className="text-xs text-text-secondary">
-                          {t.subject ?? '—'}
+                          {STATUS_CONFIG[ticket.status as TicketStatus].label}
                         </span>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <p className="text-text-dark">{t.customer?.name ?? '—'}</p>
-                        <p className="text-xs text-text-secondary">{t.customer?.email ?? ''}</p>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${status.bg} ${status.color}`}>
-                          {status.label}
+                      ) : (
+                        <span className="text-xs text-text-secondary">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
+                      {ticket.priority ? (
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
+                            ticket.priority === 'CRITICAL' || ticket.priority === 'URGENT'
+                              ? 'bg-error/10 text-error'
+                              : ticket.priority === 'HIGH'
+                                ? 'bg-warning/10 text-warning'
+                                : ticket.priority === 'MEDIUM'
+                                  ? 'bg-primary-blue/10 text-primary-blue'
+                                  : 'bg-success/10 text-success'
+                          }`}
+                        >
+                          {ticket.priority}
                         </span>
-                      </td>
-
-                      <td className="px-5 py-4">
-                        {typeof t.estimatedWaitMinutes === 'number' ? (
-                          <span className="text-warning font-semibold">{t.estimatedWaitMinutes} min</span>
-                        ) : (
-                          <span className="text-text-secondary">-</span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })
+                      ) : (
+                        <span className="text-xs text-text-secondary">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-text-secondary">
+                      {ticket.estimatedWaitMinutes !== undefined
+                        ? `${ticket.estimatedWaitMinutes} min`
+                        : '—'}
+                    </td>
+                    <td className="px-5 py-3 text-xs text-text-secondary">
+                      {ticket.createdAt
+                        ? new Date(ticket.createdAt).toLocaleString('en-ET', {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          })
+                        : '—'}
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-            <p className="text-sm text-text-secondary">
-              Page {safePage} of {totalPages} · {queue.length} total
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={safePage === 1}
-                className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safePage === totalPages}
-                className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </motion.div>
   )

@@ -1,14 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'motion/react'
-import { ScrollText, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../../context/auth'
-import { api, ApiError } from '../../../lib/api'
-import type {
-  AuditLog,
-  AuditAction,
-  AuditLogPagination,
-} from '../../../lib/types'
+import { adminApi } from '@/apis/admin'
+import type { AuditLogType } from '@/apis/admin'
 import { LoadingSpinner } from '../../../components/LoadingSpinner'
 import { ErrorMessage } from '../../../components/ErrorMessage'
 
@@ -16,7 +12,7 @@ export const Route = createFileRoute('/_dashboard/admin/audit')({
   component: AdminAuditPage,
 })
 
-const ACTION_LABELS: Record<AuditAction, string> = {
+const ACTION_LABELS: Record<string, string> = {
   USER_CREATED: 'User Created',
   USER_UPDATED: 'User Updated',
   USER_BANNED: 'User Banned',
@@ -28,7 +24,7 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   LOGOUT: 'Logout',
 }
 
-const ACTION_STYLES: Record<AuditAction, string> = {
+const ACTION_STYLES: Record<string, string> = {
   USER_CREATED: 'bg-primary-green/10 text-primary-green',
   USER_UPDATED: 'bg-primary-blue/10 text-primary-blue',
   USER_BANNED: 'bg-error/10 text-error',
@@ -45,31 +41,12 @@ const PAGE_SIZE = 25
 function AdminAuditPage() {
   const { user } = useAuth()
 
-  const [logs, setLogs] = useState<AuditLog[]>([])
-  const [pagination, setPagination] = useState<AuditLogPagination | null>(null)
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  const loadLogs = async (targetPage = page) => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await api.admin.getAuditLogs(targetPage, PAGE_SIZE)
-      setLogs(data.logs as AuditLog[])
-      setPagination(data.pagination)
-      setPage(targetPage)
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load audit log')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: auditData, isLoading: loading, isError, error, refetch: loadLogs } = adminApi.getAuditLogs.usePaginated(page, PAGE_SIZE)
 
-  useEffect(() => {
-    if (user?.role !== 'ADMIN') return
-    void loadLogs(1)
-  }, [user])
+  const logs = auditData?.logs || []
+  const pagination = auditData?.pagination
 
   if (!user || user.role !== 'ADMIN') {
     return (
@@ -80,7 +57,7 @@ function AdminAuditPage() {
   }
 
   if (loading && logs.length === 0) return <LoadingSpinner size="lg" />
-  if (error && logs.length === 0) return <ErrorMessage message={error} retry={() => loadLogs()} />
+  if (isError && logs.length === 0) return <ErrorMessage message={error?.message || 'Failed to load audit log'} retry={() => loadLogs()} />
 
   const total = pagination?.total ?? 0
   const totalPages = pagination?.totalPages ?? 1
@@ -95,10 +72,9 @@ function AdminAuditPage() {
       <div className="w-full">
         <div className="flex items-start justify-between gap-3 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-text-dark mb-1">Audit Log</h1>
+            <h1 className="text-2xl font-bold text-text-dark mb-1">Audit Logs</h1>
             <p className="text-text-secondary">
-              A record of administrative actions across the system. ({total}{' '}
-              events)
+              System-wide audit trail for all administrative actions.
             </p>
           </div>
 
@@ -112,83 +88,46 @@ function AdminAuditPage() {
           </button>
         </div>
 
-        {error && logs.length > 0 && (
-          <div className="mb-5 p-4 rounded-xl border border-error/20 bg-error/10 text-error text-sm font-semibold flex items-center justify-between">
-            <span>{error}</span>
-            <button onClick={() => loadLogs()} className="underline">
-              Retry
-            </button>
-          </div>
-        )}
-
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
           <table className="w-full text-left text-sm">
             <thead className="bg-bg border-b border-border text-text-secondary">
               <tr>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  Action
-                </th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  Details
-                </th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  Performed By
-                </th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  When
-                </th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  IP
-                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Time</th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">User</th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Action</th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Details</th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">IP</th>
               </tr>
             </thead>
-
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border text-text-dark">
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-text-secondary">
-                    No audit events recorded yet.
+                  <td colSpan={5} className="px-5 py-8 text-center text-text-secondary">
+                    No audit logs found.
                   </td>
                 </tr>
               ) : (
-                logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-bg/50 transition-colors">
-                    <td className="px-5 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${ACTION_STYLES[log.action]}`}
-                      >
-                        <ScrollText size={12} />
-                        {ACTION_LABELS[log.action]}
-                      </span>
-                    </td>
-
-                    <td className="px-5 py-4">
-                      <p className="text-text-dark">{log.description}</p>
-                      <p className="text-xs text-text-secondary mt-0.5">
-                        {log.resourceType} · {log.resourceId}
-                      </p>
-                    </td>
-
-                    <td className="px-5 py-4">
-                      <p className="text-text-dark">
-                        {log.performedByUser.name}
-                      </p>
-                      <p className="text-xs text-text-secondary">
-                        {log.performedByUser.email}
-                      </p>
-                    </td>
-
-                    <td className="px-5 py-4 text-text-secondary whitespace-nowrap">
+                logs.map((log: AuditLogType) => (
+                  <tr key={log.id} className="hover:bg-bg/50 transition">
+                    <td className="px-5 py-3 whitespace-nowrap">
                       {new Date(log.createdAt).toLocaleString('en-ET', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
+                        dateStyle: 'short',
+                        timeStyle: 'short',
                       })}
                     </td>
-
-                    <td className="px-5 py-4 text-xs text-text-secondary font-mono">
+                    <td className="px-5 py-3">
+                      <p className="font-medium">{log.user?.name ?? '—'}</p>
+                      <p className="text-xs text-text-secondary">{log.user?.email ?? ''}</p>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${ACTION_STYLES[log.action] ?? 'bg-bg text-text-secondary'}`}>
+                        {ACTION_LABELS[log.action] ?? log.action}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-text-secondary line-clamp-1 max-w-xs">
+                      {log.details ?? '—'}
+                    </td>
+                    <td className="px-5 py-3 text-text-secondary font-mono text-xs">
                       {log.ipAddress ?? '—'}
                     </td>
                   </tr>
@@ -199,26 +138,27 @@ function AdminAuditPage() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-5">
-            <p className="text-xs text-text-secondary">
-              Page {page} of {totalPages}
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-text-secondary">
+              Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, total)} of {total} logs
             </p>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => loadLogs(page - 1)}
-                disabled={page <= 1 || loading}
-                className="p-2 rounded-lg border border-border text-text-dark hover:bg-bg transition disabled:opacity-40"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 rounded-lg border border-border text-sm text-text-dark hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
-                aria-label="Previous page"
               >
                 <ChevronLeft size={16} />
               </button>
+              <span className="text-sm text-text-secondary">
+                Page {page} of {totalPages}
+              </span>
               <button
-                onClick={() => loadLogs(page + 1)}
-                disabled={page >= totalPages || loading}
-                className="p-2 rounded-lg border border-border text-text-dark hover:bg-bg transition disabled:opacity-40"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="px-3 py-1.5 rounded-lg border border-border text-sm text-text-dark hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
-                aria-label="Next page"
               >
                 <ChevronRight size={16} />
               </button>

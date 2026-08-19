@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { useEffect, useState } from 'react'
-import { api, ApiError } from '../../lib/api'
+import { ticketsApi } from '@/apis/tickets'
 import { useAuth } from '../../context/auth'
 import type { TicketCategory, TicketPriority } from '../../lib/types'
 
@@ -34,7 +34,6 @@ function ReportPage() {
   const [primaryMobile, setPrimaryMobile] = useState('')
   const [email, setEmail] = useState('')
 
-  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Prefill contact from logged-in user (optional)
@@ -45,13 +44,28 @@ function ReportPage() {
     setPrimaryMobile(user.phone || '')
   }, [user])
 
+  const { mutate: createTicket, isPending: submitting } = ticketsApi.create.useMutation({
+    onSuccess: (created) => {
+      // Go to ticket detail page
+      navigate({ to: '/tickets/$ticketId', params: { ticketId: created.id } })
+    },
+    onError: (err) => {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('Failed to submit ticket. Please try again.')
+      }
+    },
+  })
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
 
-    if (!subject.trim()) return setError('Subject is required')
-    if (!serviceNumber.trim()) return setError('Service/Account number is required')
-    if (!problemDescription.trim()) return setError('Problem description is required')
+    if (!subject.trim() || !serviceNumber.trim() || !problemDescription.trim()) {
+      setError('Please fill in all required fields.')
+      return
+    }
 
     const extraLines: string[] = []
     if (accessTechnology) extraLines.push(`Access Technology: ${accessTechnology}`)
@@ -72,27 +86,13 @@ function ReportPage() {
         ? problemDescription.trim()
         : `${problemDescription.trim()}\n\n---\n${extraLines.join('\n')}`
 
-    try {
-      setSubmitting(true)
-      const created = await api.tickets.create({
-        subject: subject.trim(),
-        serviceNumber: serviceNumber.trim(),
-        description: finalDescription,
-        category,
-        priority,
-      })
-
-      // Go to ticket detail page
-      navigate({ to: '/tickets/$ticketId', params: { ticketId: created.id } })
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message)
-      } else {
-        setError('Failed to submit ticket. Please try again.')
-      }
-    } finally {
-      setSubmitting(false)
-    }
+    createTicket({
+      subject: subject.trim(),
+      serviceNumber: serviceNumber.trim(),
+      description: finalDescription,
+      category,
+      priority,
+    })
   }
 
   return (
@@ -103,262 +103,277 @@ function ReportPage() {
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
-      <h1 className="text-2xl font-bold text-text-dark mb-1">Report a Problem</h1>
+      <h1 className="text-2xl font-bold text-text-dark mb-1">Report an Issue</h1>
       <p className="text-text-secondary mb-8">
-        Fill in your service details so we can route your ticket to the right technician.
+        Submit a support ticket. Our team will review and respond promptly.
       </p>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-error bg-error/10 px-4 py-3 text-sm text-error">
+        <div className="mb-5 p-4 rounded-xl border border-error/20 bg-error/10 text-error text-sm font-semibold">
           {error}
         </div>
       )}
 
-      <form className="space-y-10" onSubmit={handleSubmit}>
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0 }}
-        >
-          <Section title="Ticket Info">
-            <Field label="Subject">
-              <input
-                type="text"
-                placeholder="e.g. Internet not working"
-                className={inputClass}
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-              />
-            </Field>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Required Fields */}
+        <div className="bg-card rounded-xl border border-border p-6 space-y-5">
+          <h2 className="text-lg font-semibold text-text-dark border-b border-border pb-3 mb-2">
+            Required Information
+          </h2>
 
-            <Field label="Category">
+          <div>
+            <label htmlFor="subject" className="block text-sm font-semibold text-text-secondary mb-2">
+              Subject <span className="text-error">*</span>
+            </label>
+            <input
+              id="subject"
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              required
+              className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="serviceNumber" className="block text-sm font-semibold text-text-secondary mb-2">
+              Service Number <span className="text-error">*</span>
+            </label>
+            <input
+              id="serviceNumber"
+              type="text"
+              value={serviceNumber}
+              onChange={(e) => setServiceNumber(e.target.value)}
+              required
+              placeholder="e.g., SRV-123456"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+            />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="category" className="block text-sm font-semibold text-text-secondary mb-2">
+                Category <span className="text-error">*</span>
+              </label>
               <select
-                className={inputClass}
+                id="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value as TicketCategory)}
+                required
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               >
                 <option value="CONNECTIVITY">Connectivity</option>
-                <option value="HARDWARE">Hardware</option>
-                <option value="SOFTWARE">Software</option>
                 <option value="BILLING">Billing</option>
+                <option value="HARDWARE">Hardware</option>
+                <option value="SERVICE_REQUEST">Service Request</option>
                 <option value="OTHER">Other</option>
               </select>
-            </Field>
+            </div>
 
-            <Field label="Priority">
+            <div>
+              <label htmlFor="priority" className="block text-sm font-semibold text-text-secondary mb-2">
+                Priority <span className="text-error">*</span>
+              </label>
               <select
-                className={inputClass}
+                id="priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as TicketPriority)}
+                required
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
                 <option value="URGENT">Urgent</option>
               </select>
-            </Field>
+            </div>
+          </div>
 
-            <Field label="Service Number / Account Number">
-              <input
-                type="text"
-                placeholder="e.g. 0911223344"
-                className={inputClass}
-                value={serviceNumber}
-                onChange={(e) => setServiceNumber(e.target.value)}
-              />
-            </Field>
-          </Section>
-        </motion.div>
+          <div>
+            <label htmlFor="problemDescription" className="block text-sm font-semibold text-text-secondary mb-2">
+              Problem Description <span className="text-error">*</span>
+            </label>
+            <textarea
+              id="problemDescription"
+              value={problemDescription}
+              onChange={(e) => setProblemDescription(e.target.value)}
+              required
+              rows={4}
+              placeholder="Describe the issue in detail..."
+              className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
+            />
+          </div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Section title="Service Details">
-            <Field label="Access Technology">
+        {/* Technical Details */}
+        <div className="bg-card rounded-xl border border-border p-6 space-y-5">
+          <h2 className="text-lg font-semibold text-text-dark border-b border-border pb-3 mb-2">
+            Technical Details (Optional)
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="accessTechnology" className="block text-sm font-semibold text-text-secondary mb-2">
+                Access Technology
+              </label>
               <select
-                className={inputClass}
+                id="accessTechnology"
                 value={accessTechnology}
                 onChange={(e) => setAccessTechnology(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               >
-                <option value="">Select technology</option>
-                <option value="FTTH">Fiber to the Home (FTTH)</option>
-                <option value="ADSL">ADSL</option>
-                <option value="FIXED_WIRELESS">Fixed Wireless</option>
+                <option value="">Select...</option>
+                <option value="Fiber">Fiber</option>
+                <option value="4G/LTE">4G/LTE</option>
+                <option value="5G">5G</option>
+                <option value="WiFi">WiFi</option>
+                <option value="Other">Other</option>
               </select>
-            </Field>
+            </div>
 
-            <Field label="Requested Bandwidth">
-              <select
-                className={inputClass}
+            <div>
+              <label htmlFor="bandwidth" className="block text-sm font-semibold text-text-secondary mb-2">
+                Requested Bandwidth
+              </label>
+              <input
+                id="bandwidth"
+                type="text"
                 value={bandwidth}
                 onChange={(e) => setBandwidth(e.target.value)}
-              >
-                <option value="">Select speed</option>
-                <option value="5 Mbps">5 Mbps</option>
-                <option value="7 Mbps">7 Mbps</option>
-                <option value="10 Mbps">10 Mbps</option>
-                <option value="20 Mbps">20 Mbps</option>
-                <option value="50 Mbps+">50 Mbps+</option>
-              </select>
-            </Field>
-          </Section>
-        </motion.div>
+                placeholder="e.g., 100 Mbps"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              />
+            </div>
+          </div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Section title="Location">
-            <Field label="Region / City">
+        {/* Location Details */}
+        <div className="bg-card rounded-xl border border-border p-6 space-y-5">
+          <h2 className="text-lg font-semibold text-text-dark border-b border-border pb-3 mb-2">
+            Location Details (Optional)
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="region" className="block text-sm font-semibold text-text-secondary mb-2">
+                Region
+              </label>
               <input
+                id="region"
                 type="text"
-                placeholder="Addis Ababa"
-                className={inputClass}
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
-            </Field>
-
-            <Field label="Sub-City / Zone">
+            </div>
+            <div>
+              <label htmlFor="subCity" className="block text-sm font-semibold text-text-secondary mb-2">
+                Sub City
+              </label>
               <input
+                id="subCity"
                 type="text"
-                placeholder="Bole"
-                className={inputClass}
                 value={subCity}
                 onChange={(e) => setSubCity(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
-            </Field>
-
-            <Field label="Woreda">
+            </div>
+            <div>
+              <label htmlFor="woreda" className="block text-sm font-semibold text-text-secondary mb-2">
+                Woreda
+              </label>
               <input
+                id="woreda"
                 type="text"
-                placeholder="e.g. 07"
-                className={inputClass}
                 value={woreda}
                 onChange={(e) => setWoreda(e.target.value)}
+                placeholder="e.g., 5"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
-            </Field>
-
-            <Field label="Kebele / Block">
+            </div>
+            <div>
+              <label htmlFor="kebele" className="block text-sm font-semibold text-text-secondary mb-2">
+                Kebele/Block
+              </label>
               <input
+                id="kebele"
                 type="text"
-                placeholder="e.g. 03"
-                className={inputClass}
                 value={kebele}
                 onChange={(e) => setKebele(e.target.value)}
+                placeholder="e.g., 12"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
-            </Field>
-
-            <Field label="House Number">
+            </div>
+            <div>
+              <label htmlFor="houseNumber" className="block text-sm font-semibold text-text-secondary mb-2">
+                House Number
+              </label>
               <input
+                id="houseNumber"
                 type="text"
-                placeholder="e.g. 245"
-                className={inputClass}
                 value={houseNumber}
                 onChange={(e) => setHouseNumber(e.target.value)}
+                placeholder="e.g., 45"
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
-            </Field>
-          </Section>
-        </motion.div>
+            </div>
+          </div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Section title="Contact & Problem">
-            <Field label="Full Name">
+        {/* Contact Information */}
+        <div className="bg-card rounded-xl border border-border p-6 space-y-5">
+          <h2 className="text-lg font-semibold text-text-dark border-b border-border pb-3 mb-2">
+            Contact Information
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="fullName" className="block text-sm font-semibold text-text-secondary mb-2">
+                Full Name
+              </label>
               <input
+                id="fullName"
                 type="text"
-                placeholder="Abebe Kebede"
-                className={inputClass}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
-            </Field>
-
-            <Field label="Primary Mobile Number">
+            </div>
+            <div>
+              <label htmlFor="primaryMobile" className="block text-sm font-semibold text-text-secondary mb-2">
+                Mobile Number
+              </label>
               <input
+                id="primaryMobile"
                 type="tel"
-                placeholder="09xx xxx xxx"
-                className={inputClass}
                 value={primaryMobile}
                 onChange={(e) => setPrimaryMobile(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
-            </Field>
-
-            <Field label="Email Address">
+            </div>
+            <div>
+              <label htmlFor="email" className="block text-sm font-semibold text-text-secondary mb-2">
+                Email
+              </label>
               <input
+                id="email"
                 type="email"
-                placeholder="you@example.com"
-                className={inputClass}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
-            </Field>
-
-            <Field label="Problem Description" full>
-              <textarea
-                rows={4}
-                placeholder="Describe the issue — e.g. no connection since morning, intermittent drops, slow speeds..."
-                className={inputClass}
-                value={problemDescription}
-                onChange={(e) => setProblemDescription(e.target.value)}
-              />
-            </Field>
-          </Section>
-        </motion.div>
+            </div>
+          </div>
+        </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full sm:w-auto px-8 py-3 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90 disabled:opacity-50"
+          className="w-full py-3 px-6 rounded-lg bg-primary-blue text-white font-medium text-lg hover:bg-primary-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? 'Submitting...' : 'Submit Ticket'}
         </button>
       </form>
     </motion.div>
-  )
-}
-
-const inputClass =
-  'w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green'
-
-function Section({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-4">
-        {title}
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
-    </div>
-  )
-}
-
-function Field({
-  label,
-  children,
-  full,
-}: {
-  label: string
-  children: React.ReactNode
-  full?: boolean
-}) {
-  return (
-    <div className={full ? 'sm:col-span-2' : ''}>
-      <label className="block text-sm font-medium text-text-dark mb-1">
-        {label}
-      </label>
-      {children}
-    </div>
   )
 }
