@@ -107,31 +107,37 @@ function AdminAuditPage() {
                   </td>
                 </tr>
               ) : (
-                logs.map((log: AuditLogType) => (
-                  <tr key={log.id} className="hover:bg-bg/50 transition">
-                    <td className="px-5 py-3 whitespace-nowrap">
-                      {new Date(log.createdAt).toLocaleString('en-ET', {
-                        dateStyle: 'short',
-                        timeStyle: 'short',
-                      })}
-                    </td>
-                    <td className="px-5 py-3">
-                      <p className="font-medium">{log.user.name}</p>
-                      <p className="text-xs text-text-secondary">{log.user.email}</p>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${ACTION_STYLES[log.action] ?? 'bg-bg text-text-secondary'}`}>
-                        {ACTION_LABELS[log.action] ?? log.action}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-text-secondary line-clamp-1 max-w-xs">
-                      {log.details ?? '—'}
-                    </td>
-                    <td className="px-5 py-3 text-text-secondary font-mono text-xs">
-                      {log.ipAddress ?? '—'}
-                    </td>
-                  </tr>
-                ))
+                logs.map((log: AuditLogType) => {
+                  const actor = log.performedByUser ?? log.user
+                  const actorFallback = log.performedBy ?? log.userId ?? 'Unknown user'
+                  const details = log.description ?? log.details ?? '—'
+
+                  return (
+                    <tr key={log.id} className="hover:bg-bg/50 transition">
+                      <td className="px-5 py-3 whitespace-nowrap">
+                        {new Date(log.createdAt).toLocaleString('en-ET', {
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                        })}
+                      </td>
+                      <td className="px-5 py-3">
+                        <p className="font-medium">{actor?.name ?? actorFallback}</p>
+                        <p className="text-xs text-text-secondary">{actor?.email ?? actorFallback}</p>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${ACTION_STYLES[log.action] ?? 'bg-bg text-text-secondary'}`}>
+                          {ACTION_LABELS[log.action] ?? log.action}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-text-secondary line-clamp-1 max-w-xs">
+                        {details}
+                      </td>
+                      <td className="px-5 py-3 text-text-secondary font-mono text-xs">
+                        {log.ipAddress ?? '—'}
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>

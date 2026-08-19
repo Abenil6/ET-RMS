@@ -32,13 +32,25 @@ export interface UpdateUserPayload {
 
 export interface AuditLogType {
   id: string
-  userId: string
+  userId?: string
   action: string
+  resourceType?: string
+  resourceId?: string
+  description?: string
+  changes?: string | null
+  performedBy?: string
   details: string | null
   ipAddress: string | null
   userAgent: string | null
+  status?: string
+  errorMessage?: string | null
   createdAt: string
-  user: {
+  user?: {
+    id: string
+    name: string
+    email: string
+  }
+  performedByUser?: {
     id: string
     name: string
     email: string
