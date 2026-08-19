@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { ticketsApi } from '@/apis/tickets'
-import { useQueuePosition } from '@/lib/useQueuePosition'
+import { useQueuePosition } from '@/hooks/useQueuePosition'
 import { useAuth } from '@/context/auth'
 import type { Ticket } from '@/lib/types'
 

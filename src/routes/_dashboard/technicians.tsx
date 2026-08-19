@@ -3,8 +3,8 @@ import { motion } from 'motion/react'
 import { Wrench } from 'lucide-react'
 import { useAuth } from '../../context/auth'
 import { adminApi } from '@/apis/admin'
-import { LoadingSpinner } from '../../components/LoadingSpinner'
-import { ErrorMessage } from '../../components/ErrorMessage'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { ErrorMessage } from '@/components/shared/ErrorMessage'
 
 export const Route = createFileRoute('/_dashboard/technicians')({
   component: TechniciansPage,

@@ -19,7 +19,6 @@ export type {
 } from './auth'
 
 export type {
-  TicketType,
   TicketFormType,
   TicketUpdateType,
   QueueInfoType,
@@ -41,7 +40,8 @@ export type {
   UpdateUserPayload,
   AuditLogType,
   QueueStatsType,
-  TechnicianType,
+  AdminQueueItem,
+  AdminQueueResponse,
 } from './admin'
 
 

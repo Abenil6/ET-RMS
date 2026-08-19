@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../context/auth'
 import { getAvatarUrl } from '#/lib/avatars'
 import { getAccessToken } from '@/apis/core'
-import ConfirmDialog from '../components/ConfirmDialog'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useState } from 'react'
 import { LogOut, Bell, CheckCheck } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'

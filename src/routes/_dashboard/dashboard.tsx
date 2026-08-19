@@ -36,13 +36,13 @@ import {
   ticketsToExport,
 } from '../../lib/dashboardStats'
 import type { KpiKey } from '../../lib/dashboardStats'
-import { useDateRange } from '../../lib/useDateRange'
-import { KpiCard } from '../../components/dashboard/KpiCard'
-import { ChartCard } from '../../components/dashboard/ChartCard'
-import { DateRangePicker } from '../../components/dashboard/DateRangePicker'
-import { PdfExportButton } from '../../components/dashboard/PdfExportButton'
-import { LoadingSpinner } from '../../components/LoadingSpinner'
-import { ErrorMessage } from '../../components/ErrorMessage'
+import { useDateRange } from '@/hooks/useDateRange'
+import { KpiCard } from '@/features/dashboard/components/KpiCard'
+import { ChartCard } from '@/features/dashboard/components/ChartCard'
+import { DateRangePicker } from '@/features/dashboard/components/DateRangePicker'
+import { PdfExportButton } from '@/features/dashboard/components/PdfExportButton'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { ErrorMessage } from '@/components/shared/ErrorMessage'
 import { Ticket } from 'lucide-react'
 
 export const Route = createFileRoute('/_dashboard/dashboard')({

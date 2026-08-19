@@ -1,10 +1,11 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher } from './core'
-import type { Ticket, TicketStatus, TicketPriority, TicketCategory } from '../lib/types'
+import type { Ticket, TicketCategory, TicketPriority } from '../lib/types'
 
-// types
-export type TicketType = Ticket
+// ============================================================
+// Types
+// ============================================================
 
 export interface TicketFormType {
   subject: string
@@ -17,17 +18,30 @@ export interface TicketFormType {
 export interface TicketUpdateType {
   subject?: string
   description?: string
+  status?: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'CANCELLED'
   priority?: TicketPriority
-  status?: TicketStatus
+}
+
+export interface TechnicianType {
+  id: string
+  name: string
+  email: string
+  openTickets?: number
+  activeTickets?: number
 }
 
 export interface QueueInfoType {
+  ticketNumber?: string
+  status?: string
   position: number
   ahead: number
   estimatedWaitMinutes: number
 }
 
-// api functions
+// ============================================================
+// Raw API Functions
+// ============================================================
+
 async function getTicketsFn(): Promise<Ticket[]> {
   return fetcher<Ticket[]>('/api/tickets')
 }
@@ -50,8 +64,10 @@ async function updateTicketFn(id: string, data: TicketUpdateType): Promise<Ticke
   })
 }
 
-async function getQueueFn(): Promise<QueueInfoType> {
-  return fetcher<QueueInfoType>('/api/tickets/queue')
+async function deleteTicketFn(id: string): Promise<void> {
+  return fetcher<void>(`/api/tickets/${id}`, {
+    method: 'DELETE',
+  })
 }
 
 async function assignTicketFn(id: string, technicianId: string): Promise<Ticket> {
@@ -81,11 +97,17 @@ async function reviewTicketFn(id: string, rating: number, comment: string): Prom
   })
 }
 
-async function getTechniciansFn(): Promise<Array<{ id: string; name: string; email: string; openTickets?: number }>> {
-  return fetcher<Array<{ id: string; name: string; email: string; openTickets?: number }>>('/api/admin/technicians')
+async function getQueueFn(ticketId: string): Promise<QueueInfoType> {
+  return fetcher<QueueInfoType>(`/api/tickets/${ticketId}/queue`)
 }
 
+async function getTechniciansFn(): Promise<TechnicianType[]> {
+  return fetcher<TechnicianType[]>('/api/technicians')
+}
+
+// ============================================================
 // Typed Hooks
+// ============================================================
 
 export const ticketsApi = {
   getAll: {
@@ -127,7 +149,7 @@ export const ticketsApi = {
       useMutation({
         mutationFn: ({ id, data }) => updateTicketFn(id, data),
         meta: {
-          successMessage: 'Ticket updated.',
+          successMessage: 'Ticket updated successfully.',
           errorMessage: 'Failed to update ticket.',
           invalidateQueries: ['tickets'],
         },
@@ -135,12 +157,15 @@ export const ticketsApi = {
       }),
   },
 
-  getQueue: {
-    useQuery: (options?: UseQueryOptions<QueueInfoType, Error, QueueInfoType, string[]>) =>
-      useQuery({
-        queryKey: ['tickets', 'queue'],
-        queryFn: getQueueFn,
-        meta: { errorMessage: 'Failed to load queue position.' },
+  delete: {
+    useMutation: (options?: UseMutationOptions<void, Error, string>) =>
+      useMutation({
+        mutationFn: deleteTicketFn,
+        meta: {
+          successMessage: 'Ticket deleted successfully.',
+          errorMessage: 'Failed to delete ticket.',
+          invalidateQueries: ['tickets'],
+        },
         ...options,
       }),
   },
@@ -197,10 +222,21 @@ export const ticketsApi = {
       }),
   },
 
-  getTechnicians: {
-    useQuery: (options?: UseQueryOptions<Array<{ id: string; name: string; email: string; openTickets?: number }>, Error, Array<{ id: string; name: string; email: string; openTickets?: number }>, string[]>) =>
+  getQueue: {
+    useQuery: (ticketId: string, options?: UseQueryOptions<QueueInfoType, Error, QueueInfoType, string[]>) =>
       useQuery({
-        queryKey: ['admin', 'technicians'],
+        queryKey: ['tickets', 'queue', ticketId],
+        queryFn: () => getQueueFn(ticketId),
+        meta: { errorMessage: 'Failed to load queue position.' },
+        enabled: !!ticketId,
+        ...options,
+      }),
+  },
+
+  getTechnicians: {
+    useQuery: (options?: UseQueryOptions<TechnicianType[], Error, TechnicianType[], string[]>) =>
+      useQuery({
+        queryKey: ['tickets', 'technicians'],
         queryFn: getTechniciansFn,
         meta: { errorMessage: 'Failed to load technicians.' },
         ...options,

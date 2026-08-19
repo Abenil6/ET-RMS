@@ -1,6 +1,6 @@
 import { CalendarRange } from 'lucide-react'
-import { PRESET_OPTIONS, formatRange } from '../../lib/useDateRange'
-import type { RangePreset } from '../../lib/useDateRange'
+import { PRESET_OPTIONS, formatRange } from '@/hooks/useDateRange'
+import type { RangePreset } from '@/hooks/useDateRange'
 import type { DateRange } from '../../lib/dashboardStats'
 
 type Props = {
