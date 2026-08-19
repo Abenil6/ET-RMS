@@ -91,8 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const { data: meData, isLoading: meLoading, error: meError } =
     authApi.me.useQuery({
-      enabled: !!getAccessToken(), // Only fetch if token exists
-      retry: false, // Don't retry on 401
+      enabled: !!getAccessToken(),
+      retry: false,
     })
 
   useEffect(() => {

@@ -167,7 +167,7 @@ export const authApi = {
   },
 
   me: {
-    useQuery: (options?: UseQueryOptions<User, Error, User, string[]>) =>
+    useQuery: (options?: Omit<UseQueryOptions<User, Error, User, string[]>, 'queryKey' | 'queryFn'>) =>
       useQuery({
         queryKey: ['auth', 'me'],
         queryFn: meFn,
