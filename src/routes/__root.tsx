@@ -9,7 +9,8 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import { AuthProvider, useAuth } from '../context/auth'
+import { AuthBootstrap } from '@/features/auth/components/AuthBootstrap'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '../apis/queryClient'
 import logo from '../assets/Ethio-Tele.jpeg'
@@ -74,7 +75,7 @@ function RootComponent() {
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
+          <AuthBootstrap>
             {!isDashboard && <Nav />}
             <Outlet />
             {!isDashboard && <Footer />}
@@ -87,7 +88,7 @@ function RootComponent() {
                 },
               ]}
             />
-          </AuthProvider>
+          </AuthBootstrap>
           <Scripts />
         </QueryClientProvider>
       </body>

@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { BRANCHES, TIME_SLOTS } from '../../../data/appointments'
 import { motion } from 'motion/react'
 import api from '@/apis'
-import { useAuth } from '../../../context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 
 export const Route = createFileRoute('/_dashboard/appointments/new')({
   component: NewAppointmentPage,

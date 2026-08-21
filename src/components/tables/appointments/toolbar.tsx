@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '../../ui/select'
 import type { AppointmentStatus } from '../../../lib/types'
-import { useAuth } from '../../../context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 
 interface AppointmentsToolbarProps<TData> {
   table: Table<TData>
@@ -35,6 +35,14 @@ const BRANCH_OPTIONS = [
   'Jimma',
 ]
 
+function getSelectFilterValue(value: unknown) {
+  return Array.isArray(value) ? value.join(',') : ''
+}
+
+function getTextFilterValue(value: unknown) {
+  return typeof value === 'string' ? value : ''
+}
+
 export function AppointmentsToolbar<TData>({
   table,
 }: AppointmentsToolbarProps<TData>) {
@@ -47,7 +55,9 @@ export function AppointmentsToolbar<TData>({
         <div className="flex flex-1 items-center space-x-2">
           <Input
             placeholder="Search by notes..."
-            value={(table.getColumn('notes')?.getFilterValue() as string) ?? ''}
+            value={getTextFilterValue(
+              table.getColumn('notes')?.getFilterValue(),
+            )}
             onChange={(event) =>
               table.getColumn('notes')?.setFilterValue(event.target.value)
             }
@@ -56,11 +66,9 @@ export function AppointmentsToolbar<TData>({
 
           {/* Status Filter */}
           <Select
-            value={
-              (table.getColumn('status')?.getFilterValue() as string[])?.join(
-                ',',
-              ) ?? ''
-            }
+            value={getSelectFilterValue(
+              table.getColumn('status')?.getFilterValue(),
+            )}
             onValueChange={(value) => {
               const column = table.getColumn('status')
               if (value) {
@@ -84,11 +92,9 @@ export function AppointmentsToolbar<TData>({
 
           {/* Branch Filter */}
           <Select
-            value={
-              (table.getColumn('branch')?.getFilterValue() as string[])?.join(
-                ',',
-              ) ?? ''
-            }
+            value={getSelectFilterValue(
+              table.getColumn('branch')?.getFilterValue(),
+            )}
             onValueChange={(value) => {
               const column = table.getColumn('branch')
               if (value) {

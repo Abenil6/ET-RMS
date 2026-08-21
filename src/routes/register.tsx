@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { HeroShowcase } from '../components/HeroShowcase'
-import { useAuth } from '../context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 
 export const Route = createFileRoute('/register')({
   component: RegisterPage,

@@ -5,7 +5,7 @@ import {
   useNavigate,
   redirect,
 } from '@tanstack/react-router'
-import { useAuth } from '../context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import { getAvatarUrl } from '#/lib/avatars'
 import { getAccessToken } from '@/apis/core'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'

@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Mail, Shield, Edit2, X, Phone } from 'lucide-react'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useEffect, useState } from 'react'
-import { useAuth } from '../../context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   AVATAR_STYLES,
