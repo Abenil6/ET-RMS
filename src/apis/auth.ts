@@ -2,7 +2,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher, setTokens, clearTokens } from './core'
 
-//types
+// types
 
 export interface User {
   id: string
@@ -53,21 +53,21 @@ export interface ResetPasswordPayload {
 
 // raw api functions (what the hooks use under the hood)
 
-async function loginFn(data: LoginPayload): Promise<AuthTokens> {
+export async function loginFn(data: LoginPayload): Promise<AuthTokens> {
   return fetcher<AuthTokens>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-async function registerFn(data: RegisterPayload): Promise<AuthTokens> {
+export async function registerFn(data: RegisterPayload): Promise<AuthTokens> {
   return fetcher<AuthTokens>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-async function logoutFn(): Promise<void> {
+export async function logoutFn(): Promise<void> {
   const refreshToken = localStorage.getItem('refresh_token')
   if (!refreshToken) {
     clearTokens()
@@ -84,11 +84,11 @@ async function logoutFn(): Promise<void> {
   }
 }
 
-async function meFn(): Promise<User> {
+export async function meFn(): Promise<User> {
   return fetcher<User>('/api/auth/me')
 }
 
-async function updateProfileFn(data: UpdateProfilePayload): Promise<User> {
+export async function updateProfileFn(data: UpdateProfilePayload): Promise<User> {
   return fetcher<User>('/api/auth/me', {
     method: 'PATCH',
     body: JSON.stringify(data),

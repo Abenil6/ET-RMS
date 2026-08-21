@@ -15,17 +15,33 @@ export const Route = createFileRoute('/_dashboard/queue')({
 function QueuePage() {
   const { user } = useAuth()
 
-  const { data: queueData, isLoading: loading, isError, error, refetch: loadQueue } = api.Admin.getAdminQueue.useQuery()
+  const {
+    data: queueData,
+    isLoading: loading,
+    isError,
+    error,
+    refetch: loadQueue,
+  } = api.Admin.getAdminQueue.useQuery()
 
   const queue = queueData?.queue || []
   const total = queueData?.total || 0
 
   if (!user || user.role !== 'ADMIN') {
-    return <div className="p-8 text-center text-text-secondary">Unauthorized access.</div>
+    return (
+      <div className="p-8 text-center text-text-secondary">
+        Unauthorized access.
+      </div>
+    )
   }
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error.message || 'Failed to load queue'} retry={() => loadQueue()} />
+  if (isError)
+    return (
+      <ErrorMessage
+        message={error.message || 'Failed to load queue'}
+        retry={() => loadQueue()}
+      />
+    )
 
   return (
     <motion.div
@@ -38,7 +54,9 @@ function QueuePage() {
       <div className="w-full">
         <div className="flex items-start justify-between gap-3 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-text-dark mb-1">Queue Management</h1>
+            <h1 className="text-2xl font-bold text-text-dark mb-1">
+              Queue Management
+            </h1>
             <p className="text-text-secondary">
               Live ordered view of all pending customer tickets. ({total} total)
             </p>
@@ -57,19 +75,36 @@ function QueuePage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-bg border-b border-border text-text-secondary">
               <tr>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Position</th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Ticket</th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Customer</th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Status</th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Priority</th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Est. Wait</th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Created</th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  Position
+                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  Ticket
+                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  Customer
+                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  Status
+                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  Priority
+                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  Est. Wait
+                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  Created
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-text-dark">
               {queue.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-text-secondary">
+                  <td
+                    colSpan={7}
+                    className="px-5 py-8 text-center text-text-secondary"
+                  >
                     Queue is empty
                   </td>
                 </tr>
@@ -89,7 +124,9 @@ function QueuePage() {
                     </td>
                     <td className="px-5 py-3">
                       <p className="font-medium">{ticket.customer.name}</p>
-                      <p className="text-xs text-text-secondary">{ticket.customer.email}</p>
+                      <p className="text-xs text-text-secondary">
+                        {ticket.customer.email}
+                      </p>
                     </td>
                     <td className="px-5 py-3">
                       <span
@@ -102,7 +139,8 @@ function QueuePage() {
                       {
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                            ticket.priority === 'CRITICAL' || ticket.priority === 'URGENT'
+                            ticket.priority === 'CRITICAL' ||
+                            ticket.priority === 'URGENT'
                               ? 'bg-error/10 text-error'
                               : ticket.priority === 'HIGH'
                                 ? 'bg-warning/10 text-warning'
