@@ -1,6 +1,6 @@
 import api from '@/apis'
 import { useQueuePosition } from '@/hooks/useQueuePosition'
-import { useAuth } from '@/context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 
 export function useTicketDetail(ticketId: string) {
   const { user } = useAuth()

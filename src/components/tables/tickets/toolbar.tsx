@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '../../ui/select'
 import { STATUS_CONFIG, PRIORITY_CONFIG, CATEGORY_LABELS } from '../../../data/tickets'
-import { useAuth } from '../../../context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useState } from 'react'
 
 interface TicketsToolbarProps<TData> {

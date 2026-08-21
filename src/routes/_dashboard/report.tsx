@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import api from '@/apis'
-import { useAuth } from '../../context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import type { TicketCategory, TicketPriority } from '../../lib/types'
 
 export const Route = createFileRoute('/_dashboard/report')({

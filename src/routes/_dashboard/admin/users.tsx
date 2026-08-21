@@ -11,7 +11,7 @@ import {
   Trash2,
   RefreshCw,
 } from 'lucide-react'
-import { useAuth } from '../../../context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import api from '@/apis'
 import type { AdminUserType } from '@/apis'
 import type { Role } from '../../../lib/types'

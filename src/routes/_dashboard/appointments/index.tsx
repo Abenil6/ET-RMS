@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo } from 'react'
-import { useAuth } from '../../../context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import api from '@/apis'
 import { motion } from 'motion/react'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'

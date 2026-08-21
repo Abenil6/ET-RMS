@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useAuth } from '../context/auth'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
