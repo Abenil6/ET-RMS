@@ -1,91 +1,100 @@
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Modal } from '@/components/shared/Modal'
-import type { CreateUserPayload } from '@/apis'
-import type { Role } from '@/lib/types'
+import { inviteUserSchema, type InviteUserInput } from '@/features/admin/schemas'
 
-const ROLE_LABELS: Record<Role, string> = {
+const ROLE_LABELS = {
   CUSTOMER: 'Customer',
   TECHNICIAN: 'Technician',
   ADMIN: 'Admin',
-}
+} as const
 
 interface InviteUserModalProps {
-  onSubmit: (data: CreateUserPayload) => void
+  onSubmit: (data: InviteUserInput & { password: string }) => void
   onCancel: () => void
 }
 
 export function InviteUserModal({ onSubmit, onCancel }: InviteUserModalProps) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [role, setRole] = useState<Role>('CUSTOMER')
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    onSubmit({ name, email, password, role })
-  }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<InviteUserInput & { password: string }>({
+    resolver: zodResolver(inviteUserSchema.extend({ password: inviteUserSchema.shape.name })),
+    defaultValues: {
+      role: 'CUSTOMER',
+    },
+  })
 
   return (
     <Modal onClose={onCancel} title="Invite User">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-text-secondary mb-2">
-            Name
-          </label>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">Name</label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            {...register('name')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            required
           />
+          {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
         </div>
+
         <div>
-          <label className="block text-sm font-semibold text-text-secondary mb-2">
-            Email
-          </label>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">Email</label>
           <input
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            {...register('email')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            required
           />
+          {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
         </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">
+            Phone (optional)
+          </label>
+          <input
+            type="tel"
+            {...register('phone')}
+            className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+          />
+          {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>}
+        </div>
+
         <div>
           <label className="block text-sm font-semibold text-text-secondary mb-2">
             Temporary Password
           </label>
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            {...register('password')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            required
           />
+          {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
         </div>
+
         <div>
-          <label className="block text-sm font-semibold text-text-secondary mb-2">
-            Role
-          </label>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">Role</label>
           <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as Role)}
+            {...register('role')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
           >
-            {(Object.keys(ROLE_LABELS) as Role[]).map((r) => (
-              <option key={r} value={r}>
-                {ROLE_LABELS[r]}
+            {Object.entries(ROLE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
               </option>
             ))}
           </select>
+          {errors.role && <p className="mt-1 text-xs text-red-500">{errors.role.message}</p>}
         </div>
+
         <div className="flex gap-2 pt-2">
           <button
             type="submit"
-            className="flex-1 px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition"
+            disabled={isSubmitting}
+            className="flex-1 px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition disabled:opacity-50"
           >
-            Invite
+            {isSubmitting ? 'Inviting...' : 'Invite'}
           </button>
           <button
             type="button"

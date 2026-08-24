@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+import axios from 'axios'
 
 export class ApiError extends Error {
   constructor(
@@ -11,34 +11,28 @@ export class ApiError extends Error {
   }
 }
 
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 /**
  * TanStack Start supports SSR.
  *
  * localStorage does NOT exist on the server, so we keep the
  * tokens in memory and only read/write localStorage in the browser.
  */
-
 let accessToken: string | null = null
 let refreshToken: string | null = null
 
-function isBrowser() {
+function isBrowser(): boolean {
   return typeof window !== 'undefined'
 }
 
-function loadTokens() {
+function loadTokens(): void {
   if (!isBrowser()) return
   accessToken = window.localStorage.getItem('access_token')
   refreshToken = window.localStorage.getItem('refresh_token')
 }
 
-function getRefreshToken() {
-  if (refreshToken === null && isBrowser()) {
-    loadTokens()
-  }
-  return refreshToken
-}
-
-function saveTokens(access: string, refresh: string) {
+export function saveTokens(access: string, refresh: string): void {
   accessToken = access
   refreshToken = refresh
   if (!isBrowser()) return
@@ -46,11 +40,11 @@ function saveTokens(access: string, refresh: string) {
   window.localStorage.setItem('refresh_token', refresh)
 }
 
-export function setTokens(access: string, refresh: string) {
+export function setTokens(access: string, refresh: string): void {
   saveTokens(access, refresh)
 }
 
-export function clearTokens() {
+export function clearTokens(): void {
   accessToken = null
   refreshToken = null
   if (!isBrowser()) return
@@ -58,17 +52,30 @@ export function clearTokens() {
   window.localStorage.removeItem('refresh_token')
 }
 
-export function getAccessToken() {
+export function getAccessToken(): string | null {
   if (accessToken === null && isBrowser()) {
     loadTokens()
   }
   return accessToken
 }
 
+export function getRefreshToken(): string | null {
+  if (refreshToken === null && isBrowser()) {
+    loadTokens()
+  }
+  return refreshToken
+}
+
+type AuthRefreshResponse = {
+  accessToken: string
+  refreshToken: string
+}
+
 /**
- * Automatically refresh access token when needed.
+ * Automatically refresh access token using raw axios
+ * to prevent circular interceptor loops in apiClient.
  */
-async function refreshAccessToken(): Promise<boolean> {
+export async function refreshAccessToken(): Promise<boolean> {
   const currentRefreshToken = getRefreshToken()
 
   if (!currentRefreshToken) {
@@ -76,32 +83,24 @@ async function refreshAccessToken(): Promise<boolean> {
   }
 
   try {
-    const response = await fetch(`${API_BASE}/api/auth/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        refreshToken: currentRefreshToken,
-      }),
-    })
+    const response = await axios.post<{ data?: AuthRefreshResponse }>(
+      `${API_BASE}/api/auth/refresh`,
+      { refreshToken: currentRefreshToken },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    )
 
-    if (!response.ok) {
-      clearTokens()
-      return false
-    }
+    const data = response.data?.data
 
-    const json = await response.json()
-
-    const data = json.data
-
-    if (!data?.accessToken || !data?.refreshToken) {
+    if (!data || !data.accessToken || !data.refreshToken) {
       clearTokens()
       return false
     }
 
     setTokens(data.accessToken, data.refreshToken)
-
     return true
   } catch {
     clearTokens()
@@ -110,65 +109,19 @@ async function refreshAccessToken(): Promise<boolean> {
 }
 
 /**
- * Generic API fetcher with auth + auto token refresh.
+ * Generic HTTP fetcher using apiClient
+ * This is the execution engine for all API calls
  */
-export async function fetcher<T>(
-  endpoint: string,
-  options: RequestInit = {},
-): Promise<T> {
-  if (isBrowser() && accessToken === null) {
-    loadTokens()
+export async function fetcher<T>(url: string, options?: RequestInit): Promise<T> {
+  const { apiClient } = await import('./apiClient')
+  
+  const config = {
+    url,
+    method: (options?.method || 'GET') as string,
+    ...(options?.body && { data: options.body }),
+    headers: options?.headers as Record<string, string>,
   }
 
-  const makeRequest = async (token: string | null) => {
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token
-          ? {
-              Authorization: `Bearer ${token}`,
-            }
-          : {}),
-        ...options.headers,
-      },
-    }
-
-    return fetch(`${API_BASE}${endpoint}`, config)
-  }
-
-  let response = await makeRequest(accessToken)
-
-  /**
-   * If access token expired, try refresh once.
-   */
-  if (response.status === 401 && getRefreshToken()) {
-    const refreshed = await refreshAccessToken()
-
-    if (refreshed) {
-      response = await makeRequest(accessToken)
-    }
-  }
-
-  if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({
-        error: 'Network error',
-      }))
-
-    throw new ApiError(
-      response.status,
-      error.error || error.message || `HTTP ${response.status}`,
-      error.errors,
-    )
-  }
-
-  if (response.status === 204) {
-    return {} as T
-  }
-
-  const json = await response.json()
-
-  return json.data
+  const response = await apiClient.request<T>(config)
+  return response.data
 }
