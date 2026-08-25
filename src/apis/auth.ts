@@ -1,17 +1,10 @@
-/**
- * ============================================================
- * Auth Resource API
- * Phase 3: Centralized Resource API Layer
- * ============================================================
- */
+
 
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher, setTokens, clearTokens } from './core'
 
-// ============================================================
-// Backend & DB Interfaces
-// ============================================================
+
 
 export interface User {
   id: string
@@ -28,9 +21,6 @@ export interface AuthTokens {
   user: User
 }
 
-// ============================================================
-// Payload Imports (from Phase 2 domain schemas)
-// ============================================================
 
 export type {
   LoginInput,
@@ -77,21 +67,21 @@ export type ResetPasswordPayload = {
 // Raw Execution Functions
 // ============================================================
 
-export async function loginFn(data: LoginPayload): Promise<AuthTokens> {
+async function login(data: LoginPayload): Promise<AuthTokens> {
   return fetcher<AuthTokens>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-export async function registerFn(data: RegisterPayload): Promise<AuthTokens> {
+async function register(data: RegisterPayload): Promise<AuthTokens> {
   return fetcher<AuthTokens>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-export async function logoutFn(): Promise<void> {
+async function logout(): Promise<void> {
   const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null
   if (!refreshToken) {
     clearTokens()
@@ -108,11 +98,11 @@ export async function logoutFn(): Promise<void> {
   }
 }
 
-export async function meFn(): Promise<User> {
+async function getCurrentUser(): Promise<User> {
   return fetcher<User>('/api/auth/me')
 }
 
-export async function updateProfileFn(data: UpdateProfilePayload): Promise<User> {
+async function updateProfile(data: UpdateProfilePayload): Promise<User> {
   return fetcher<User>('/api/auth/me', {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -158,7 +148,7 @@ export const authApi = {
   login: {
     useMutation: (options?: UseMutationOptions<AuthTokens, Error, LoginPayload>) =>
       useMutation({
-        mutationFn: loginFn,
+        mutationFn: login,
         meta: {
           successMessage: 'Welcome back!',
           errorMessage: 'Login failed. Please check your credentials.',
@@ -178,7 +168,7 @@ export const authApi = {
   register: {
     useMutation: (options?: UseMutationOptions<AuthTokens, Error, RegisterPayload>) =>
       useMutation({
-        mutationFn: registerFn,
+        mutationFn: register,
         meta: {
           successMessage: 'Account created! Please check your email.',
           errorMessage: 'Registration failed. Please try again.',
@@ -198,7 +188,7 @@ export const authApi = {
   logout: {
     useMutation: (options?: UseMutationOptions<void, Error, void>) =>
       useMutation({
-        mutationFn: logoutFn,
+        mutationFn: logout,
         meta: {
           successMessage: 'Logged out successfully.',
           errorMessage: 'Logout failed.',
@@ -215,7 +205,7 @@ export const authApi = {
     useQuery: (options?: Omit<UseQueryOptions<User, Error, User, string[]>, 'queryKey' | 'queryFn'>) =>
       useQuery({
         queryKey: ['auth', 'me'],
-        queryFn: meFn,
+        queryFn: getCurrentUser,
         meta: {
           errorMessage: 'Failed to load user session.',
         },
@@ -231,7 +221,7 @@ export const authApi = {
   updateProfile: {
     useMutation: (options?: UseMutationOptions<User, Error, UpdateProfilePayload>) =>
       useMutation({
-        mutationFn: updateProfileFn,
+        mutationFn: updateProfile,
         meta: {
           successMessage: 'Profile updated.',
           errorMessage: 'Failed to update profile.',
