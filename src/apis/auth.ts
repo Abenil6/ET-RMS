@@ -77,21 +77,21 @@ export type ResetPasswordPayload = {
 // Raw Execution Functions
 // ============================================================
 
-async function login(data: LoginPayload): Promise<AuthTokens> {
+export async function loginFn(data: LoginPayload): Promise<AuthTokens> {
   return fetcher<AuthTokens>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-async function register(data: RegisterPayload): Promise<AuthTokens> {
+export async function registerFn(data: RegisterPayload): Promise<AuthTokens> {
   return fetcher<AuthTokens>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-async function logout(): Promise<void> {
+export async function logoutFn(): Promise<void> {
   const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null
   if (!refreshToken) {
     clearTokens()
@@ -108,11 +108,11 @@ async function logout(): Promise<void> {
   }
 }
 
-async function getCurrentUser(): Promise<User> {
+export async function meFn(): Promise<User> {
   return fetcher<User>('/api/auth/me')
 }
 
-async function updateProfile(data: UpdateProfilePayload): Promise<User> {
+export async function updateProfileFn(data: UpdateProfilePayload): Promise<User> {
   return fetcher<User>('/api/auth/me', {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -158,7 +158,7 @@ export const authApi = {
   login: {
     useMutation: (options?: UseMutationOptions<AuthTokens, Error, LoginPayload>) =>
       useMutation({
-        mutationFn: login,
+        mutationFn: loginFn,
         meta: {
           successMessage: 'Welcome back!',
           errorMessage: 'Login failed. Please check your credentials.',
@@ -178,7 +178,7 @@ export const authApi = {
   register: {
     useMutation: (options?: UseMutationOptions<AuthTokens, Error, RegisterPayload>) =>
       useMutation({
-        mutationFn: register,
+        mutationFn: registerFn,
         meta: {
           successMessage: 'Account created! Please check your email.',
           errorMessage: 'Registration failed. Please try again.',
@@ -198,7 +198,7 @@ export const authApi = {
   logout: {
     useMutation: (options?: UseMutationOptions<void, Error, void>) =>
       useMutation({
-        mutationFn: logout,
+        mutationFn: logoutFn,
         meta: {
           successMessage: 'Logged out successfully.',
           errorMessage: 'Logout failed.',
@@ -215,7 +215,7 @@ export const authApi = {
     useQuery: (options?: Omit<UseQueryOptions<User, Error, User, string[]>, 'queryKey' | 'queryFn'>) =>
       useQuery({
         queryKey: ['auth', 'me'],
-        queryFn: getCurrentUser,
+        queryFn: meFn,
         meta: {
           errorMessage: 'Failed to load user session.',
         },
@@ -231,7 +231,7 @@ export const authApi = {
   updateProfile: {
     useMutation: (options?: UseMutationOptions<User, Error, UpdateProfilePayload>) =>
       useMutation({
-        mutationFn: updateProfile,
+        mutationFn: updateProfileFn,
         meta: {
           successMessage: 'Profile updated.',
           errorMessage: 'Failed to update profile.',
