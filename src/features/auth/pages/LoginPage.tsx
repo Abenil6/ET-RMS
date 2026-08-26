@@ -5,7 +5,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { HeroShowcase } from '@/components/HeroShowcase'
-import { loginSchema, type LoginInput } from '@/features/auth/schemas'
+import { loginSchema } from '@/types/user'
+import type { LoginInput } from '@/types/user'
 import api from '@/apis'
 
 export function LoginPage() {

@@ -6,7 +6,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import api from '@/apis'
 import { HeroShowcase } from '@/components/HeroShowcase'
-import { resetPasswordSchema, type ResetPasswordInput } from '@/features/auth/schemas'
+import { resetPasswordSchema } from '@/types/user'
+import type { ResetPasswordInput } from '@/types/user'
 
 const routeApi = getRouteApi('/reset-password')
 
@@ -47,7 +48,7 @@ export function ResetPasswordPage() {
       return
     }
 
-    resetPassword({ token, ...data })
+    resetPassword({ token, newPassword: data.password })
   }
 
   if (submitted) {

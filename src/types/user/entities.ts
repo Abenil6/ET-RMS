@@ -1,4 +1,4 @@
-import type { Role } from '../core'
+import type { Role } from './schemas'
 
 export interface User {
   id: string
@@ -18,6 +18,7 @@ export interface AdminUser extends User {
 export interface AuthTokens {
   accessToken: string
   refreshToken: string
+  user: User
 }
 
 export interface AuthResponse {

@@ -5,7 +5,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { HeroShowcase } from '@/components/HeroShowcase'
-import { registerSchema, type RegisterInput } from '@/features/auth/schemas'
+import { registerSchema } from '@/types/user'
+import type { RegisterInput } from '@/types/user'
 import api from '@/apis'
 
 export function RegisterPage() {

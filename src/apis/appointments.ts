@@ -10,46 +10,21 @@ import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher } from './core'
 
 // ============================================================
-// Backend & DB Interfaces
+// Type Imports
 // ============================================================
 
-export interface Appointment {
-  id: string
-  branch: string
-  slotTime: string
-  status: 'RESERVED' | 'COMPLETED' | 'CANCELLED'
-  notes: string | null
-  createdAt: string
-  userId: string
-  user: {
-    id: string
-    name: string
-    email: string
-  }
-}
-
-// ============================================================
-// Payload Imports (from Phase 2 domain schemas)
-// ============================================================
-
-export type {
+import type { Appointment } from '@/types/appointments'
+import type {
   CreateAppointmentInput,
   UpdateAppointmentInput,
   AppointmentFormInput,
-} from '@/features/appointments/schemas'
+} from '@/types/appointments'
 
-// Re-export for backwards compatibility
+// Re-export for convenience
+export type { Appointment, CreateAppointmentInput, UpdateAppointmentInput, AppointmentFormInput }
+
+// Legacy aliases
 export type AppointmentType = Appointment
-
-export type AppointmentFormType = {
-  branch: string
-  slotTime: string
-  notes?: string
-}
-
-export type AppointmentUpdateType = {
-  status: 'CANCELLED' | 'COMPLETED'
-}
 
 // ============================================================
 // Raw Execution Functions
@@ -59,14 +34,14 @@ async function getAllAppointments(): Promise<Appointment[]> {
   return fetcher<Appointment[]>('/api/appointments')
 }
 
-async function createAppointment(data: AppointmentFormType): Promise<Appointment> {
+async function createAppointment(data: CreateAppointmentInput): Promise<Appointment> {
   return fetcher<Appointment>('/api/appointments', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-async function updateAppointment(id: string, data: AppointmentUpdateType): Promise<Appointment> {
+async function updateAppointment(id: string, data: UpdateAppointmentInput): Promise<Appointment> {
   return fetcher<Appointment>(`/api/appointments/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -96,7 +71,7 @@ export const appointmentsApi = {
    * Automatically invalidates appointments list on success
    */
   create: {
-    useMutation: (options?: UseMutationOptions<Appointment, Error, AppointmentFormType>) =>
+    useMutation: (options?: UseMutationOptions<Appointment, Error, CreateAppointmentInput>) =>
       useMutation({
         mutationFn: createAppointment,
         meta: {
@@ -113,7 +88,7 @@ export const appointmentsApi = {
    * Automatically invalidates appointments cache on success
    */
   update: {
-    useMutation: (options?: UseMutationOptions<Appointment, Error, { id: string; data: AppointmentUpdateType }>) =>
+    useMutation: (options?: UseMutationOptions<Appointment, Error, { id: string; data: UpdateAppointmentInput }>) =>
       useMutation({
         mutationFn: ({ id, data }) => updateAppointment(id, data),
         meta: {

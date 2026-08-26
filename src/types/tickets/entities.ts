@@ -1,4 +1,4 @@
-import type { TicketStatus, TicketPriority, TicketCategory } from '../core'
+import type { TicketStatus, TicketPriority, TicketCategory } from './schemas'
 
 export interface TicketCustomer {
   id: string

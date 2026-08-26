@@ -10,127 +10,42 @@ import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher } from './core'
 
 // ============================================================
-// Backend & DB Interfaces
+// Type Imports
 // ============================================================
 
-export interface AdminUser {
-  id: string
-  name: string
-  email: string
-  phone: string | null
-  role: 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN'
-  banned: boolean
-  bannedAt: string | null
-  createdAt: string
-  lastLoginAt: string | null
-}
+import type { AdminUser } from '@/types/user'
+import type { Technician } from '@/types/tickets'
+import type {
+  AuditLog,
+  QueueStats,
+  AdminQueueItem,
+  AdminQueueResponse,
+} from '@/types/admin'
+import type { CreateUserPayload, UpdateUserPayload } from '@/types/user'
+import type { PaginationMeta } from '@/types/core'
 
-export interface Technician {
-  id: string
-  name: string
-  email: string
-  openTickets?: number
-  activeTickets?: number
-}
-
-export interface AuditLog {
-  id: string
-  userId?: string
-  action: string
-  resourceType?: string
-  resourceId?: string
-  description?: string
-  changes?: string | null
-  performedBy?: string
-  details: string | null
-  ipAddress: string | null
-  userAgent: string | null
-  status?: string
-  errorMessage?: string | null
-  createdAt: string
-  user?: {
-    id: string
-    name: string
-    email: string
-  }
-  performedByUser?: {
-    id: string
-    name: string
-    email: string
-  }
-}
-
-export interface AuditLogPagination {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-}
-
-export interface AuditLogsResponse {
-  logs: AuditLog[]
-  pagination: AuditLogPagination
-}
-
-export interface QueueStats {
-  total: number
-  open: number
-  inProgress: number
-  resolved: number
-  averageWaitTime: number
-}
-
-export interface AdminQueueItem {
-  id: string
-  ticketNumber: string
-  subject: string
-  status: string
-  priority: string
-  createdAt: string
-  customer: {
-    name: string
-    email: string
-  }
-  position: number
-  estimatedWaitMinutes: number
-}
-
-export interface AdminQueueResponse {
-  total: number
-  queue: AdminQueueItem[]
-}
-
-// ============================================================
-// Payload Imports (from Phase 2 domain schemas)
-// ============================================================
-
+// Re-export for convenience
+export type { AdminUser, Technician, AuditLog, QueueStats, AdminQueueItem, AdminQueueResponse }
 export type {
   InviteUserInput,
   UpdateUserInput,
   BanUserInput,
   AuditLogFilters,
-} from '@/features/admin/schemas'
+  CreateUserPayload,
+  UpdateUserPayload,
+} from '@/types/admin'
 
-// Re-export for backwards compatibility
+// Legacy aliases
 export type AdminUserType = AdminUser
 export type TechnicianType = Technician
 export type AuditLogType = AuditLog
 export type QueueStatsType = QueueStats
 
-export type CreateUserPayload = {
-  name: string
-  email: string
-  password: string
-  phone?: string
-  role: 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN'
-}
+export interface AuditLogPagination extends PaginationMeta {}
 
-export type UpdateUserPayload = {
-  name?: string
-  email?: string
-  phone?: string
-  role?: 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN'
-  isBanned?: boolean
+export interface AuditLogsResponse {
+  logs: AuditLog[]
+  pagination: AuditLogPagination
 }
 
 // ============================================================

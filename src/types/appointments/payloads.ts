@@ -1,4 +1,4 @@
-import type { AppointmentStatus } from '../core'
+import type { AppointmentStatus } from './schemas'
 
 export interface CreateAppointmentPayload {
   branch: string

@@ -1,4 +1,4 @@
-import type { AuditAction, AuditResourceType, PaginatedResponse } from '../core'
+import type { AuditAction, AuditResourceType } from '../core'
 
 export interface AuditPerformedBy {
   id: string
@@ -8,17 +8,20 @@ export interface AuditPerformedBy {
 
 export interface AuditLog {
   id: string
-  action: AuditAction
-  resourceType: AuditResourceType
-  resourceId: string
-  description: string
-  changes: string | null
-  performedBy: string
-  performedByUser: AuditPerformedBy
+  userId?: string
+  action: AuditAction | string
+  resourceType?: AuditResourceType | string
+  resourceId?: string
+  description?: string
+  details?: string | null
+  changes?: string | null
+  performedBy?: string
+  performedByUser?: AuditPerformedBy
+  user?: AuditPerformedBy
   ipAddress: string | null
   userAgent: string | null
-  status: string
-  errorMessage: string | null
+  status?: string
+  errorMessage?: string | null
   createdAt: string
 }
 

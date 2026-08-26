@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Modal } from '@/components/shared/Modal'
-import { inviteUserSchema, type InviteUserInput } from '@/features/admin/schemas'
+import { inviteUserSchema } from '@/types/admin'
+import type { InviteUserInput } from '@/types/admin'
 
 const ROLE_LABELS = {
   CUSTOMER: 'Customer',

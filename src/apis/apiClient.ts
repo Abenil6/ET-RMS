@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AxiosError, InternalAxiosRequestConfig} from 'axios'
+import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import {
   API_BASE,
   getAccessToken,
@@ -37,7 +37,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
 // 1. REQUEST INTERCEPTOR: Inject Bearer token from core.ts
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getAccessToken()
-  if (token && config.headers) {
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
@@ -69,7 +69,6 @@ apiClient.interceptors.response.use(
     // Handle 401 Unauthorized errors
     if (
       error.response?.status === 401 &&
-      originalRequest &&
       !originalRequest._retry &&
       !originalRequest.url?.includes('/api/auth/refresh')
     ) {
@@ -85,7 +84,7 @@ apiClient.interceptors.response.use(
           failedQueue.push({ resolve, reject })
         })
           .then((token) => {
-            if (originalRequest.headers && token) {
+            if (token) {
               originalRequest.headers.Authorization = `Bearer ${token}`
             }
             return apiClient(originalRequest)
@@ -107,7 +106,7 @@ apiClient.interceptors.response.use(
         const newAccessToken = getAccessToken()
         processQueue(null, newAccessToken)
 
-        if (originalRequest.headers && newAccessToken) {
+        if (newAccessToken) {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
         }
 

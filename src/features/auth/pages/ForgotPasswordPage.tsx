@@ -6,7 +6,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import api from '@/apis'
 import { HeroShowcase } from '@/components/HeroShowcase'
-import { forgotPasswordSchema, type ForgotPasswordInput } from '@/features/auth/schemas'
+import { forgotPasswordSchema } from '@/types/user'
+import type { ForgotPasswordInput } from '@/types/user'
 
 export function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false)

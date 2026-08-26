@@ -1,10 +1,5 @@
 import { z } from 'zod'
-
-// ============================================================
-// Enums and Constants
-// ============================================================
-
-export const RoleEnum = z.enum(['CUSTOMER', 'TECHNICIAN', 'ADMIN'])
+import { RoleEnum } from '../user/schemas'
 
 // ============================================================
 // Validation Schemas
@@ -89,4 +84,3 @@ export type InviteUserInput = z.infer<typeof inviteUserSchema>
 export type UpdateUserInput = z.infer<typeof updateUserSchema>
 export type BanUserInput = z.infer<typeof banUserSchema>
 export type AuditLogFilters = z.infer<typeof auditLogFiltersSchema>
-export type Role = z.infer<typeof RoleEnum>
