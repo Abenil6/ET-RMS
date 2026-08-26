@@ -1,8 +1,10 @@
+
+
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher, setTokens, clearTokens } from './core'
 
-// types
+
 
 export interface User {
   id: string
@@ -19,56 +21,68 @@ export interface AuthTokens {
   user: User
 }
 
-export interface LoginPayload {
+
+export type {
+  LoginInput,
+  RegisterInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+  ChangePasswordInput,
+} from '@/features/auth/schemas'
+
+// Re-export for backwards compatibility
+export type LoginPayload = {
   email: string
   password: string
 }
 
-export interface RegisterPayload {
+export type RegisterPayload = {
   name: string
   email: string
   password: string
   phone?: string
 }
 
-export interface UpdateProfilePayload {
+export type UpdateProfilePayload = {
   name?: string
   email?: string
   phone?: string
 }
 
-export interface ChangePasswordPayload {
+export type ChangePasswordPayload = {
   currentPassword: string
   newPassword: string
 }
 
-export interface ForgotPasswordPayload {
+export type ForgotPasswordPayload = {
   email: string
 }
 
-export interface ResetPasswordPayload {
+export type ResetPasswordPayload = {
   token: string
   newPassword: string
 }
 
-// raw api functions (what the hooks use under the hood)
+// ============================================================
+// Raw Execution Functions
+// ============================================================
 
-export async function loginFn(data: LoginPayload): Promise<AuthTokens> {
+async function login(data: LoginPayload): Promise<AuthTokens> {
   return fetcher<AuthTokens>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-export async function registerFn(data: RegisterPayload): Promise<AuthTokens> {
+async function register(data: RegisterPayload): Promise<AuthTokens> {
   return fetcher<AuthTokens>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-export async function logoutFn(): Promise<void> {
-  const refreshToken = localStorage.getItem('refresh_token')
+async function logout(): Promise<void> {
+  const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null
   if (!refreshToken) {
     clearTokens()
     return
@@ -84,82 +98,97 @@ export async function logoutFn(): Promise<void> {
   }
 }
 
-export async function meFn(): Promise<User> {
+async function getCurrentUser(): Promise<User> {
   return fetcher<User>('/api/auth/me')
 }
 
-export async function updateProfileFn(data: UpdateProfilePayload): Promise<User> {
+async function updateProfile(data: UpdateProfilePayload): Promise<User> {
   return fetcher<User>('/api/auth/me', {
     method: 'PATCH',
     body: JSON.stringify(data),
   })
 }
 
-async function changePasswordFn(data: ChangePasswordPayload): Promise<{ message: string }> {
+async function changePassword(data: ChangePasswordPayload): Promise<{ message: string }> {
   return fetcher<{ message: string }>('/api/auth/change-password', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-async function deleteAccountFn(): Promise<void> {
+async function deleteAccount(): Promise<void> {
   return fetcher<void>('/api/auth/me', {
     method: 'DELETE',
   })
 }
 
-async function forgotPasswordFn(data: ForgotPasswordPayload): Promise<{ message: string }> {
+async function forgotPassword(data: ForgotPasswordPayload): Promise<{ message: string }> {
   return fetcher<{ message: string }>('/api/auth/forgot-password', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-async function resetPasswordFn(data: ResetPasswordPayload): Promise<{ message: string }> {
+async function resetPassword(data: ResetPasswordPayload): Promise<{ message: string }> {
   return fetcher<{ message: string }>('/api/auth/reset-password', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-// hooks that components can use to interact with the auth API
+// ============================================================
+// Hooks Object Definition
+// ============================================================
+
 export const authApi = {
-login: {
-  useMutation: (options?: UseMutationOptions<AuthTokens, Error, LoginPayload>) =>
-    useMutation({
-      mutationFn: loginFn,
-      meta: {
-        successMessage: 'Welcome back!',
-        errorMessage: 'Login failed. Please check your credentials.',
-      },
-      ...options,
-      onSuccess: (...args) => {
-        setTokens(args[0].accessToken, args[0].refreshToken)
-        options?.onSuccess?.(...args)
-      },
-    }),
-},
+  /**
+   * Login with email and password
+   * Automatically saves tokens on success
+   */
+  login: {
+    useMutation: (options?: UseMutationOptions<AuthTokens, Error, LoginPayload>) =>
+      useMutation({
+        mutationFn: login,
+        meta: {
+          successMessage: 'Welcome back!',
+          errorMessage: 'Login failed. Please check your credentials.',
+        },
+        ...options,
+        onSuccess: (...args) => {
+          setTokens(args[0].accessToken, args[0].refreshToken)
+          options?.onSuccess?.(...args)
+        },
+      }),
+  },
 
+  /**
+   * Register a new account
+   * Automatically saves tokens on success
+   */
   register: {
-  useMutation: (options?: UseMutationOptions<AuthTokens, Error, RegisterPayload>) =>
-    useMutation({
-      mutationFn: registerFn,
-      meta: {
-        successMessage: 'Account created! Please check your email.',
-        errorMessage: 'Registration failed. Please try again.',
-      },
-      ...options,
-      onSuccess: (...args) => {
-        setTokens(args[0].accessToken, args[0].refreshToken)
-        options?.onSuccess?.(...args)
-      },
-    }),
-},
+    useMutation: (options?: UseMutationOptions<AuthTokens, Error, RegisterPayload>) =>
+      useMutation({
+        mutationFn: register,
+        meta: {
+          successMessage: 'Account created! Please check your email.',
+          errorMessage: 'Registration failed. Please try again.',
+        },
+        ...options,
+        onSuccess: (...args) => {
+          setTokens(args[0].accessToken, args[0].refreshToken)
+          options?.onSuccess?.(...args)
+        },
+      }),
+  },
 
+  /**
+   * Logout current user
+   * Clears tokens and session
+   */
   logout: {
     useMutation: (options?: UseMutationOptions<void, Error, void>) =>
       useMutation({
-        mutationFn: logoutFn,
+        mutationFn: logout,
         meta: {
           successMessage: 'Logged out successfully.',
           errorMessage: 'Logout failed.',
@@ -168,23 +197,31 @@ login: {
       }),
   },
 
+  /**
+   * Fetch current authenticated user
+   * Cached for 10 minutes
+   */
   me: {
     useQuery: (options?: Omit<UseQueryOptions<User, Error, User, string[]>, 'queryKey' | 'queryFn'>) =>
       useQuery({
         queryKey: ['auth', 'me'],
-        queryFn: meFn,
+        queryFn: getCurrentUser,
         meta: {
           errorMessage: 'Failed to load user session.',
         },
-        staleTime: 1000 * 60 * 10, // 10 min
+        staleTime: 1000 * 60 * 10,
         ...options,
       }),
   },
 
+  /**
+   * Update current user profile
+   * Automatically invalidates auth/me cache
+   */
   updateProfile: {
     useMutation: (options?: UseMutationOptions<User, Error, UpdateProfilePayload>) =>
       useMutation({
-        mutationFn: updateProfileFn,
+        mutationFn: updateProfile,
         meta: {
           successMessage: 'Profile updated.',
           errorMessage: 'Failed to update profile.',
@@ -194,10 +231,13 @@ login: {
       }),
   },
 
+  /**
+   * Change current user password
+   */
   changePassword: {
     useMutation: (options?: UseMutationOptions<{ message: string }, Error, ChangePasswordPayload>) =>
       useMutation({
-        mutationFn: changePasswordFn,
+        mutationFn: changePassword,
         meta: {
           successMessage: 'Password changed.',
           errorMessage: 'Failed to change password.',
@@ -206,10 +246,13 @@ login: {
       }),
   },
 
+  /**
+   * Delete current user account permanently
+   */
   deleteAccount: {
     useMutation: (options?: UseMutationOptions<void, Error, void>) =>
       useMutation({
-        mutationFn: deleteAccountFn,
+        mutationFn: deleteAccount,
         meta: {
           successMessage: 'Account deleted.',
           errorMessage: 'Failed to delete account.',
@@ -218,10 +261,13 @@ login: {
       }),
   },
 
+  /**
+   * Request password reset email
+   */
   forgotPassword: {
     useMutation: (options?: UseMutationOptions<{ message: string }, Error, ForgotPasswordPayload>) =>
       useMutation({
-        mutationFn: forgotPasswordFn,
+        mutationFn: forgotPassword,
         meta: {
           successMessage: 'If the email exists, a reset link was sent.',
           errorMessage: 'Failed to send reset email.',
@@ -230,10 +276,13 @@ login: {
       }),
   },
 
+  /**
+   * Reset password with token
+   */
   resetPassword: {
     useMutation: (options?: UseMutationOptions<{ message: string }, Error, ResetPasswordPayload>) =>
       useMutation({
-        mutationFn: resetPasswordFn,
+        mutationFn: resetPassword,
         meta: {
           successMessage: 'Password reset successfully.',
           errorMessage: 'Failed to reset password. Token may be expired.',
@@ -242,3 +291,9 @@ login: {
       }),
   },
 }
+
+// ============================================================
+// Default Export
+// ============================================================
+
+export default authApi

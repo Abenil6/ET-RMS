@@ -1,36 +1,39 @@
+/**
+ * ============================================================
+ * Admin Resource API
+ * Phase 3: Centralized Resource API Layer
+ * ============================================================
+ */
+
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher } from './core'
-import type { User, Role } from '../lib/types'
 
 // ============================================================
-// Types
+// Backend & DB Interfaces
 // ============================================================
 
-export type AdminUserType = User & {
-  isBanned: boolean
-  banned?: boolean
-  bannedAt?: string | null
+export interface AdminUser {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  role: 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN'
+  banned: boolean
+  bannedAt: string | null
+  createdAt: string
   lastLoginAt: string | null
 }
 
-export interface CreateUserPayload {
+export interface Technician {
+  id: string
   name: string
   email: string
-  password: string
-  phone?: string
-  role: Role
+  openTickets?: number
+  activeTickets?: number
 }
 
-export interface UpdateUserPayload {
-  name?: string
-  email?: string
-  phone?: string
-  role?: Role
-  isBanned?: boolean
-}
-
-export interface AuditLogType {
+export interface AuditLog {
   id: string
   userId?: string
   action: string
@@ -65,11 +68,11 @@ export interface AuditLogPagination {
 }
 
 export interface AuditLogsResponse {
-  logs: AuditLogType[]
+  logs: AuditLog[]
   pagination: AuditLogPagination
 }
 
-export interface QueueStatsType {
+export interface QueueStats {
   total: number
   open: number
   inProgress: number
@@ -77,15 +80,6 @@ export interface QueueStatsType {
   averageWaitTime: number
 }
 
-export interface TechnicianType {
-  id: string
-  name: string
-  email: string
-  openTickets?: number
-  activeTickets?: number
-}
-
-// Queue management types
 export interface AdminQueueItem {
   id: string
   ticketNumber: string
@@ -106,9 +100,44 @@ export interface AdminQueueResponse {
   queue: AdminQueueItem[]
 }
 
-type AdminUserApiResponse = Omit<AdminUserType, 'isBanned' | 'lastLoginAt'> & {
+// ============================================================
+// Payload Imports (from Phase 2 domain schemas)
+// ============================================================
+
+export type {
+  InviteUserInput,
+  UpdateUserInput,
+  BanUserInput,
+  AuditLogFilters,
+} from '@/features/admin/schemas'
+
+// Re-export for backwards compatibility
+export type AdminUserType = AdminUser
+export type TechnicianType = Technician
+export type AuditLogType = AuditLog
+export type QueueStatsType = QueueStats
+
+export type CreateUserPayload = {
+  name: string
+  email: string
+  password: string
+  phone?: string
+  role: 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN'
+}
+
+export type UpdateUserPayload = {
+  name?: string
+  email?: string
+  phone?: string
+  role?: 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN'
   isBanned?: boolean
-  banned?: boolean
+}
+
+// ============================================================
+// Raw Execution Functions
+// ============================================================
+
+type AdminUserApiResponse = Omit<AdminUser, 'lastLoginAt'> & {
   lastLoginAt?: string | null
 }
 
@@ -118,42 +147,37 @@ type PasswordResetEnvelope =
   | { temporaryPassword: string }
   | { temporaryPassword?: string; message?: string }
 
-function normalizeAdminUser(user: AdminUserApiResponse): AdminUserType {
+function normalizeAdminUser(user: AdminUserApiResponse): AdminUser {
   return {
     ...user,
-    isBanned: Boolean(user.isBanned ?? user.banned),
     lastLoginAt: user.lastLoginAt ?? null,
   }
 }
 
-function unwrapUser(response: UserEnvelope): AdminUserType {
+function unwrapUser(response: UserEnvelope): AdminUser {
   const user = 'user' in response ? response.user : response
   return normalizeAdminUser(user)
 }
 
-function unwrapUsers(response: UsersEnvelope): AdminUserType[] {
+function unwrapUsers(response: UsersEnvelope): AdminUser[] {
   const users = Array.isArray(response) ? response : response.users
   return users.map(normalizeAdminUser)
 }
 
-// ============================================================
-// Raw API Functions
-// ============================================================
-
-async function getQueueFn(): Promise<QueueStatsType> {
-  return fetcher<QueueStatsType>('/api/admin/queue')
+async function getQueue(): Promise<QueueStats> {
+  return fetcher<QueueStats>('/api/admin/queue')
 }
 
-async function getTechniciansFn(): Promise<TechnicianType[]> {
-  return fetcher<TechnicianType[]>('/api/technicians')
+async function getTechnicians(): Promise<Technician[]> {
+  return fetcher<Technician[]>('/api/technicians')
 }
 
-async function getUsersFn(): Promise<AdminUserType[]> {
+async function getUsers(): Promise<AdminUser[]> {
   const response = await fetcher<UsersEnvelope>('/api/admin/users')
   return unwrapUsers(response)
 }
 
-async function createUserFn(data: CreateUserPayload): Promise<AdminUserType> {
+async function createUser(data: CreateUserPayload): Promise<AdminUser> {
   const response = await fetcher<UserEnvelope>('/api/admin/users', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -161,12 +185,12 @@ async function createUserFn(data: CreateUserPayload): Promise<AdminUserType> {
   return unwrapUser(response)
 }
 
-async function getUserFn(id: string): Promise<AdminUserType> {
+async function getUser(id: string): Promise<AdminUser> {
   const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}`)
   return unwrapUser(response)
 }
 
-async function updateUserFn(id: string, data: UpdateUserPayload): Promise<AdminUserType> {
+async function updateUser(id: string, data: UpdateUserPayload): Promise<AdminUser> {
   const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -174,89 +198,105 @@ async function updateUserFn(id: string, data: UpdateUserPayload): Promise<AdminU
   return unwrapUser(response)
 }
 
-async function deleteUserFn(id: string): Promise<void> {
+async function deleteUser(id: string): Promise<void> {
   return fetcher<void>(`/api/admin/users/${id}`, {
     method: 'DELETE',
   })
 }
 
-async function banUserFn(id: string): Promise<AdminUserType> {
+async function banUser(id: string): Promise<AdminUser> {
   const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}/ban`, {
     method: 'POST',
   })
   return unwrapUser(response)
 }
 
-async function unbanUserFn(id: string): Promise<AdminUserType> {
+async function unbanUser(id: string): Promise<AdminUser> {
   const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}/unban`, {
     method: 'POST',
   })
   return unwrapUser(response)
 }
 
-async function resetUserPasswordFn(id: string): Promise<PasswordResetEnvelope> {
+async function resetUserPassword(id: string): Promise<PasswordResetEnvelope> {
   return fetcher<PasswordResetEnvelope>(`/api/admin/users/${id}/reset-password`, {
     method: 'POST',
   })
 }
 
-async function getAuditLogsFn(page = 1, limit = 25): Promise<AuditLogsResponse> {
+async function getAuditLogs(page = 1, limit = 25): Promise<AuditLogsResponse> {
   return fetcher<AuditLogsResponse>(`/api/admin/audit?page=${page}&limit=${limit}`)
 }
 
-async function getAdminQueueFn(): Promise<AdminQueueResponse> {
+async function getAdminQueue(): Promise<AdminQueueResponse> {
   return fetcher<AdminQueueResponse>('/api/admin/queue')
 }
 
 // ============================================================
-// Typed Hooks
+// Hooks Object Definition
 // ============================================================
 
 export const adminApi = {
+  /**
+   * Fetch queue statistics for admin dashboard
+   */
   getQueue: {
-    useQuery: (options?: UseQueryOptions<QueueStatsType, Error, QueueStatsType, string[]>) =>
+    useQuery: (options?: UseQueryOptions<QueueStats, Error, QueueStats, string[]>) =>
       useQuery({
         queryKey: ['admin', 'queue'],
-        queryFn: getQueueFn,
+        queryFn: getQueue,
         meta: { errorMessage: 'Failed to load queue stats.' },
         ...options,
       }),
   },
 
+  /**
+   * Fetch detailed admin queue with ticket items
+   */
   getAdminQueue: {
     useQuery: (options?: UseQueryOptions<AdminQueueResponse, Error, AdminQueueResponse, string[]>) =>
       useQuery({
         queryKey: ['admin', 'admin-queue'],
-        queryFn: getAdminQueueFn,
+        queryFn: getAdminQueue,
         meta: { errorMessage: 'Failed to load admin queue.' },
         ...options,
       }),
   },
 
+  /**
+   * Fetch all technicians for assignment
+   */
   getTechnicians: {
-    useQuery: (options?: UseQueryOptions<TechnicianType[], Error, TechnicianType[], string[]>) =>
+    useQuery: (options?: UseQueryOptions<Technician[], Error, Technician[], string[]>) =>
       useQuery({
         queryKey: ['admin', 'technicians'],
-        queryFn: getTechniciansFn,
+        queryFn: getTechnicians,
         meta: { errorMessage: 'Failed to load technicians.' },
         ...options,
       }),
   },
 
+  /**
+   * Fetch all users (admin only)
+   */
   getUsers: {
-    useQuery: (options?: UseQueryOptions<AdminUserType[], Error, AdminUserType[], string[]>) =>
+    useQuery: (options?: UseQueryOptions<AdminUser[], Error, AdminUser[], string[]>) =>
       useQuery({
         queryKey: ['admin', 'users'],
-        queryFn: getUsersFn,
+        queryFn: getUsers,
         meta: { errorMessage: 'Failed to load users.' },
         ...options,
       }),
   },
 
+  /**
+   * Create/invite a new user
+   * Automatically invalidates users cache on success
+   */
   createUser: {
-    useMutation: (options?: UseMutationOptions<AdminUserType, Error, CreateUserPayload>) =>
+    useMutation: (options?: UseMutationOptions<AdminUser, Error, CreateUserPayload>) =>
       useMutation({
-        mutationFn: createUserFn,
+        mutationFn: createUser,
         meta: {
           successMessage: 'User invited successfully.',
           errorMessage: 'Failed to invite user.',
@@ -266,21 +306,28 @@ export const adminApi = {
       }),
   },
 
+  /**
+   * Fetch a single user by ID
+   */
   getUser: {
-    useQuery: (id: string, options?: UseQueryOptions<AdminUserType, Error, AdminUserType, string[]>) =>
+    useQuery: (id: string, options?: UseQueryOptions<AdminUser, Error, AdminUser, string[]>) =>
       useQuery({
         queryKey: ['admin', 'user', id],
-        queryFn: () => getUserFn(id),
+        queryFn: () => getUser(id),
         meta: { errorMessage: 'Failed to load user.' },
         enabled: !!id,
         ...options,
       }),
   },
 
+  /**
+   * Update user information
+   * Automatically invalidates users cache on success
+   */
   updateUser: {
-    useMutation: (options?: UseMutationOptions<AdminUserType, Error, { id: string; data: UpdateUserPayload }>) =>
+    useMutation: (options?: UseMutationOptions<AdminUser, Error, { id: string; data: UpdateUserPayload }>) =>
       useMutation({
-        mutationFn: ({ id, data }) => updateUserFn(id, data),
+        mutationFn: ({ id, data }) => updateUser(id, data),
         meta: {
           successMessage: 'User updated successfully.',
           errorMessage: 'Failed to update user.',
@@ -290,10 +337,14 @@ export const adminApi = {
       }),
   },
 
+  /**
+   * Delete a user permanently
+   * Automatically invalidates users cache on success
+   */
   deleteUser: {
     useMutation: (options?: UseMutationOptions<void, Error, string>) =>
       useMutation({
-        mutationFn: deleteUserFn,
+        mutationFn: deleteUser,
         meta: {
           successMessage: 'User deleted successfully.',
           errorMessage: 'Failed to delete user.',
@@ -303,10 +354,14 @@ export const adminApi = {
       }),
   },
 
+  /**
+   * Ban a user
+   * Automatically invalidates users cache on success
+   */
   banUser: {
-    useMutation: (options?: UseMutationOptions<AdminUserType, Error, string>) =>
+    useMutation: (options?: UseMutationOptions<AdminUser, Error, string>) =>
       useMutation({
-        mutationFn: banUserFn,
+        mutationFn: banUser,
         meta: {
           successMessage: 'User banned successfully.',
           errorMessage: 'Failed to ban user.',
@@ -316,10 +371,14 @@ export const adminApi = {
       }),
   },
 
+  /**
+   * Unban a user
+   * Automatically invalidates users cache on success
+   */
   unbanUser: {
-    useMutation: (options?: UseMutationOptions<AdminUserType, Error, string>) =>
+    useMutation: (options?: UseMutationOptions<AdminUser, Error, string>) =>
       useMutation({
-        mutationFn: unbanUserFn,
+        mutationFn: unbanUser,
         meta: {
           successMessage: 'User unbanned successfully.',
           errorMessage: 'Failed to unban user.',
@@ -329,10 +388,13 @@ export const adminApi = {
       }),
   },
 
+  /**
+   * Reset user password (admin initiated)
+   */
   resetUserPassword: {
     useMutation: (options?: UseMutationOptions<PasswordResetEnvelope, Error, string>) =>
       useMutation({
-        mutationFn: resetUserPasswordFn,
+        mutationFn: resetUserPassword,
         meta: {
           successMessage: 'Password reset email sent.',
           errorMessage: 'Failed to reset password.',
@@ -341,11 +403,14 @@ export const adminApi = {
       }),
   },
 
+  /**
+   * Fetch audit logs with pagination
+   */
   getAuditLogs: {
     useQuery: (options?: UseQueryOptions<AuditLogsResponse, Error, AuditLogsResponse, string[]>) =>
       useQuery({
         queryKey: ['admin', 'audit-logs', '1', '25'],
-        queryFn: () => getAuditLogsFn(1, 25),
+        queryFn: () => getAuditLogs(1, 25),
         meta: { errorMessage: 'Failed to load audit logs.' },
         ...options,
       }),
@@ -353,9 +418,15 @@ export const adminApi = {
     usePaginated: (page: number, limit: number, options?: UseQueryOptions<AuditLogsResponse, Error, AuditLogsResponse, string[]>) =>
       useQuery({
         queryKey: ['admin', 'audit-logs', String(page), String(limit)],
-        queryFn: () => getAuditLogsFn(page, limit),
+        queryFn: () => getAuditLogs(page, limit),
         meta: { errorMessage: 'Failed to load audit logs.' },
         ...options,
       }),
   },
 }
+
+// ============================================================
+// Default Export
+// ============================================================
+
+export default adminApi

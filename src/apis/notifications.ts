@@ -1,71 +1,99 @@
+/**
+ * ============================================================
+ * Notifications Resource API
+ * Phase 3: Centralized Resource API Layer
+ * ============================================================
+ */
+
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher } from './core'
-import type { Notification } from '../lib/types'
 
 // ============================================================
-// Types
+// Backend & DB Interfaces
+// ============================================================
+
+export interface Notification {
+  id: string
+  message: string
+  read: boolean
+  createdAt: string
+  userId: string
+  ticketId: string | null
+}
+
+// ============================================================
+// Payload Types
 // ============================================================
 
 export type NotificationType = Notification
 
 // ============================================================
-// Raw API Functions
+// Raw Execution Functions
 // ============================================================
 
-async function getNotificationsFn(unreadOnly = false): Promise<Notification[]> {
-  return fetcher<Notification[]>(
-    `/api/notifications${unreadOnly ? '?unread=1' : ''}`,
-  )
+async function getAllNotifications(unreadOnly = false): Promise<Notification[]> {
+  return fetcher<Notification[]>(`/api/notifications${unreadOnly ? '?unread=1' : ''}`)
 }
 
-async function getUnreadCountFn(): Promise<number> {
-  const unread = await getNotificationsFn(true)
+async function getUnreadCount(): Promise<number> {
+  const unread = await getAllNotifications(true)
   return unread.length
 }
 
-async function markAsReadFn(id: string): Promise<void> {
+async function markAsRead(id: string): Promise<void> {
   return fetcher<void>(`/api/notifications/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ read: true }),
   })
 }
 
-async function markAllAsReadFn(): Promise<void> {
-  const unread = await getNotificationsFn(true)
-  await Promise.all(unread.map((notification) => markAsReadFn(notification.id)))
+async function markAllAsRead(): Promise<void> {
+  const unread = await getAllNotifications(true)
+  await Promise.all(unread.map((notification) => markAsRead(notification.id)))
 }
 
 // ============================================================
-// Typed Hooks
+// Hooks Object Definition
 // ============================================================
 
 export const notificationsApi = {
+  /**
+   * Fetch all notifications for current user
+   */
   getAll: {
     useQuery: (options?: UseQueryOptions<Notification[], Error, Notification[], string[]>) =>
       useQuery({
         queryKey: ['notifications'],
-        queryFn: () => getNotificationsFn(),
+        queryFn: () => getAllNotifications(),
         meta: { errorMessage: 'Failed to load notifications.' },
         ...options,
       }),
   },
 
+  /**
+   * Fetch unread notification count
+   * Polls every 30 seconds for updates
+   */
   getUnreadCount: {
     useQuery: (options?: UseQueryOptions<number, Error, number, string[]>) =>
       useQuery({
         queryKey: ['notifications', 'unread'],
-        queryFn: getUnreadCountFn,
+        queryFn: getUnreadCount,
         meta: { errorMessage: 'Failed to load unread count.' },
-        refetchInterval: 30000, // Poll every 30s
+        refetchInterval: 30000,
         ...options,
       }),
   },
 
+  /**
+   * Mark a single notification as read
+   * Automatically invalidates notifications cache on success
+   */
   markAsRead: {
     useMutation: (options?: UseMutationOptions<void, Error, string>) =>
       useMutation({
-        mutationFn: markAsReadFn,
+        mutationFn: markAsRead,
         meta: {
           successMessage: 'Notification marked as read.',
           errorMessage: 'Failed to mark as read.',
@@ -75,10 +103,14 @@ export const notificationsApi = {
       }),
   },
 
+  /**
+   * Mark all notifications as read
+   * Automatically invalidates notifications cache on success
+   */
   markAllAsRead: {
     useMutation: (options?: UseMutationOptions<void, Error, void>) =>
       useMutation({
-        mutationFn: markAllAsReadFn,
+        mutationFn: markAllAsRead,
         meta: {
           successMessage: 'All notifications marked as read.',
           errorMessage: 'Failed to mark all as read.',
@@ -88,3 +120,9 @@ export const notificationsApi = {
       }),
   },
 }
+
+// ============================================================
+// Default Export
+// ============================================================
+
+export default notificationsApi

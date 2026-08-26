@@ -1,96 +1,91 @@
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Modal } from '@/components/shared/Modal'
-import type { AdminUserType, UpdateUserPayload } from '@/apis'
-import type { Role } from '@/lib/types'
+import { updateUserSchema, type UpdateUserInput } from '@/features/admin/schemas'
+import type { AdminUserType } from '@/apis'
 
-const ROLE_LABELS: Record<Role, string> = {
+const ROLE_LABELS = {
   CUSTOMER: 'Customer',
   TECHNICIAN: 'Technician',
   ADMIN: 'Admin',
-}
+} as const
 
 interface EditUserModalProps {
   user: AdminUserType
-  onSubmit: (data: UpdateUserPayload) => void
+  onSubmit: (data: UpdateUserInput) => void
   onCancel: () => void
 }
 
 export function EditUserModal({ user, onSubmit, onCancel }: EditUserModalProps) {
-  const [name, setName] = useState(user.name)
-  const [email, setEmail] = useState(user.email)
-  const [phone, setPhone] = useState(user.phone || '')
-  const [role, setRole] = useState<Role>(user.role)
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const data: UpdateUserPayload = {}
-    if (name !== user.name) data.name = name
-    if (email !== user.email) data.email = email
-    if (phone !== user.phone) data.phone = phone || null as any
-    if (role !== user.role) data.role = role
-    onSubmit(data)
-  }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<UpdateUserInput>({
+    resolver: zodResolver(updateUserSchema),
+    defaultValues: {
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      role: user.role,
+    },
+  })
 
   return (
     <Modal onClose={onCancel} title="Edit User">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-text-secondary mb-2">
-            Name
-          </label>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">Name</label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            {...register('name')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            required
           />
+          {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
         </div>
+
         <div>
-          <label className="block text-sm font-semibold text-text-secondary mb-2">
-            Email
-          </label>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">Email</label>
           <input
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            {...register('email')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            required
           />
+          {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
         </div>
+
         <div>
-          <label className="block text-sm font-semibold text-text-secondary mb-2">
-            Phone
-          </label>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">Phone</label>
           <input
             type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            {...register('phone')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
           />
+          {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>}
         </div>
+
         <div>
-          <label className="block text-sm font-semibold text-text-secondary mb-2">
-            Role
-          </label>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">Role</label>
           <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as Role)}
+            {...register('role')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
           >
-            {(Object.keys(ROLE_LABELS) as Role[]).map((r) => (
-              <option key={r} value={r}>
-                {ROLE_LABELS[r]}
+            {Object.entries(ROLE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
               </option>
             ))}
           </select>
+          {errors.role && <p className="mt-1 text-xs text-red-500">{errors.role.message}</p>}
         </div>
+
         <div className="flex gap-2 pt-2">
           <button
             type="submit"
-            className="flex-1 px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition"
+            disabled={isSubmitting}
+            className="flex-1 px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition disabled:opacity-50"
           >
-            Save
+            {isSubmitting ? 'Saving...' : 'Save'}
           </button>
           <button
             type="button"
