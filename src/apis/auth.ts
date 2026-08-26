@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
-import { fetcher, setTokens, clearTokens } from './core'
+import { request, setTokens, clearTokens } from './core'
 
 // ============================================================
 // Type Imports
@@ -37,14 +37,14 @@ export type {
 // ============================================================
 
 export async function login(data: LoginPayload): Promise<AuthTokens> {
-  return fetcher<AuthTokens>('/api/auth/login', {
+  return request<AuthTokens>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
 export async function register(data: RegisterPayload): Promise<AuthTokens> {
-  return fetcher<AuthTokens>('/api/auth/register', {
+  return request<AuthTokens>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
   })
@@ -58,7 +58,7 @@ export async function logout(): Promise<void> {
   }
 
   try {
-    await fetcher<{ loggedOut: boolean }>('/api/auth/logout', {
+    await request<{ loggedOut: boolean }>('/api/auth/logout', {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
     })
@@ -68,38 +68,38 @@ export async function logout(): Promise<void> {
 }
 
 export async function getCurrentUser(): Promise<User> {
-  return fetcher<User>('/api/auth/me')
+  return request<User>('/api/auth/me')
 }
 
 export async function updateProfile(data: UpdateProfilePayload): Promise<User> {
-  return fetcher<User>('/api/auth/me', {
+  return request<User>('/api/auth/me', {
     method: 'PATCH',
     body: JSON.stringify(data),
   })
 }
 
 async function changePassword(data: ChangePasswordPayload): Promise<{ message: string }> {
-  return fetcher<{ message: string }>('/api/auth/change-password', {
+  return request<{ message: string }>('/api/auth/change-password', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
 async function deleteAccount(): Promise<void> {
-  return fetcher<void>('/api/auth/me', {
+  return request<void>('/api/auth/me', {
     method: 'DELETE',
   })
 }
 
 async function forgotPassword(data: ForgotPasswordPayload): Promise<{ message: string }> {
-  return fetcher<{ message: string }>('/api/auth/forgot-password', {
+  return request<{ message: string }>('/api/auth/forgot-password', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
 async function resetPassword(data: ResetPasswordPayload): Promise<{ message: string }> {
-  return fetcher<{ message: string }>('/api/auth/reset-password', {
+  return request<{ message: string }>('/api/auth/reset-password', {
     method: 'POST',
     body: JSON.stringify(data),
   })

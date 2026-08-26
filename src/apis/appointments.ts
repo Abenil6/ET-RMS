@@ -7,7 +7,7 @@
 
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
-import { fetcher } from './core'
+import { request } from './core'
 
 // ============================================================
 // Type Imports
@@ -31,18 +31,18 @@ export type AppointmentType = Appointment
 // ============================================================
 
 async function getAllAppointments(): Promise<Appointment[]> {
-  return fetcher<Appointment[]>('/api/appointments')
+  return request<Appointment[]>('/api/appointments')
 }
 
 async function createAppointment(data: CreateAppointmentInput): Promise<Appointment> {
-  return fetcher<Appointment>('/api/appointments', {
+  return request<Appointment>('/api/appointments', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
 async function updateAppointment(id: string, data: UpdateAppointmentInput): Promise<Appointment> {
-  return fetcher<Appointment>(`/api/appointments/${id}`, {
+  return request<Appointment>(`/api/appointments/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   })

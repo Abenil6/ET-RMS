@@ -26,7 +26,7 @@ import adminApi from './admin'
 
 export { queryClient } from './queryClient'
 export { apiClient } from './apiClient'
-export { fetcher, ApiError, getAccessToken, setTokens, clearTokens } from './core'
+export { request, ApiError, getAccessToken, setTokens, clearTokens } from './core'
 
 // ============================================================
 // Named Resource Exports (for tree-shaking)

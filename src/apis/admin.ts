@@ -7,7 +7,7 @@
 
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
-import { fetcher } from './core'
+import { request } from './core'
 
 // ============================================================
 // Type Imports
@@ -80,20 +80,20 @@ function unwrapUsers(response: UsersEnvelope): AdminUser[] {
 }
 
 async function getQueue(): Promise<QueueStats> {
-  return fetcher<QueueStats>('/api/admin/queue')
+  return request<QueueStats>('/api/admin/queue')
 }
 
 async function getTechnicians(): Promise<Technician[]> {
-  return fetcher<Technician[]>('/api/technicians')
+  return request<Technician[]>('/api/technicians')
 }
 
 async function getUsers(): Promise<AdminUser[]> {
-  const response = await fetcher<UsersEnvelope>('/api/admin/users')
+  const response = await request<UsersEnvelope>('/api/admin/users')
   return unwrapUsers(response)
 }
 
 async function createUser(data: CreateUserPayload): Promise<AdminUser> {
-  const response = await fetcher<UserEnvelope>('/api/admin/users', {
+  const response = await request<UserEnvelope>('/api/admin/users', {
     method: 'POST',
     body: JSON.stringify(data),
   })
@@ -101,12 +101,12 @@ async function createUser(data: CreateUserPayload): Promise<AdminUser> {
 }
 
 async function getUser(id: string): Promise<AdminUser> {
-  const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}`)
+  const response = await request<UserEnvelope>(`/api/admin/users/${id}`)
   return unwrapUser(response)
 }
 
 async function updateUser(id: string, data: UpdateUserPayload): Promise<AdminUser> {
-  const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}`, {
+  const response = await request<UserEnvelope>(`/api/admin/users/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   })
@@ -114,37 +114,37 @@ async function updateUser(id: string, data: UpdateUserPayload): Promise<AdminUse
 }
 
 async function deleteUser(id: string): Promise<void> {
-  return fetcher<void>(`/api/admin/users/${id}`, {
+  return request<void>(`/api/admin/users/${id}`, {
     method: 'DELETE',
   })
 }
 
 async function banUser(id: string): Promise<AdminUser> {
-  const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}/ban`, {
+  const response = await request<UserEnvelope>(`/api/admin/users/${id}/ban`, {
     method: 'POST',
   })
   return unwrapUser(response)
 }
 
 async function unbanUser(id: string): Promise<AdminUser> {
-  const response = await fetcher<UserEnvelope>(`/api/admin/users/${id}/unban`, {
+  const response = await request<UserEnvelope>(`/api/admin/users/${id}/unban`, {
     method: 'POST',
   })
   return unwrapUser(response)
 }
 
 async function resetUserPassword(id: string): Promise<PasswordResetEnvelope> {
-  return fetcher<PasswordResetEnvelope>(`/api/admin/users/${id}/reset-password`, {
+  return request<PasswordResetEnvelope>(`/api/admin/users/${id}/reset-password`, {
     method: 'POST',
   })
 }
 
 async function getAuditLogs(page = 1, limit = 25): Promise<AuditLogsResponse> {
-  return fetcher<AuditLogsResponse>(`/api/admin/audit?page=${page}&limit=${limit}`)
+  return request<AuditLogsResponse>(`/api/admin/audit?page=${page}&limit=${limit}`)
 }
 
 async function getAdminQueue(): Promise<AdminQueueResponse> {
-  return fetcher<AdminQueueResponse>('/api/admin/queue')
+  return request<AdminQueueResponse>('/api/admin/queue')
 }
 
 // ============================================================

@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
-import { fetcher } from './core'
+import { request } from './core'
 import type {
   Ticket,
   Technician,
@@ -32,66 +32,66 @@ export type QueueInfoType = QueueInfo
 // ============================================================
 
 async function getAllTickets(): Promise<Ticket[]> {
-  return fetcher<Ticket[]>('/api/tickets')
+  return request<Ticket[]>('/api/tickets')
 }
 
 async function getTicketById(id: string): Promise<Ticket> {
-  return fetcher<Ticket>(`/api/tickets/${id}`)
+  return request<Ticket>(`/api/tickets/${id}`)
 }
 
 async function createTicket(data: CreateTicketInput): Promise<Ticket> {
-  return fetcher<Ticket>('/api/tickets', {
+  return request<Ticket>('/api/tickets', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
 async function updateTicket(id: string, data: UpdateTicketInput): Promise<Ticket> {
-  return fetcher<Ticket>(`/api/tickets/${id}`, {
+  return request<Ticket>(`/api/tickets/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   })
 }
 
 async function deleteTicket(id: string): Promise<void> {
-  return fetcher<void>(`/api/tickets/${id}`, {
+  return request<void>(`/api/tickets/${id}`, {
     method: 'DELETE',
   })
 }
 
 async function assignTicket(id: string, technicianId: string): Promise<Ticket> {
-  return fetcher<Ticket>(`/api/tickets/${id}/assign`, {
+  return request<Ticket>(`/api/tickets/${id}/assign`, {
     method: 'POST',
     body: JSON.stringify({ technicianId }),
   })
 }
 
 async function resolveTicket(id: string, resolution: string): Promise<Ticket> {
-  return fetcher<Ticket>(`/api/tickets/${id}/resolve`, {
+  return request<Ticket>(`/api/tickets/${id}/resolve`, {
     method: 'POST',
     body: JSON.stringify({ resolution }),
   })
 }
 
 async function reopenTicket(id: string): Promise<Ticket> {
-  return fetcher<Ticket>(`/api/tickets/${id}/reopen`, {
+  return request<Ticket>(`/api/tickets/${id}/reopen`, {
     method: 'POST',
   })
 }
 
 async function reviewTicket(id: string, rating: number, comment: string): Promise<Ticket> {
-  return fetcher<Ticket>(`/api/tickets/${id}/review`, {
+  return request<Ticket>(`/api/tickets/${id}/review`, {
     method: 'POST',
     body: JSON.stringify({ rating, comment }),
   })
 }
 
 async function getTicketQueue(ticketId: string): Promise<QueueInfo> {
-  return fetcher<QueueInfo>(`/api/tickets/${ticketId}/queue`)
+  return request<QueueInfo>(`/api/tickets/${ticketId}/queue`)
 }
 
 async function getTechnicians(): Promise<Technician[]> {
-  return fetcher<Technician[]>('/api/technicians')
+  return request<Technician[]>('/api/technicians')
 }
 
 // ============================================================
