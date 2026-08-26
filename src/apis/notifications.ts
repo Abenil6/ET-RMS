@@ -7,7 +7,7 @@
 
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
-import { fetcher } from './core'
+import { request } from './core'
 
 // ============================================================
 // Type Imports
@@ -26,7 +26,7 @@ export type NotificationType = Notification
 // ============================================================
 
 async function getAllNotifications(unreadOnly = false): Promise<Notification[]> {
-  return fetcher<Notification[]>(`/api/notifications${unreadOnly ? '?unread=1' : ''}`)
+  return request<Notification[]>(`/api/notifications${unreadOnly ? '?unread=1' : ''}`)
 }
 
 async function getUnreadCount(): Promise<number> {
@@ -35,7 +35,7 @@ async function getUnreadCount(): Promise<number> {
 }
 
 async function markAsRead(id: string): Promise<void> {
-  return fetcher<void>(`/api/notifications/${id}`, {
+  return request<void>(`/api/notifications/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ read: true }),
   })

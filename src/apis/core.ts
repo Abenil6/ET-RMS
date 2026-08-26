@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { AxiosRequestConfig, AxiosResponse } from 'axios'
 
 export class ApiError extends Error {
   constructor(
@@ -108,20 +109,54 @@ export async function refreshAccessToken(): Promise<boolean> {
   }
 }
 
-/**
- * Generic HTTP fetcher using apiClient
- * This is the execution engine for all API calls
- */
-export async function fetcher<T>(url: string, options?: RequestInit): Promise<T> {
-  const { apiClient } = await import('./apiClient')
-  
-  const config = {
-    url,
-    method: options?.method || 'GET',
-    ...(options?.body && { data: options.body }),
-    headers: options?.headers as Record<string, string>,
+function parseJsonBody(body: BodyInit | null | undefined) {
+  if (typeof body !== 'string') {
+    return body
   }
 
-  const response = await apiClient.request<T>(config)
-  return response.data
+  try {
+    return JSON.parse(body)
+  } catch {
+    return body
+  }
+}
+
+function toAxiosConfig(url: string, options?: RequestInit): AxiosRequestConfig {
+  return {
+    url,
+    method: options?.method || 'GET',
+    ...(options?.body && { data: parseJsonBody(options.body) }),
+    headers: options?.headers as Record<string, string>,
+  }
+}
+
+function unwrapResponse<T>(response: AxiosResponse<{ data?: T } | T>): T {
+  if (response.status === 204) {
+    return {} as T
+  }
+
+  const responseData = response.data
+
+  if (
+    responseData &&
+    typeof responseData === 'object' &&
+    'data' in responseData
+  ) {
+    return responseData.data as T
+  }
+
+  return responseData as T
+}
+
+/**
+ * Generic HTTP request wrapper using the shared Axios apiClient.
+ * This is the single success-response unwrapping point for API modules.
+ */
+export async function request<T>(url: string, options?: RequestInit): Promise<T> {
+  const { apiClient } = await import('./apiClient')
+  const response = await apiClient.request<{ data?: T } | T>(
+    toAxiosConfig(url, options),
+  )
+
+  return unwrapResponse<T>(response)
 }

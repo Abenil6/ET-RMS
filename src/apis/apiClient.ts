@@ -43,26 +43,10 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config
 })
 
-// 2. RESPONSE INTERCEPTOR: Unwrap backend payload & handle 401 refresh flow
+// 2. RESPONSE INTERCEPTOR: handle 401 refresh flow and normalize errors.
+// Successful response unwrapping belongs in core request<T>().
 apiClient.interceptors.response.use(
-  (response) => {
-    if (response.status === 204) {
-      return {}
-    }
-
-    const responseData = response.data
-
-    // Unwrap backend { data: ... } structure if present
-    if (
-      responseData &&
-      typeof responseData === 'object' &&
-      'data' in responseData
-    ) {
-      return responseData.data
-    }
-
-    return responseData
-  },
+  (response) => response,
   async (error: AxiosError<{ error?: string; message?: string; errors?: Record<string, string[]> }>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
