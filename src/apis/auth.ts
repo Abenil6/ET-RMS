@@ -1,87 +1,56 @@
-
-
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher, setTokens, clearTokens } from './core'
 
+// ============================================================
+// Type Imports
+// ============================================================
 
+import type { User, AuthTokens } from '@/types/user'
+import type {
+  LoginPayload,
+  RegisterPayload,
+  UpdateProfilePayload,
+  ChangePasswordPayload,
+  ForgotPasswordPayload,
+  ResetPasswordPayload,
+} from '@/types/user'
 
-export interface User {
-  id: string
-  name: string
-  email: string
-  phone: string | null
-  role: 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN'
-  createdAt: string
-}
-
-export interface AuthTokens {
-  accessToken: string
-  refreshToken: string
-  user: User
-}
-
-
+// Re-export for convenience
+export type { User, AuthTokens }
 export type {
   LoginInput,
   RegisterInput,
   ForgotPasswordInput,
   ResetPasswordInput,
   ChangePasswordInput,
-} from '@/features/auth/schemas'
-
-// Re-export for backwards compatibility
-export type LoginPayload = {
-  email: string
-  password: string
-}
-
-export type RegisterPayload = {
-  name: string
-  email: string
-  password: string
-  phone?: string
-}
-
-export type UpdateProfilePayload = {
-  name?: string
-  email?: string
-  phone?: string
-}
-
-export type ChangePasswordPayload = {
-  currentPassword: string
-  newPassword: string
-}
-
-export type ForgotPasswordPayload = {
-  email: string
-}
-
-export type ResetPasswordPayload = {
-  token: string
-  newPassword: string
-}
+  LoginPayload,
+  RegisterPayload,
+  UpdateProfilePayload,
+  ChangePasswordPayload,
+  ForgotPasswordPayload,
+  ResetPasswordPayload,
+} from '@/types/user'
 
 // ============================================================
 // Raw Execution Functions
 // ============================================================
 
-async function login(data: LoginPayload): Promise<AuthTokens> {
+export async function login(data: LoginPayload): Promise<AuthTokens> {
   return fetcher<AuthTokens>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-async function register(data: RegisterPayload): Promise<AuthTokens> {
+export async function register(data: RegisterPayload): Promise<AuthTokens> {
   return fetcher<AuthTokens>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-async function logout(): Promise<void> {
+export async function logout(): Promise<void> {
   const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null
   if (!refreshToken) {
     clearTokens()
@@ -98,11 +67,11 @@ async function logout(): Promise<void> {
   }
 }
 
-async function getCurrentUser(): Promise<User> {
+export async function getCurrentUser(): Promise<User> {
   return fetcher<User>('/api/auth/me')
 }
 
-async function updateProfile(data: UpdateProfilePayload): Promise<User> {
+export async function updateProfile(data: UpdateProfilePayload): Promise<User> {
   return fetcher<User>('/api/auth/me', {
     method: 'PATCH',
     body: JSON.stringify(data),

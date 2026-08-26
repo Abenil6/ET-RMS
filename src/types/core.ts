@@ -1,12 +1,6 @@
-export type Role = 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN'
-
-export type TicketStatus = 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'CANCELLED'
-
-export type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
-
-export type TicketCategory = 'CONNECTIVITY' | 'HARDWARE' | 'SOFTWARE' | 'BILLING' | 'OTHER'
-
-export type AppointmentStatus = 'RESERVED' | 'COMPLETED' | 'CANCELLED'
+// Note: Role, TicketStatus, TicketPriority, TicketCategory, and AppointmentStatus
+// are now inferred from Zod schemas in their respective type domains.
+// Import them from @/types/user, @/types/tickets, or @/types/appointments instead.
 
 export type AuditAction =
   | 'USER_CREATED'

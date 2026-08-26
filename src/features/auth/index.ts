@@ -1,7 +1,14 @@
 // ============================================================
-// Schemas
+// Re-export types from types/user for convenience
 // ============================================================
-export * from './schemas'
+export type {
+  LoginInput,
+  RegisterInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+  ChangePasswordInput,
+  Role,
+} from '@/types/user'
 
 // ============================================================
 // Hooks

@@ -1,10 +1,10 @@
 import { create } from 'zustand'
 import {
-  loginFn,
-  logoutFn,
-  meFn,
-  registerFn,
-  updateProfileFn,
+  getCurrentUser,
+  login as loginRequest,
+  logout as logoutRequest,
+  register as registerRequest,
+  updateProfile as updateProfileRequest,
 } from '@/apis/auth'
 import type { RegisterPayload, UpdateProfilePayload, User as ApiUser } from '@/apis/auth'
 import { clearTokens, getAccessToken, setTokens } from '@/apis/core'
@@ -119,7 +119,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ loading: true })
 
       try {
-        const user = await meFn()
+        const user = await getCurrentUser()
         set({
           user: withAvatar(user),
           loading: false,
@@ -146,7 +146,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   login: async (email: string, password: string) => {
     try {
-      const data = await loginFn({ email: email.trim(), password })
+      const data = await loginRequest({ email: email.trim(), password })
       setTokens(data.accessToken, data.refreshToken)
       set({
         user: withAvatar(data.user),
@@ -165,7 +165,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   register: async (data: RegisterPayload) => {
     try {
-      const response = await registerFn(data)
+      const response = await registerRequest(data)
       setTokens(response.accessToken, response.refreshToken)
       set({
         user: withAvatar(response.user),
@@ -184,7 +184,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   logout: async () => {
     try {
-      await logoutFn()
+      await logoutRequest()
     } finally {
       clearTokens()
       set({
@@ -219,7 +219,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         return { success: true }
       }
 
-      const savedUser = await updateProfileFn(payload)
+      const savedUser = await updateProfileRequest(payload)
 
       set({
         user: {

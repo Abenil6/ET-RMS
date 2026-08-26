@@ -1,4 +1,4 @@
-import type { TicketCategory, TicketPriority, TicketStatus } from '../core'
+import type { TicketCategory, TicketPriority, TicketStatus } from './schemas'
 
 export interface CreateTicketPayload {
   subject: string

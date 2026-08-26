@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Modal } from '@/components/shared/Modal'
-import { updateUserSchema, type UpdateUserInput } from '@/features/admin/schemas'
+import { updateUserSchema } from '@/types/admin'
+import type { UpdateUserInput } from '@/types/admin'
 import type { AdminUserType } from '@/apis'
 
 const ROLE_LABELS = {

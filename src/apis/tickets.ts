@@ -1,83 +1,27 @@
-
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher } from './core'
-
-export interface Ticket {
-  id: string
-  ticketNumber: string
-  subject: string
-  serviceNumber: string
-  category: 'CONNECTIVITY' | 'HARDWARE' | 'SOFTWARE' | 'BILLING' | 'OTHER'
-  description: string
-  status: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'CANCELLED'
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
-  createdAt: string
-  updatedAt: string
-  resolvedAt: string | null
-  resolution: string | null
-  customerId: string
-  technicianId: string | null
-  customer: {
-    id: string
-    name: string
-    email: string
-  }
-  technician: {
-    id: string
-    name: string
-    email: string
-  } | null
-  review: {
-    rating: number
-    comment: string
-    createdAt: string
-  } | null
-  queue?: {
-    position: number
-    ahead: number
-    estimatedWaitMinutes: number
-  }
-}
-
-export interface Technician {
-  id: string
-  name: string
-  email: string
-  openTickets?: number
-  activeTickets?: number
-}
-
-export interface QueueInfo {
-  ticketNumber?: string
-  status?: string
-  position: number
-  ahead: number
-  estimatedWaitMinutes: number
-}
-
-
-export type {
+import type {
+  Ticket,
+  Technician,
+  QueueInfo,
   CreateTicketInput,
   UpdateTicketInput,
   AssignTicketInput,
   ResolveTicketInput,
   ReviewTicketInput,
-} from '@/features/tickets/schemas'
+} from '@/types/tickets'
 
-export type TicketFormType = {
-  subject: string
-  serviceNumber: string
-  category: 'CONNECTIVITY' | 'HARDWARE' | 'SOFTWARE' | 'BILLING' | 'OTHER'
-  description: string
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
-}
-
-export type TicketUpdateType = {
-  subject?: string
-  description?: string
-  status?: 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'CANCELLED'
-  priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+// Re-export types for convenience
+export type {
+  Ticket,
+  Technician,
+  QueueInfo,
+  CreateTicketInput,
+  UpdateTicketInput,
+  AssignTicketInput,
+  ResolveTicketInput,
+  ReviewTicketInput,
 }
 
 export type TechnicianType = Technician
@@ -95,14 +39,14 @@ async function getTicketById(id: string): Promise<Ticket> {
   return fetcher<Ticket>(`/api/tickets/${id}`)
 }
 
-async function createTicket(data: TicketFormType): Promise<Ticket> {
+async function createTicket(data: CreateTicketInput): Promise<Ticket> {
   return fetcher<Ticket>('/api/tickets', {
     method: 'POST',
     body: JSON.stringify(data),
   })
 }
 
-async function updateTicket(id: string, data: TicketUpdateType): Promise<Ticket> {
+async function updateTicket(id: string, data: UpdateTicketInput): Promise<Ticket> {
   return fetcher<Ticket>(`/api/tickets/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
@@ -187,7 +131,7 @@ export const ticketsApi = {
    * Automatically invalidates tickets list on success
    */
   create: {
-    useMutation: (options?: UseMutationOptions<Ticket, Error, TicketFormType>) =>
+    useMutation: (options?: UseMutationOptions<Ticket, Error, CreateTicketInput>) =>
       useMutation({
         mutationFn: createTicket,
         meta: {
@@ -204,7 +148,7 @@ export const ticketsApi = {
    * Automatically invalidates tickets cache on success
    */
   update: {
-    useMutation: (options?: UseMutationOptions<Ticket, Error, { id: string; data: TicketUpdateType }>) =>
+    useMutation: (options?: UseMutationOptions<Ticket, Error, { id: string; data: UpdateTicketInput }>) =>
       useMutation({
         mutationFn: ({ id, data }) => updateTicket(id, data),
         meta: {

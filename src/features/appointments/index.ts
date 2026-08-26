@@ -1,10 +1,7 @@
-// ============================================================
-// Schemas
-// ============================================================
-export * from './schemas'
-
-// ============================================================
-// Hooks
-// ============================================================
-export * from './hooks/useAppointmentQueries'
-export * from './hooks/useAppointmentMutations'
+// Re-export types from types/appointments for convenience
+export type {
+  CreateAppointmentInput,
+  UpdateAppointmentInput,
+  AppointmentFormInput,
+  AppointmentStatus,
+} from '@/types/appointments'

@@ -1,13 +1,6 @@
 // ============================================================
-// Schemas
-// ============================================================
-export * from './schemas'
-
-// ============================================================
 // Hooks
 // ============================================================
-export * from './hooks/useTicketQueries'
-export * from './hooks/useTicketMutations'
 export { useTicketActions } from './hooks/useTicketActions'
 export { useTicketDetail } from './hooks/useTicketDetail'
 

@@ -1,4 +1,4 @@
-import type { Role } from '../core'
+import type { Role } from './schemas'
 
 export interface LoginPayload {
   email: string

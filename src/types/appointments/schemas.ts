@@ -45,7 +45,7 @@ export const createAppointmentSchema = z.object({
  */
 export const updateAppointmentSchema = z.object({
   status: z.enum(['CANCELLED', 'COMPLETED'], {
-    errorMap: () => ({ message: 'Status can only be CANCELLED or COMPLETED' }),
+    message: 'Status can only be CANCELLED or COMPLETED',
   }),
 })
 

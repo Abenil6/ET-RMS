@@ -93,7 +93,7 @@ export async function refreshAccessToken(): Promise<boolean> {
       }
     )
 
-    const data = response.data?.data
+    const data = response.data.data
 
     if (!data || !data.accessToken || !data.refreshToken) {
       clearTokens()
@@ -117,7 +117,7 @@ export async function fetcher<T>(url: string, options?: RequestInit): Promise<T>
   
   const config = {
     url,
-    method: (options?.method || 'GET') as string,
+    method: options?.method || 'GET',
     ...(options?.body && { data: options.body }),
     headers: options?.headers as Record<string, string>,
   }

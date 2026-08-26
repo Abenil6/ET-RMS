@@ -64,8 +64,6 @@ export type {
   Ticket,
   Technician,
   QueueInfo,
-  TicketFormType,
-  TicketUpdateType,
   TechnicianType,
   QueueInfoType,
   CreateTicketInput,
@@ -79,8 +77,6 @@ export type {
 export type {
   Appointment,
   AppointmentType,
-  AppointmentFormType,
-  AppointmentUpdateType,
   CreateAppointmentInput,
   UpdateAppointmentInput,
   AppointmentFormInput,

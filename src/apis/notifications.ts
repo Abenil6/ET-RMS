@@ -10,22 +10,15 @@ import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { fetcher } from './core'
 
 // ============================================================
-// Backend & DB Interfaces
+// Type Imports
 // ============================================================
 
-export interface Notification {
-  id: string
-  message: string
-  read: boolean
-  createdAt: string
-  userId: string
-  ticketId: string | null
-}
+import type { Notification } from '@/types/notification'
 
-// ============================================================
-// Payload Types
-// ============================================================
+// Re-export for convenience
+export type { Notification }
 
+// Legacy alias
 export type NotificationType = Notification
 
 // ============================================================

@@ -1,7 +1,13 @@
 import { z } from 'zod'
 
 // ============================================================
-// Validation Schemas
+// Enums and Constants
+// ============================================================
+
+export const RoleEnum = z.enum(['CUSTOMER', 'TECHNICIAN', 'ADMIN'])
+
+// ============================================================
+// Auth Validation Schemas
 // ============================================================
 
 /**
@@ -107,3 +113,4 @@ export type RegisterInput = z.infer<typeof registerSchema>
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
+export type Role = z.infer<typeof RoleEnum>
