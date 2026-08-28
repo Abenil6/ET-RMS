@@ -1,11 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { request, setTokens, clearTokens } from './core'
-
-// ============================================================
-// Type Imports
-// ============================================================
-
 import type { User, AuthTokens } from '@/types/user'
 import type {
   LoginPayload,
@@ -16,7 +11,6 @@ import type {
   ResetPasswordPayload,
 } from '@/types/user'
 
-// Re-export for convenience
 export type { User, AuthTokens }
 export type {
   LoginInput,
@@ -31,10 +25,6 @@ export type {
   ForgotPasswordPayload,
   ResetPasswordPayload,
 } from '@/types/user'
-
-// ============================================================
-// Raw Execution Functions
-// ============================================================
 
 export async function login(data: LoginPayload): Promise<AuthTokens> {
   return request<AuthTokens>('/api/auth/login', {
@@ -105,15 +95,7 @@ async function resetPassword(data: ResetPasswordPayload): Promise<{ message: str
   })
 }
 
-// ============================================================
-// Hooks Object Definition
-// ============================================================
-
 export const authApi = {
-  /**
-   * Login with email and password
-   * Automatically saves tokens on success
-   */
   login: {
     useMutation: (options?: UseMutationOptions<AuthTokens, Error, LoginPayload>) =>
       useMutation({
@@ -122,18 +104,17 @@ export const authApi = {
           successMessage: 'Welcome back!',
           errorMessage: 'Login failed. Please check your credentials.',
         },
-        ...options,
-        onSuccess: (...args) => {
-          setTokens(args[0].accessToken, args[0].refreshToken)
-          options?.onSuccess?.(...args)
+        onSuccess: (...args ) => {
+          const [data] = args
+          setTokens(data.accessToken, data.refreshToken)
+          if (options?.onSuccess) {
+            options.onSuccess(...args)
+          }
         },
+        ...options,
       }),
   },
 
-  /**
-   * Register a new account
-   * Automatically saves tokens on success
-   */
   register: {
     useMutation: (options?: UseMutationOptions<AuthTokens, Error, RegisterPayload>) =>
       useMutation({
@@ -142,18 +123,17 @@ export const authApi = {
           successMessage: 'Account created! Please check your email.',
           errorMessage: 'Registration failed. Please try again.',
         },
-        ...options,
-        onSuccess: (...args) => {
-          setTokens(args[0].accessToken, args[0].refreshToken)
-          options?.onSuccess?.(...args)
+        onSuccess: (...args ) => {
+          const [data] = args
+          setTokens(data.accessToken, data.refreshToken)
+          if (options?.onSuccess) {
+            options.onSuccess(...args)
+          }
         },
+        ...options,
       }),
   },
 
-  /**
-   * Logout current user
-   * Clears tokens and session
-   */
   logout: {
     useMutation: (options?: UseMutationOptions<void, Error, void>) =>
       useMutation({
@@ -166,10 +146,6 @@ export const authApi = {
       }),
   },
 
-  /**
-   * Fetch current authenticated user
-   * Cached for 10 minutes
-   */
   me: {
     useQuery: (options?: Omit<UseQueryOptions<User, Error, User, string[]>, 'queryKey' | 'queryFn'>) =>
       useQuery({
@@ -183,10 +159,6 @@ export const authApi = {
       }),
   },
 
-  /**
-   * Update current user profile
-   * Automatically invalidates auth/me cache
-   */
   updateProfile: {
     useMutation: (options?: UseMutationOptions<User, Error, UpdateProfilePayload>) =>
       useMutation({
@@ -200,9 +172,6 @@ export const authApi = {
       }),
   },
 
-  /**
-   * Change current user password
-   */
   changePassword: {
     useMutation: (options?: UseMutationOptions<{ message: string }, Error, ChangePasswordPayload>) =>
       useMutation({
@@ -215,9 +184,6 @@ export const authApi = {
       }),
   },
 
-  /**
-   * Delete current user account permanently
-   */
   deleteAccount: {
     useMutation: (options?: UseMutationOptions<void, Error, void>) =>
       useMutation({
@@ -230,9 +196,6 @@ export const authApi = {
       }),
   },
 
-  /**
-   * Request password reset email
-   */
   forgotPassword: {
     useMutation: (options?: UseMutationOptions<{ message: string }, Error, ForgotPasswordPayload>) =>
       useMutation({
@@ -245,9 +208,6 @@ export const authApi = {
       }),
   },
 
-  /**
-   * Reset password with token
-   */
   resetPassword: {
     useMutation: (options?: UseMutationOptions<{ message: string }, Error, ResetPasswordPayload>) =>
       useMutation({
@@ -260,9 +220,5 @@ export const authApi = {
       }),
   },
 }
-
-// ============================================================
-// Default Export
-// ============================================================
 
 export default authApi

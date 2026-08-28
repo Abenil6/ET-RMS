@@ -19,7 +19,7 @@ export const queryClient = new QueryClient({
         toast.error(`Something went wrong: ${error.message}`)
       }
     },
-    onSuccess: (_data, _variables, _context, mutation) => {
+    onSuccess: (_data, _variables, _context, mutation ) => {
       if (mutation.meta?.successMessage) {
         toast.success(mutation.meta.successMessage)
       }
@@ -30,10 +30,10 @@ export const queryClient = new QueryClient({
   }),
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 30,
-      retry: 1,
-      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // stale time is configured for unnecessary refetches, but can be overridden in individual queries
+      gcTime: 1000 * 60 * 30, // caches are garbage collected after 30 minutes of inactivity
+      retry: 1, // retry failed queries once before throwing an error
+      refetchOnWindowFocus: false, // disable refetching on window focus to avoid unnecessary network requests
     },
   },
 })
