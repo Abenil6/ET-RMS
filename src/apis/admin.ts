@@ -1,18 +1,6 @@
-/**
- * ============================================================
- * Admin Resource API
- * Phase 3: Centralized Resource API Layer
- * ============================================================
- */
-
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { request } from './core'
-
-// ============================================================
-// Type Imports
-// ============================================================
-
 import type { AdminUser } from '@/types/user'
 import type { Technician } from '@/types/tickets'
 import type {
@@ -24,7 +12,6 @@ import type {
 import type { CreateUserPayload, UpdateUserPayload } from '@/types/user'
 import type { PaginationMeta } from '@/types/core'
 
-// Re-export for convenience
 export type { AdminUser, Technician, AuditLog, QueueStats, AdminQueueItem, AdminQueueResponse }
 export type {
   InviteUserInput,
@@ -35,7 +22,6 @@ export type {
   UpdateUserPayload,
 } from '@/types/admin'
 
-// Legacy aliases
 export type AdminUserType = AdminUser
 export type TechnicianType = Technician
 export type AuditLogType = AuditLog
@@ -47,10 +33,6 @@ export interface AuditLogsResponse {
   logs: AuditLog[]
   pagination: AuditLogPagination
 }
-
-// ============================================================
-// Raw Execution Functions
-// ============================================================
 
 type AdminUserApiResponse = Omit<AdminUser, 'lastLoginAt'> & {
   lastLoginAt?: string | null
@@ -147,53 +129,40 @@ async function getAdminQueue(): Promise<AdminQueueResponse> {
   return request<AdminQueueResponse>('/api/admin/queue')
 }
 
-// ============================================================
-// Hooks Object Definition
-// ============================================================
-
 export const adminApi = {
-  /**
-   * Fetch queue statistics for admin dashboard
-   */
   getQueue: {
     useQuery: (options?: UseQueryOptions<QueueStats, Error, QueueStats, string[]>) =>
       useQuery({
         queryKey: ['admin', 'queue'],
         queryFn: getQueue,
         meta: { errorMessage: 'Failed to load queue stats.' },
+        staleTime: 1000 * 30,
         ...options,
       }),
   },
 
-  /**
-   * Fetch detailed admin queue with ticket items
-   */
   getAdminQueue: {
     useQuery: (options?: UseQueryOptions<AdminQueueResponse, Error, AdminQueueResponse, string[]>) =>
       useQuery({
         queryKey: ['admin', 'admin-queue'],
         queryFn: getAdminQueue,
         meta: { errorMessage: 'Failed to load admin queue.' },
+        staleTime: 1000 * 30,
         ...options,
       }),
   },
 
-  /**
-   * Fetch all technicians for assignment
-   */
   getTechnicians: {
     useQuery: (options?: UseQueryOptions<Technician[], Error, Technician[], string[]>) =>
       useQuery({
-        queryKey: ['admin', 'technicians'],
+        queryKey: ['technicians'],
         queryFn: getTechnicians,
         meta: { errorMessage: 'Failed to load technicians.' },
+        staleTime: 1000 * 60 * 10,
         ...options,
       }),
   },
 
-  /**
-   * Fetch all users (admin only)
-   */
   getUsers: {
     useQuery: (options?: UseQueryOptions<AdminUser[], Error, AdminUser[], string[]>) =>
       useQuery({
@@ -204,10 +173,6 @@ export const adminApi = {
       }),
   },
 
-  /**
-   * Create/invite a new user
-   * Automatically invalidates users cache on success
-   */
   createUser: {
     useMutation: (options?: UseMutationOptions<AdminUser, Error, CreateUserPayload>) =>
       useMutation({
@@ -221,9 +186,6 @@ export const adminApi = {
       }),
   },
 
-  /**
-   * Fetch a single user by ID
-   */
   getUser: {
     useQuery: (id: string, options?: UseQueryOptions<AdminUser, Error, AdminUser, string[]>) =>
       useQuery({
@@ -235,10 +197,6 @@ export const adminApi = {
       }),
   },
 
-  /**
-   * Update user information
-   * Automatically invalidates users cache on success
-   */
   updateUser: {
     useMutation: (options?: UseMutationOptions<AdminUser, Error, { id: string; data: UpdateUserPayload }>) =>
       useMutation({
@@ -252,10 +210,6 @@ export const adminApi = {
       }),
   },
 
-  /**
-   * Delete a user permanently
-   * Automatically invalidates users cache on success
-   */
   deleteUser: {
     useMutation: (options?: UseMutationOptions<void, Error, string>) =>
       useMutation({
@@ -269,10 +223,6 @@ export const adminApi = {
       }),
   },
 
-  /**
-   * Ban a user
-   * Automatically invalidates users cache on success
-   */
   banUser: {
     useMutation: (options?: UseMutationOptions<AdminUser, Error, string>) =>
       useMutation({
@@ -286,10 +236,6 @@ export const adminApi = {
       }),
   },
 
-  /**
-   * Unban a user
-   * Automatically invalidates users cache on success
-   */
   unbanUser: {
     useMutation: (options?: UseMutationOptions<AdminUser, Error, string>) =>
       useMutation({
@@ -303,9 +249,6 @@ export const adminApi = {
       }),
   },
 
-  /**
-   * Reset user password (admin initiated)
-   */
   resetUserPassword: {
     useMutation: (options?: UseMutationOptions<PasswordResetEnvelope, Error, string>) =>
       useMutation({
@@ -318,9 +261,6 @@ export const adminApi = {
       }),
   },
 
-  /**
-   * Fetch audit logs with pagination
-   */
   getAuditLogs: {
     useQuery: (options?: UseQueryOptions<AuditLogsResponse, Error, AuditLogsResponse, string[]>) =>
       useQuery({
@@ -339,9 +279,5 @@ export const adminApi = {
       }),
   },
 }
-
-// ============================================================
-// Default Export
-// ============================================================
 
 export default adminApi

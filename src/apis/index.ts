@@ -1,18 +1,4 @@
-/**
- * ============================================================
- * Unified API Entry Point
- * Phase 3: Centralized Resource API Layer
- * ============================================================
- * 
- * This is the SINGLE source for all server interactions.
- * Components should import the default `api` object and never
- * import individual resource modules directly.
- * 
- * Usage:
- *   import api from '@/apis'
- *   const { data } = api.Tickets.getAll.useQuery()
- *   const { mutate } = api.Auth.login.useMutation()
- */
+
 
 import authApi from './auth'
 import ticketsApi from './tickets'
@@ -108,23 +94,7 @@ export type {
   AuditLogFilters,
 } from './admin'
 
-// ============================================================
-// Unified API Object (Default Export)
-// ============================================================
 
-/**
- * Global API object providing hooks-first access to all resources.
- * 
- * Structure:
- *   api.<Resource>.<operation>.<useQuery|useMutation>()
- * 
- * Examples:
- *   - api.Auth.login.useMutation()
- *   - api.Tickets.getAll.useQuery()
- *   - api.Appointments.create.useMutation()
- *   - api.Notifications.markAsRead.useMutation()
- *   - api.Admin.getUsers.useQuery()
- */
 export const api = {
   Auth: authApi,
   Tickets: ticketsApi,

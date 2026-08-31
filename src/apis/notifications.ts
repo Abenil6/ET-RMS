@@ -1,29 +1,11 @@
-/**
- * ============================================================
- * Notifications Resource API
- * Phase 3: Centralized Resource API Layer
- * ============================================================
- */
-
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { request } from './core'
-
-// ============================================================
-// Type Imports
-// ============================================================
-
+import { queryClient } from './queryClient'
 import type { Notification } from '@/types/notification'
 
-// Re-export for convenience
 export type { Notification }
-
-// Legacy alias
 export type NotificationType = Notification
-
-// ============================================================
-// Raw Execution Functions
-// ============================================================
 
 async function getAllNotifications(unreadOnly = false): Promise<Notification[]> {
   return request<Notification[]>(`/api/notifications${unreadOnly ? '?unread=1' : ''}`)
@@ -46,14 +28,7 @@ async function markAllAsRead(): Promise<void> {
   await Promise.all(unread.map((notification) => markAsRead(notification.id)))
 }
 
-// ============================================================
-// Hooks Object Definition
-// ============================================================
-
 export const notificationsApi = {
-  /**
-   * Fetch all notifications for current user
-   */
   getAll: {
     useQuery: (options?: UseQueryOptions<Notification[], Error, Notification[], string[]>) =>
       useQuery({
@@ -64,25 +39,19 @@ export const notificationsApi = {
       }),
   },
 
-  /**
-   * Fetch unread notification count
-   * Polls every 30 seconds for updates
-   */
   getUnreadCount: {
     useQuery: (options?: UseQueryOptions<number, Error, number, string[]>) =>
       useQuery({
         queryKey: ['notifications', 'unread'],
         queryFn: getUnreadCount,
         meta: { errorMessage: 'Failed to load unread count.' },
+        staleTime: 0,
         refetchInterval: 30000,
+        refetchOnWindowFocus: true,
         ...options,
       }),
   },
 
-  /**
-   * Mark a single notification as read
-   * Automatically invalidates notifications cache on success
-   */
   markAsRead: {
     useMutation: (options?: UseMutationOptions<void, Error, string>) =>
       useMutation({
@@ -90,16 +59,37 @@ export const notificationsApi = {
         meta: {
           successMessage: 'Notification marked as read.',
           errorMessage: 'Failed to mark as read.',
-          invalidateQueries: ['notifications'],
+        },
+        onMutate: async (id) => {
+          await queryClient.cancelQueries({ queryKey: ['notifications'] })
+          const previous = queryClient.getQueryData<Notification[]>(['notifications'])
+          if (previous) {
+            queryClient.setQueryData<Notification[]>(
+              ['notifications'],
+              previous.map((n) => (n.id === id ? { ...n, read: true } : n)),
+            )
+          }
+          const prevCount = queryClient.getQueryData<number>(['notifications', 'unread'])
+          if (prevCount) {
+            queryClient.setQueryData(['notifications', 'unread'], Math.max(0, prevCount - 1))
+          }
+          return { previous, prevCount } as { previous: Notification[] | undefined; prevCount: number | undefined }
+        },
+        onError: (_err, _id, context) => {
+          if (context && typeof context === 'object' && 'previous' in context && context.previous) {
+            queryClient.setQueryData(['notifications'], context.previous)
+          }
+          if (context && typeof context === 'object' && 'prevCount' in context && context.prevCount !== undefined) {
+            queryClient.setQueryData(['notifications', 'unread'], context.prevCount)
+          }
+        },
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['notifications'] })
         },
         ...options,
       }),
   },
 
-  /**
-   * Mark all notifications as read
-   * Automatically invalidates notifications cache on success
-   */
   markAllAsRead: {
     useMutation: (options?: UseMutationOptions<void, Error, void>) =>
       useMutation({
@@ -107,15 +97,31 @@ export const notificationsApi = {
         meta: {
           successMessage: 'All notifications marked as read.',
           errorMessage: 'Failed to mark all as read.',
-          invalidateQueries: ['notifications'],
+        },
+        onMutate: async () => {
+          await queryClient.cancelQueries({ queryKey: ['notifications'] })
+          const previous = queryClient.getQueryData<Notification[]>(['notifications'])
+          if (previous) {
+            queryClient.setQueryData<Notification[]>(
+              ['notifications'],
+              previous.map((n) => ({ ...n, read: true })),
+            )
+          }
+          queryClient.setQueryData(['notifications', 'unread'], 0)
+          return { previous } as { previous: Notification[] | undefined }
+        },
+        onError: (_err, _vars, context) => {
+          if (context && typeof context === 'object' && 'previous' in context && context.previous) {
+            queryClient.setQueryData(['notifications'], context.previous)
+          }
+          queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] })
+        },
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['notifications'] })
         },
         ...options,
       }),
   },
 }
-
-// ============================================================
-// Default Export
-// ============================================================
 
 export default notificationsApi

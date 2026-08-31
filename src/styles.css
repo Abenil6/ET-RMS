@@ -2,14 +2,20 @@
 
 @import "tailwindcss";
 
+/* Enable class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary-green: #2BB673;
   --color-primary-blue: #0072CE;
+
   --color-text-dark: #1F2937;
   --color-text-secondary: #6B7280;
+
   --color-bg: #F8FAFC;
   --color-card: #FFFFFF;
   --color-border: #E5E7EB;
+
   --color-success: #22C55E;
   --color-warning: #F59E0B;
   --color-error: #EF4444;
@@ -17,11 +23,29 @@
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Dark mode variables */
+.dark {
+  --color-bg: #07110C;
+  --color-card: #0D1A13;
+  --color-border: #203529;
+
+  --color-text-dark: #EEF8F1;
+  --color-text-secondary: #9FB2A6;
+
+  --color-primary-green: #38D98A;
+  --color-primary-blue: #4AA8FF;
+
+  --color-success: #3DDC97;
+  --color-warning: #FBBF24;
+  --color-error: #FB7185;
+}
+
+/* Global styles */
 * {
   box-sizing: border-box;
 }
 
-html{
+html {
   scroll-behavior: smooth;
 }
 
@@ -35,5 +59,7 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text-dark);
   font-family: var(--font-sans);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
-

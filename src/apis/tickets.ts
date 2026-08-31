@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'
 import { request } from './core'
+import { queryClient } from './queryClient'
 import type {
   Ticket,
   Technician,
@@ -12,7 +13,6 @@ import type {
   ReviewTicketInput,
 } from '@/types/tickets'
 
-// Re-export types for convenience
 export type {
   Ticket,
   Technician,
@@ -26,10 +26,6 @@ export type {
 
 export type TechnicianType = Technician
 export type QueueInfoType = QueueInfo
-
-// ============================================================
-// Raw Execution Functions
-// ============================================================
 
 async function getAllTickets(): Promise<Ticket[]> {
   return request<Ticket[]>('/api/tickets')
@@ -94,14 +90,7 @@ async function getTechnicians(): Promise<Technician[]> {
   return request<Technician[]>('/api/technicians')
 }
 
-// ============================================================
-// Hooks Object Definition
-// ============================================================
-
 export const ticketsApi = {
-  /**
-   * Fetch all tickets for the current user
-   */
   getAll: {
     useQuery: (options?: UseQueryOptions<Ticket[], Error, Ticket[], string[]>) =>
       useQuery({
@@ -112,9 +101,6 @@ export const ticketsApi = {
       }),
   },
 
-  /**
-   * Fetch a single ticket by ID
-   */
   getById: {
     useQuery: (id: string, options?: UseQueryOptions<Ticket, Error, Ticket, string[]>) =>
       useQuery({
@@ -126,10 +112,6 @@ export const ticketsApi = {
       }),
   },
 
-  /**
-   * Create a new ticket
-   * Automatically invalidates tickets list on success
-   */
   create: {
     useMutation: (options?: UseMutationOptions<Ticket, Error, CreateTicketInput>) =>
       useMutation({
@@ -143,10 +125,6 @@ export const ticketsApi = {
       }),
   },
 
-  /**
-   * Update ticket fields (partial update)
-   * Automatically invalidates tickets cache on success
-   */
   update: {
     useMutation: (options?: UseMutationOptions<Ticket, Error, { id: string; data: UpdateTicketInput }>) =>
       useMutation({
@@ -154,16 +132,28 @@ export const ticketsApi = {
         meta: {
           successMessage: 'Ticket updated successfully.',
           errorMessage: 'Failed to update ticket.',
-          invalidateQueries: ['tickets'],
+        },
+        onMutate: async ({ id, data }) => {
+          await queryClient.cancelQueries({ queryKey: ['tickets', id] })
+          const previous = queryClient.getQueryData<Ticket>(['tickets', id])
+          if (previous) {
+            queryClient.setQueryData(['tickets', id], { ...previous, ...data })
+          }
+          return { previous } as { previous: Ticket | undefined }
+        },
+        onError: (_err, { id }, context) => {
+          if (context && typeof context === 'object' && 'previous' in context && context.previous) {
+            queryClient.setQueryData(['tickets', id], context.previous)
+          }
+        },
+        onSuccess: (updatedTicket, variables) => {
+          queryClient.setQueryData(['tickets', variables.id], updatedTicket)
+          queryClient.invalidateQueries({ queryKey: ['tickets'], exact: true })
         },
         ...options,
       }),
   },
 
-  /**
-   * Delete a ticket permanently
-   * Automatically invalidates tickets cache on success
-   */
   delete: {
     useMutation: (options?: UseMutationOptions<void, Error, string>) =>
       useMutation({
@@ -171,16 +161,15 @@ export const ticketsApi = {
         meta: {
           successMessage: 'Ticket deleted successfully.',
           errorMessage: 'Failed to delete ticket.',
-          invalidateQueries: ['tickets'],
+        },
+        onSuccess: (_data, id) => {
+          queryClient.removeQueries({ queryKey: ['tickets', id] })
+          queryClient.invalidateQueries({ queryKey: ['tickets'], exact: true })
         },
         ...options,
       }),
   },
 
-  /**
-   * Assign ticket to a technician
-   * Automatically invalidates tickets cache on success
-   */
   assign: {
     useMutation: (options?: UseMutationOptions<Ticket, Error, { id: string; technicianId: string }>) =>
       useMutation({
@@ -188,16 +177,28 @@ export const ticketsApi = {
         meta: {
           successMessage: 'Ticket assigned.',
           errorMessage: 'Failed to assign ticket.',
-          invalidateQueries: ['tickets'],
+        },
+        onMutate: async ({ id, technicianId }) => {
+          await queryClient.cancelQueries({ queryKey: ['tickets', id] })
+          const previous = queryClient.getQueryData<Ticket>(['tickets', id])
+          if (previous) {
+            queryClient.setQueryData(['tickets', id], { ...previous, assignedTo: technicianId, status: 'in_progress' })
+          }
+          return { previous } as { previous: Ticket | undefined }
+        },
+        onError: (_err, { id }, context) => {
+          if (context && typeof context === 'object' && 'previous' in context && context.previous) {
+            queryClient.setQueryData(['tickets', id], context.previous)
+          }
+        },
+        onSuccess: (updatedTicket, variables) => {
+          queryClient.setQueryData(['tickets', variables.id], updatedTicket)
+          queryClient.invalidateQueries({ queryKey: ['tickets'], exact: true })
         },
         ...options,
       }),
   },
 
-  /**
-   * Resolve a ticket with resolution notes
-   * Automatically invalidates tickets cache on success
-   */
   resolve: {
     useMutation: (options?: UseMutationOptions<Ticket, Error, { id: string; resolution: string }>) =>
       useMutation({
@@ -205,16 +206,28 @@ export const ticketsApi = {
         meta: {
           successMessage: 'Ticket resolved.',
           errorMessage: 'Failed to resolve ticket.',
-          invalidateQueries: ['tickets'],
+        },
+        onMutate: async ({ id }) => {
+          await queryClient.cancelQueries({ queryKey: ['tickets', id] })
+          const previous = queryClient.getQueryData<Ticket>(['tickets', id])
+          if (previous) {
+            queryClient.setQueryData(['tickets', id], { ...previous, status: 'resolved' })
+          }
+          return { previous } as { previous: Ticket | undefined }
+        },
+        onError: (_err, { id }, context) => {
+          if (context && typeof context === 'object' && 'previous' in context && context.previous) {
+            queryClient.setQueryData(['tickets', id], context.previous)
+          }
+        },
+        onSuccess: (updatedTicket, variables) => {
+          queryClient.setQueryData(['tickets', variables.id], updatedTicket)
+          queryClient.invalidateQueries({ queryKey: ['tickets'], exact: true })
         },
         ...options,
       }),
   },
 
-  /**
-   * Reopen a closed or resolved ticket
-   * Automatically invalidates tickets cache on success
-   */
   reopen: {
     useMutation: (options?: UseMutationOptions<Ticket, Error, string>) =>
       useMutation({
@@ -222,16 +235,15 @@ export const ticketsApi = {
         meta: {
           successMessage: 'Ticket reopened.',
           errorMessage: 'Failed to reopen ticket.',
-          invalidateQueries: ['tickets'],
+        },
+        onSuccess: (updatedTicket, id) => {
+          queryClient.setQueryData(['tickets', id], updatedTicket)
+          queryClient.invalidateQueries({ queryKey: ['tickets'], exact: true })
         },
         ...options,
       }),
   },
 
-  /**
-   * Submit a review for a resolved ticket
-   * Automatically invalidates tickets cache on success
-   */
   review: {
     useMutation: (options?: UseMutationOptions<Ticket, Error, { id: string; rating: number; comment: string }>) =>
       useMutation({
@@ -239,16 +251,15 @@ export const ticketsApi = {
         meta: {
           successMessage: 'Review submitted.',
           errorMessage: 'Failed to submit review.',
-          invalidateQueries: ['tickets'],
+        },
+        onSuccess: (updatedTicket, variables) => {
+          queryClient.setQueryData(['tickets', variables.id], updatedTicket)
+          queryClient.invalidateQueries({ queryKey: ['tickets'], exact: true })
         },
         ...options,
       }),
   },
 
-  /**
-   * Fetch ticket queue position and wait time
-   * Useful for real-time queue monitoring
-   */
   getQueue: {
     useQuery: (
       ticketId: string,
@@ -263,23 +274,16 @@ export const ticketsApi = {
       }),
   },
 
-  /**
-   * Fetch all available technicians
-   * Used for ticket assignment
-   */
   getTechnicians: {
     useQuery: (options?: UseQueryOptions<Technician[], Error, Technician[], string[]>) =>
       useQuery({
-        queryKey: ['tickets', 'technicians'],
+        queryKey: ['technicians'],
         queryFn: getTechnicians,
         meta: { errorMessage: 'Failed to load technicians.' },
+        staleTime: 1000 * 60 * 10,
         ...options,
       }),
   },
 }
-
-// ============================================================
-// Default Export
-// ============================================================
 
 export default ticketsApi
