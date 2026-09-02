@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import api from '@/apis'
 import { motion } from 'motion/react'
@@ -8,6 +9,7 @@ import { AppointmentsDataTable } from '@/components/tables/appointments/data-tab
 import { createAppointmentsColumns } from '@/components/tables/appointments/columns'
 
 export function AppointmentsPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
 
   const {
@@ -31,7 +33,13 @@ export function AppointmentsPage() {
 
   if (!user) return null
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error.message || 'Failed to load appointments'} retry={refresh} />
+  if (isError)
+    return (
+      <ErrorMessage
+        message={error.message || t('appointments.error_loading')}
+        retry={refresh}
+      />
+    )
 
   function handleCancel(id: string) {
     updateAppointment({ id, data: { status: 'CANCELLED' } })
@@ -57,11 +65,11 @@ export function AppointmentsPage() {
     >
       <div className="w-full">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Appointments</h1>
+          <h1 className="text-3xl font-bold">{t('appointments.title')}</h1>
           <p className="text-text-secondary">
             {user.role === 'CUSTOMER'
-              ? 'View and manage your scheduled appointments'
-              : 'Manage all customer appointments'}
+              ? t('appointments.subtitle_customer')
+              : t('appointments.subtitle_admin')}
           </p>
         </div>
 

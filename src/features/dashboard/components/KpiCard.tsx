@@ -1,6 +1,7 @@
 import { motion } from 'motion/react'
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import i18n from '@/lib/i18n'
 
 type Color = 'primary-green' | 'warning' | 'success' | 'primary-blue'
 
@@ -35,7 +36,7 @@ export function KpiCard({
   const deltaContent =
     delta === null || delta === undefined ? (
       <span className="inline-flex items-center gap-1 text-xs font-semibold text-text-secondary">
-        <Minus size={13} /> n/a
+        <Minus size={13} /> {i18n.t('dashboard.not_available')}
       </span>
     ) : delta >= 0 ? (
       <span className="inline-flex items-center gap-1 text-xs font-semibold text-success">
@@ -55,7 +56,9 @@ export function KpiCard({
       className="bg-card rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition"
     >
       <div className="flex items-center justify-between mb-3">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${bg}`}>
+        <div
+          className={`w-10 h-10 rounded-lg flex items-center justify-center ${bg}`}
+        >
           <Icon className={`w-5 h-5 ${text}`} />
         </div>
         {deltaContent}
@@ -65,7 +68,11 @@ export function KpiCard({
       </p>
       <p className="text-2xl font-bold text-text-dark mt-1">
         {value.toLocaleString()}
-        {unit ? <span className="text-base font-semibold text-text-secondary ml-1">{unit}</span> : null}
+        {unit ? (
+          <span className="text-base font-semibold text-text-secondary ml-1">
+            {unit}
+          </span>
+        ) : null}
       </p>
     </motion.div>
   )

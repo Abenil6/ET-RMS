@@ -4,6 +4,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { motion, AnimatePresence } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 import {
   AVATAR_STYLES,
   AVATAR_SEEDS,
@@ -17,6 +18,7 @@ type Notice = { kind: 'success' | 'error'; message: string } | null
 
 export function ProfilePage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { user, updateProfile, logout } = useAuth()
 
   const [isEditing, setIsEditing] = useState(false)
@@ -65,11 +67,15 @@ export function ProfilePage() {
       setCurrentPassword('')
       setNewPassword('')
       setIsChangingPassword(false)
-      setSecurityNotice({ kind: 'success', message: 'Password updated successfully.' })
+      setSecurityNotice({
+        kind: 'success',
+        message: t('profile.password_updated'),
+      })
       setTimeout(() => setSecurityNotice(null), 4000)
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : 'Failed to change password.'
+      const msg =
+        err instanceof Error ? err.message : t('profile.error_change_password')
       setSecurityNotice({ kind: 'error', message: msg })
       setChangingPassword(false)
     },
@@ -81,7 +87,8 @@ export function ProfilePage() {
       navigate({ to: '/login' })
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : 'Failed to delete account.'
+      const msg =
+        err instanceof Error ? err.message : t('profile.error_delete_account')
       setSecurityNotice({ kind: 'error', message: msg })
       setDeleting(false)
     },
@@ -92,11 +99,11 @@ export function ProfilePage() {
     setProfileNotice(null)
 
     if (!name.trim()) {
-      setProfileNotice({ kind: 'error', message: 'Name is required.' })
+      setProfileNotice({ kind: 'error', message: t('profile.name_required') })
       return
     }
     if (!email.trim()) {
-      setProfileNotice({ kind: 'error', message: 'Email is required.' })
+      setProfileNotice({ kind: 'error', message: t('profile.email_required') })
       return
     }
 
@@ -112,12 +119,18 @@ export function ProfilePage() {
       })
 
       if (!result.success) {
-        setProfileNotice({ kind: 'error', message: result.error || 'Failed to update profile.' })
+        setProfileNotice({
+          kind: 'error',
+          message: result.error || t('profile.error_update_profile'),
+        })
         return
       }
 
       setIsEditing(false)
-      setProfileNotice({ kind: 'success', message: 'Profile updated successfully.' })
+      setProfileNotice({
+        kind: 'success',
+        message: t('profile.profile_updated'),
+      })
       setTimeout(() => setProfileNotice(null), 4000)
     } finally {
       setSavingProfile(false)
@@ -129,11 +142,17 @@ export function ProfilePage() {
     setSecurityNotice(null)
 
     if (!currentPassword || !newPassword) {
-      setSecurityNotice({ kind: 'error', message: 'Please fill in both current and new passwords.' })
+      setSecurityNotice({
+        kind: 'error',
+        message: t('profile.passwords_required'),
+      })
       return
     }
     if (newPassword.length < 6) {
-      setSecurityNotice({ kind: 'error', message: 'New password must be at least 6 characters.' })
+      setSecurityNotice({
+        kind: 'error',
+        message: t('profile.password_min_length'),
+      })
       return
     }
 
@@ -161,10 +180,8 @@ export function ProfilePage() {
       transition={{ duration: 0.6 }}
     >
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Profile Settings</h1>
-        <p className="text-text-secondary">
-          Manage your account settings and preferences
-        </p>
+        <h1 className="text-3xl font-bold">{t('profile.title')}</h1>
+        <p className="text-text-secondary">{t('profile.subtitle')}</p>
       </div>
 
       <div className="grid lg:grid-cols-4 gap-8">
@@ -175,7 +192,7 @@ export function ProfilePage() {
               <div className="relative">
                 <img
                   src={getAvatarUrl(selectedAvatarStyle, selectedAvatarSeed)}
-                  alt="Avatar preview"
+                  alt={t('profile.avatar_preview')}
                   className="w-24 h-24 rounded-full object-cover border-4 border-border"
                 />
                 {isEditing && (
@@ -227,7 +244,9 @@ export function ProfilePage() {
           {/* Profile Info */}
           <div className="bg-card rounded-xl border border-border p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-text-dark">Profile Information</h2>
+              <h2 className="text-xl font-bold text-text-dark">
+                {t('profile.information_title')}
+              </h2>
               <button
                 onClick={() => setIsEditing(!isEditing)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
@@ -237,7 +256,7 @@ export function ProfilePage() {
                 }`}
                 type="button"
               >
-                {isEditing ? 'Cancel' : 'Edit'}
+                {isEditing ? t('profile.cancel') : t('profile.edit')}
               </button>
             </div>
 
@@ -245,7 +264,7 @@ export function ProfilePage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-text-secondary mb-2">
-                    Name
+                    {t('profile.name_label')}
                   </label>
                   <input
                     type="text"
@@ -257,7 +276,7 @@ export function ProfilePage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-text-secondary mb-2">
-                    Email
+                    {t('profile.email_label')}
                   </label>
                   <input
                     type="email"
@@ -270,20 +289,20 @@ export function ProfilePage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-text-secondary mb-2">
-                  Phone
+                  {t('profile.phone_label')}
                 </label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   disabled={!isEditing}
-                  placeholder="Optional"
+                  placeholder={t('profile.optional')}
                   className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-text-secondary mb-2">
-                  Avatar Style
+                  {t('profile.avatar_style_label')}
                 </label>
                 <select
                   value={selectedAvatarStyle}
@@ -306,14 +325,16 @@ export function ProfilePage() {
                     disabled={savingProfile}
                     className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition disabled:opacity-50"
                   >
-                    {savingProfile ? 'Saving...' : 'Save Changes'}
+                    {savingProfile
+                      ? t('profile.saving')
+                      : t('profile.save_changes')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsEditing(false)}
                     className="px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition"
                   >
-                    Cancel
+                    {t('profile.cancel')}
                   </button>
                 </div>
               )}
@@ -337,17 +358,21 @@ export function ProfilePage() {
 
           {/* Security */}
           <div className="bg-card rounded-xl border border-border p-6">
-            <h2 className="text-xl font-bold text-text-dark mb-6">Security</h2>
+            <h2 className="text-xl font-bold text-text-dark mb-6">
+              {t('profile.security_title')}
+            </h2>
 
             <div className="grid md:grid-cols-2 gap-6">
               {/* Change Password */}
               <div className="p-4 rounded-lg border border-border">
-                <h3 className="text-lg font-semibold text-text-dark mb-4">Change Password</h3>
+                <h3 className="text-lg font-semibold text-text-dark mb-4">
+                  {t('profile.change_password_title')}
+                </h3>
                 {isChangingPassword ? (
                   <form onSubmit={handleChangePassword} className="space-y-4">
                     <div>
                       <label className="block text-sm font-semibold text-text-secondary mb-2">
-                        Current Password
+                        {t('profile.current_password_label')}
                       </label>
                       <input
                         type="password"
@@ -359,7 +384,7 @@ export function ProfilePage() {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-text-secondary mb-2">
-                        New Password
+                        {t('profile.new_password_label')}
                       </label>
                       <input
                         type="password"
@@ -376,7 +401,9 @@ export function ProfilePage() {
                         disabled={changingPassword}
                         className="flex-1 px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition disabled:opacity-50"
                       >
-                        {changingPassword ? 'Updating...' : 'Update Password'}
+                        {changingPassword
+                          ? t('profile.updating')
+                          : t('profile.update_password')}
                       </button>
                       <button
                         type="button"
@@ -387,7 +414,7 @@ export function ProfilePage() {
                         }}
                         className="flex-1 px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition"
                       >
-                        Cancel
+                        {t('profile.cancel')}
                       </button>
                     </div>
                   </form>
@@ -396,24 +423,27 @@ export function ProfilePage() {
                     onClick={() => setIsChangingPassword(true)}
                     className="w-full px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition"
                   >
-                    Change Password
+                    {t('profile.change_password_button')}
                   </button>
                 )}
               </div>
 
               {/* Delete Account */}
               <div className="p-4 rounded-lg border border-error/20 bg-error/5">
-                <h3 className="text-lg font-semibold text-error mb-4">Delete Account</h3>
+                <h3 className="text-lg font-semibold text-error mb-4">
+                  {t('profile.delete_account_title')}
+                </h3>
                 <p className="text-sm text-text-secondary mb-4">
-                  Permanently delete your account and all associated data. This action
-                  cannot be undone.
+                  {t('profile.delete_account_description')}
                 </p>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   disabled={deleting}
                   className="w-full px-4 py-2 rounded-lg bg-error text-white text-sm font-medium hover:bg-error/90 transition disabled:opacity-50"
                 >
-                  {deleting ? 'Deleting...' : 'Delete Account'}
+                  {deleting
+                    ? t('profile.deleting')
+                    : t('profile.delete_account_button')}
                 </button>
               </div>
             </div>
@@ -454,7 +484,9 @@ export function ProfilePage() {
               className="bg-card rounded-xl border border-border p-6 w-full max-w-md max-h-[80vh] overflow-y-auto shadow-xl"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-text-dark">Choose Avatar</h3>
+                <h3 className="text-xl font-bold text-text-dark">
+                  {t('profile.choose_avatar')}
+                </h3>
                 <button
                   onClick={() => setShowAvatarPicker(false)}
                   className="p-1 rounded-lg text-text-secondary hover:bg-bg transition"
@@ -466,7 +498,7 @@ export function ProfilePage() {
               <div className="space-y-4">
                 <div>
                   <p className="text-sm font-semibold text-text-secondary mb-2">
-                    Style: {selectedAvatarStyle}
+                    {t('profile.avatar_style', { style: selectedAvatarStyle })}
                   </p>
                   <select
                     value={selectedAvatarStyle}
@@ -481,7 +513,9 @@ export function ProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-text-secondary mb-2">Seed</p>
+                  <p className="text-sm font-semibold text-text-secondary mb-2">
+                    {t('profile.avatar_seed')}
+                  </p>
                   <div className="grid grid-cols-5 gap-3">
                     {AVATAR_SEEDS.map((seed) => (
                       <button
@@ -496,7 +530,7 @@ export function ProfilePage() {
                       >
                         <img
                           src={getAvatarUrl(selectedAvatarStyle, seed)}
-                          alt={`Avatar ${seed}`}
+                          alt={t('profile.avatar_alt', { seed })}
                           className="w-full h-16 rounded-lg object-cover"
                         />
                       </button>
@@ -514,10 +548,11 @@ export function ProfilePage() {
         open={showDeleteConfirm}
         onConfirm={handleDeleteAccount}
         onCancel={() => setShowDeleteConfirm(false)}
-        title="Delete Account?"
-        description="Are you sure you want to permanently delete your account? This action cannot be undone."
-        confirmLabel={deleting ? 'Deleting...' : 'Delete Account'}
-        
+        title={t('profile.delete_account_confirm_title')}
+        description={t('profile.delete_account_confirm_description')}
+        confirmLabel={
+          deleting ? t('profile.deleting') : t('profile.delete_account_button')
+        }
       />
     </motion.div>
   )

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 import { RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import api from '@/apis'
@@ -34,11 +35,18 @@ const ACTION_STYLES: Record<string, string> = {
 const PAGE_SIZE = 25
 
 export function AdminAuditPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
 
   const [page, setPage] = useState(1)
 
-  const { data: auditData, isLoading: loading, isError, error, refetch: loadLogs } = api.Admin.getAuditLogs.usePaginated(page, PAGE_SIZE)
+  const {
+    data: auditData,
+    isLoading: loading,
+    isError,
+    error,
+    refetch: loadLogs,
+  } = api.Admin.getAuditLogs.usePaginated(page, PAGE_SIZE)
 
   const logs = auditData?.logs || []
   const pagination = auditData?.pagination
@@ -46,13 +54,19 @@ export function AdminAuditPage() {
   if (!user || user.role !== 'ADMIN') {
     return (
       <div className="p-8 text-center text-text-secondary">
-        Unauthorized access.
+        {t('admin_audit.unauthorized')}
       </div>
     )
   }
 
   if (loading && logs.length === 0) return <LoadingSpinner size="lg" />
-  if (isError && logs.length === 0) return <ErrorMessage message={error.message || 'Failed to load audit log'} retry={() => loadLogs()} />
+  if (isError && logs.length === 0)
+    return (
+      <ErrorMessage
+        message={error.message || t('admin_audit.error_loading')}
+        retry={() => loadLogs()}
+      />
+    )
 
   const total = pagination?.total ?? 0
   const totalPages = pagination?.totalPages ?? 1
@@ -67,17 +81,17 @@ export function AdminAuditPage() {
       <div className="w-full">
         <div className="flex items-start justify-between gap-3 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-text-dark mb-1">Audit Logs</h1>
-            <p className="text-text-secondary">
-              System-wide audit trail for all administrative actions.
-            </p>
+            <h1 className="text-2xl font-bold text-text-dark mb-1">
+              {t('admin_audit.title')}
+            </h1>
+            <p className="text-text-secondary">{t('admin_audit.subtitle')}</p>
           </div>
 
           <button
             onClick={() => loadLogs()}
             className="p-2 rounded-lg border border-border text-text-dark hover:bg-bg transition"
             type="button"
-            title="Refresh"
+            title={t('admin_audit.refresh')}
           >
             <RefreshCw size={18} />
           </button>
@@ -87,24 +101,40 @@ export function AdminAuditPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-bg border-b border-border text-text-secondary">
               <tr>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Time</th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">User</th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Action</th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">Details</th>
-                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">IP</th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  {t('admin_audit.time_column')}
+                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  {t('admin_audit.user_column')}
+                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  {t('admin_audit.action_column')}
+                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  {t('admin_audit.details_column')}
+                </th>
+                <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
+                  {t('admin_audit.ip_column')}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-text-dark">
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-text-secondary">
-                    No audit logs found.
+                  <td
+                    colSpan={5}
+                    className="px-5 py-8 text-center text-text-secondary"
+                  >
+                    {t('admin_audit.empty')}
                   </td>
                 </tr>
               ) : (
                 logs.map((log: AuditLogType) => {
                   const actor = log.performedByUser ?? log.user
-                  const actorFallback = log.performedBy ?? log.userId ?? 'Unknown user'
+                  const actorFallback =
+                    log.performedBy ??
+                    log.userId ??
+                    t('admin_audit.unknown_user')
                   const details = log.description ?? log.details ?? '—'
 
                   return (
@@ -116,12 +146,21 @@ export function AdminAuditPage() {
                         })}
                       </td>
                       <td className="px-5 py-3">
-                        <p className="font-medium">{actor?.name ?? actorFallback}</p>
-                        <p className="text-xs text-text-secondary">{actor?.email ?? actorFallback}</p>
+                        <p className="font-medium">
+                          {actor?.name ?? actorFallback}
+                        </p>
+                        <p className="text-xs text-text-secondary">
+                          {actor?.email ?? actorFallback}
+                        </p>
                       </td>
                       <td className="px-5 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${ACTION_STYLES[log.action] ?? 'bg-bg text-text-secondary'}`}>
-                          {ACTION_LABELS[log.action] ?? log.action}
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${ACTION_STYLES[log.action] ?? 'bg-bg text-text-secondary'}`}
+                        >
+                          {t(`admin_audit.actions.${log.action}`, {
+                            defaultValue:
+                              ACTION_LABELS[log.action] ?? log.action,
+                          })}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-text-secondary line-clamp-1 max-w-xs">
@@ -141,7 +180,11 @@ export function AdminAuditPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-text-secondary">
-              Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, total)} of {total} logs
+              {t('admin_audit.showing', {
+                from: (page - 1) * PAGE_SIZE + 1,
+                to: Math.min(page * PAGE_SIZE, total),
+                total,
+              })}
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -153,7 +196,7 @@ export function AdminAuditPage() {
                 <ChevronLeft size={16} />
               </button>
               <span className="text-sm text-text-secondary">
-                Page {page} of {totalPages}
+                {t('admin_audit.page', { page, totalPages })}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

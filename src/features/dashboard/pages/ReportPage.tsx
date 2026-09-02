@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import api from '@/apis'
 import { useAuth } from '@/features/auth/hooks/useAuth'
@@ -7,6 +8,7 @@ import type { TicketCategory, TicketPriority } from '@/lib/types'
 
 export function ReportPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { user } = useAuth()
 
   // API-required fields
@@ -40,35 +42,47 @@ export function ReportPage() {
     setPrimaryMobile(user.phone || '')
   }, [user])
 
-  const { mutate: createTicket, isPending: submitting } = api.Tickets.create.useMutation({
-    onSuccess: (created) => {
-      // Go to ticket detail page
-      navigate({ to: '/tickets/$ticketId', params: { ticketId: created.id } })
-    },
-    onError: (err) => {
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError('Failed to submit ticket. Please try again.')
-      }
-    },
-  })
+  const { mutate: createTicket, isPending: submitting } =
+    api.Tickets.create.useMutation({
+      onSuccess: (created) => {
+        // Go to ticket detail page
+        navigate({ to: '/tickets/$ticketId', params: { ticketId: created.id } })
+      },
+      onError: (err) => {
+        if (err instanceof Error) {
+          setError(err.message)
+        } else {
+          setError(t('report.error_submit'))
+        }
+      },
+    })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
 
-    if (!subject.trim() || !serviceNumber.trim() || !problemDescription.trim()) {
-      setError('Please fill in all required fields.')
+    if (
+      !subject.trim() ||
+      !serviceNumber.trim() ||
+      !problemDescription.trim()
+    ) {
+      setError(t('report.error_required_fields'))
       return
     }
 
     const extraLines: string[] = []
-    if (accessTechnology) extraLines.push(`Access Technology: ${accessTechnology}`)
+    if (accessTechnology)
+      extraLines.push(`Access Technology: ${accessTechnology}`)
     if (bandwidth) extraLines.push(`Requested Bandwidth: ${bandwidth}`)
     if (region || subCity || woreda || kebele || houseNumber) {
       extraLines.push(
-        `Location: ${[region, subCity, woreda && `Woreda ${woreda}`, kebele && `Kebele/Block ${kebele}`, houseNumber && `House ${houseNumber}`]
+        `Location: ${[
+          region,
+          subCity,
+          woreda && `Woreda ${woreda}`,
+          kebele && `Kebele/Block ${kebele}`,
+          houseNumber && `House ${houseNumber}`,
+        ]
           .filter(Boolean)
           .join(', ')}`,
       )
@@ -99,10 +113,10 @@ export function ReportPage() {
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
-      <h1 className="text-2xl font-bold text-text-dark mb-1">Report an Issue</h1>
-      <p className="text-text-secondary mb-8">
-        Submit a support ticket. Our team will review and respond promptly.
-      </p>
+      <h1 className="text-2xl font-bold text-text-dark mb-1">
+        {t('report.title')}
+      </h1>
+      <p className="text-text-secondary mb-8">{t('report.subtitle')}</p>
 
       {error && (
         <div className="mb-5 p-4 rounded-xl border border-error/20 bg-error/10 text-error text-sm font-semibold">
@@ -114,12 +128,15 @@ export function ReportPage() {
         {/* Required Fields */}
         <div className="bg-card rounded-xl border border-border p-6 space-y-5">
           <h2 className="text-lg font-semibold text-text-dark border-b border-border pb-3 mb-2">
-            Required Information
+            {t('report.required_information')}
           </h2>
 
           <div>
-            <label htmlFor="subject" className="block text-sm font-semibold text-text-secondary mb-2">
-              Subject <span className="text-error">*</span>
+            <label
+              htmlFor="subject"
+              className="block text-sm font-semibold text-text-secondary mb-2"
+            >
+              {t('report.subject_label')} <span className="text-error">*</span>
             </label>
             <input
               id="subject"
@@ -132,8 +149,12 @@ export function ReportPage() {
           </div>
 
           <div>
-            <label htmlFor="serviceNumber" className="block text-sm font-semibold text-text-secondary mb-2">
-              Service Number <span className="text-error">*</span>
+            <label
+              htmlFor="serviceNumber"
+              className="block text-sm font-semibold text-text-secondary mb-2"
+            >
+              {t('report.service_number_label')}{' '}
+              <span className="text-error">*</span>
             </label>
             <input
               id="serviceNumber"
@@ -141,15 +162,19 @@ export function ReportPage() {
               value={serviceNumber}
               onChange={(e) => setServiceNumber(e.target.value)}
               required
-              placeholder="e.g., SRV-123456"
+              placeholder={t('report.service_number_placeholder')}
               className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
             />
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="category" className="block text-sm font-semibold text-text-secondary mb-2">
-                Category <span className="text-error">*</span>
+              <label
+                htmlFor="category"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.category_label')}{' '}
+                <span className="text-error">*</span>
               </label>
               <select
                 id="category"
@@ -158,17 +183,27 @@ export function ReportPage() {
                 required
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               >
-                <option value="CONNECTIVITY">Connectivity</option>
-                <option value="BILLING">Billing</option>
-                <option value="HARDWARE">Hardware</option>
-                <option value="SERVICE_REQUEST">Service Request</option>
-                <option value="OTHER">Other</option>
+                <option value="CONNECTIVITY">
+                  {t('report.category_connectivity')}
+                </option>
+                <option value="BILLING">{t('report.category_billing')}</option>
+                <option value="HARDWARE">
+                  {t('report.category_hardware')}
+                </option>
+                <option value="SERVICE_REQUEST">
+                  {t('report.category_service_request')}
+                </option>
+                <option value="OTHER">{t('report.category_other')}</option>
               </select>
             </div>
 
             <div>
-              <label htmlFor="priority" className="block text-sm font-semibold text-text-secondary mb-2">
-                Priority <span className="text-error">*</span>
+              <label
+                htmlFor="priority"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.priority_label')}{' '}
+                <span className="text-error">*</span>
               </label>
               <select
                 id="priority"
@@ -177,17 +212,21 @@ export function ReportPage() {
                 required
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               >
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
+                <option value="LOW">{t('report.priority_low')}</option>
+                <option value="MEDIUM">{t('report.priority_medium')}</option>
+                <option value="HIGH">{t('report.priority_high')}</option>
+                <option value="URGENT">{t('report.priority_urgent')}</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label htmlFor="problemDescription" className="block text-sm font-semibold text-text-secondary mb-2">
-              Problem Description <span className="text-error">*</span>
+            <label
+              htmlFor="problemDescription"
+              className="block text-sm font-semibold text-text-secondary mb-2"
+            >
+              {t('report.problem_description_label')}{' '}
+              <span className="text-error">*</span>
             </label>
             <textarea
               id="problemDescription"
@@ -195,7 +234,7 @@ export function ReportPage() {
               onChange={(e) => setProblemDescription(e.target.value)}
               required
               rows={4}
-              placeholder="Describe the issue in detail..."
+              placeholder={t('report.problem_description_placeholder')}
               className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
             />
           </div>
@@ -204,13 +243,16 @@ export function ReportPage() {
         {/* Technical Details */}
         <div className="bg-card rounded-xl border border-border p-6 space-y-5">
           <h2 className="text-lg font-semibold text-text-dark border-b border-border pb-3 mb-2">
-            Technical Details (Optional)
+            {t('report.technical_details')}
           </h2>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="accessTechnology" className="block text-sm font-semibold text-text-secondary mb-2">
-                Access Technology
+              <label
+                htmlFor="accessTechnology"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.access_technology_label')}
               </label>
               <select
                 id="accessTechnology"
@@ -218,25 +260,28 @@ export function ReportPage() {
                 onChange={(e) => setAccessTechnology(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               >
-                <option value="">Select...</option>
+                <option value="">{t('report.select_placeholder')}</option>
                 <option value="Fiber">Fiber</option>
                 <option value="4G/LTE">4G/LTE</option>
                 <option value="5G">5G</option>
                 <option value="WiFi">WiFi</option>
-                <option value="Other">Other</option>
+                <option value="Other">{t('report.category_other')}</option>
               </select>
             </div>
 
             <div>
-              <label htmlFor="bandwidth" className="block text-sm font-semibold text-text-secondary mb-2">
-                Requested Bandwidth
+              <label
+                htmlFor="bandwidth"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.bandwidth_label')}
               </label>
               <input
                 id="bandwidth"
                 type="text"
                 value={bandwidth}
                 onChange={(e) => setBandwidth(e.target.value)}
-                placeholder="e.g., 100 Mbps"
+                placeholder={t('report.bandwidth_placeholder')}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
             </div>
@@ -246,13 +291,16 @@ export function ReportPage() {
         {/* Location Details */}
         <div className="bg-card rounded-xl border border-border p-6 space-y-5">
           <h2 className="text-lg font-semibold text-text-dark border-b border-border pb-3 mb-2">
-            Location Details (Optional)
+            {t('report.location_details')}
           </h2>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="region" className="block text-sm font-semibold text-text-secondary mb-2">
-                Region
+              <label
+                htmlFor="region"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.region_label')}
               </label>
               <input
                 id="region"
@@ -263,8 +311,11 @@ export function ReportPage() {
               />
             </div>
             <div>
-              <label htmlFor="subCity" className="block text-sm font-semibold text-text-secondary mb-2">
-                Sub City
+              <label
+                htmlFor="subCity"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.sub_city_label')}
               </label>
               <input
                 id="subCity"
@@ -275,41 +326,50 @@ export function ReportPage() {
               />
             </div>
             <div>
-              <label htmlFor="woreda" className="block text-sm font-semibold text-text-secondary mb-2">
-                Woreda
+              <label
+                htmlFor="woreda"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.woreda_label')}
               </label>
               <input
                 id="woreda"
                 type="text"
                 value={woreda}
                 onChange={(e) => setWoreda(e.target.value)}
-                placeholder="e.g., 5"
+                placeholder={t('report.woreda_placeholder')}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
             </div>
             <div>
-              <label htmlFor="kebele" className="block text-sm font-semibold text-text-secondary mb-2">
-                Kebele/Block
+              <label
+                htmlFor="kebele"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.kebele_label')}
               </label>
               <input
                 id="kebele"
                 type="text"
                 value={kebele}
                 onChange={(e) => setKebele(e.target.value)}
-                placeholder="e.g., 12"
+                placeholder={t('report.kebele_placeholder')}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
             </div>
             <div>
-              <label htmlFor="houseNumber" className="block text-sm font-semibold text-text-secondary mb-2">
-                House Number
+              <label
+                htmlFor="houseNumber"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.house_number_label')}
               </label>
               <input
                 id="houseNumber"
                 type="text"
                 value={houseNumber}
                 onChange={(e) => setHouseNumber(e.target.value)}
-                placeholder="e.g., 45"
+                placeholder={t('report.house_number_placeholder')}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
             </div>
@@ -319,13 +379,16 @@ export function ReportPage() {
         {/* Contact Information */}
         <div className="bg-card rounded-xl border border-border p-6 space-y-5">
           <h2 className="text-lg font-semibold text-text-dark border-b border-border pb-3 mb-2">
-            Contact Information
+            {t('report.contact_information')}
           </h2>
 
           <div className="grid md:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="fullName" className="block text-sm font-semibold text-text-secondary mb-2">
-                Full Name
+              <label
+                htmlFor="fullName"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.full_name_label')}
               </label>
               <input
                 id="fullName"
@@ -336,8 +399,11 @@ export function ReportPage() {
               />
             </div>
             <div>
-              <label htmlFor="primaryMobile" className="block text-sm font-semibold text-text-secondary mb-2">
-                Mobile Number
+              <label
+                htmlFor="primaryMobile"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.mobile_number_label')}
               </label>
               <input
                 id="primaryMobile"
@@ -348,8 +414,11 @@ export function ReportPage() {
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-text-secondary mb-2">
-                Email
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('report.email_label')}
               </label>
               <input
                 id="email"
@@ -367,7 +436,7 @@ export function ReportPage() {
           disabled={submitting}
           className="w-full py-3 px-6 rounded-lg bg-primary-blue text-white font-medium text-lg hover:bg-primary-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting ? 'Submitting...' : 'Submit Ticket'}
+          {submitting ? t('report.submit_loading') : t('report.submit_button')}
         </button>
       </form>
     </motion.div>

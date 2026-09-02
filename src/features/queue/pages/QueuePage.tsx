@@ -5,9 +5,11 @@ import { ErrorMessage } from '@/components/shared/ErrorMessage'
 import { STATUS_CONFIG } from '@/data/tickets'
 import type { TicketStatus } from '@/lib/types'
 import { motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 import type { AdminQueueItem } from '@/apis'
 
 export function QueuePage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
 
   const {
@@ -24,7 +26,7 @@ export function QueuePage() {
   if (!user || user.role !== 'ADMIN') {
     return (
       <div className="p-8 text-center text-text-secondary">
-        Unauthorized access.
+        {t('queue.unauthorized')}
       </div>
     )
   }
@@ -33,7 +35,7 @@ export function QueuePage() {
   if (isError)
     return (
       <ErrorMessage
-        message={error.message || 'Failed to load queue'}
+        message={error.message || t('queue.error_loading')}
         retry={() => loadQueue()}
       />
     )
@@ -50,10 +52,10 @@ export function QueuePage() {
         <div className="flex items-start justify-between gap-3 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-text-dark mb-1">
-              Queue Management
+              {t('queue.title')}
             </h1>
             <p className="text-text-secondary">
-              Live ordered view of all pending customer tickets. ({total} total)
+              {t('queue.subtitle', { total })}
             </p>
           </div>
 
@@ -62,7 +64,7 @@ export function QueuePage() {
             className="px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-semibold hover:bg-bg"
             type="button"
           >
-            Refresh
+            {t('queue.refresh')}
           </button>
         </div>
 
@@ -71,25 +73,25 @@ export function QueuePage() {
             <thead className="bg-bg border-b border-border text-text-secondary">
               <tr>
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  Position
+                  {t('queue.position_column')}
                 </th>
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  Ticket
+                  {t('queue.ticket_column')}
                 </th>
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  Customer
+                  {t('queue.customer_column')}
                 </th>
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  Status
+                  {t('queue.status_column')}
                 </th>
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  Priority
+                  {t('queue.priority_column')}
                 </th>
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  Est. Wait
+                  {t('queue.estimated_wait_column')}
                 </th>
                 <th className="px-5 py-3 font-semibold uppercase tracking-wide text-xs">
-                  Created
+                  {t('queue.created_column')}
                 </th>
               </tr>
             </thead>
@@ -100,7 +102,7 @@ export function QueuePage() {
                     colSpan={7}
                     className="px-5 py-8 text-center text-text-secondary"
                   >
-                    Queue is empty
+                    {t('queue.empty')}
                   </td>
                 </tr>
               ) : (
@@ -149,7 +151,9 @@ export function QueuePage() {
                       }
                     </td>
                     <td className="px-5 py-3 text-text-secondary">
-                      {ticket.estimatedWaitMinutes} min
+                      {t('queue.minutes', {
+                        count: ticket.estimatedWaitMinutes,
+                      })}
                     </td>
                     <td className="px-5 py-3 text-xs text-text-secondary">
                       {new Date(ticket.createdAt).toLocaleString('en-ET', {

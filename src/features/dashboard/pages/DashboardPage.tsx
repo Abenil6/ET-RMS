@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import api from '@/apis'
 import {
@@ -62,19 +63,53 @@ export function DashboardPage() {
 }
 
 function AdminOverview() {
-  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = api.Tickets.getAll.useQuery()
+  const { t } = useTranslation()
+  const {
+    data: tickets,
+    isLoading: loading,
+    isError,
+    error,
+    refetch: refresh,
+  } = api.Tickets.getAll.useQuery()
   const { preset, setPreset, custom, setCustom, range } = useDateRange()
 
-  const kpis = useMemo(() => computeKpis(tickets ?? [], range), [tickets, range])
-  const daily = useMemo(() => dailySeries(tickets ?? [], range), [tickets, range])
-  const weekday = useMemo(() => weekdayBuckets(tickets ?? [], range), [tickets, range])
-  const categories = useMemo(() => categoryBreakdown(tickets ?? [], range), [tickets, range])
-  const repeat = useMemo(() => repeatRate(tickets ?? [], range), [tickets, range])
-  const topTechs = useMemo(() => topTechnicians(tickets ?? [], range), [tickets, range])
-  const exportData = useMemo(() => ticketsToExport(tickets ?? [], range), [tickets, range])
+  const kpis = useMemo(
+    () => computeKpis(tickets ?? [], range),
+    [tickets, range],
+  )
+  const daily = useMemo(
+    () => dailySeries(tickets ?? [], range),
+    [tickets, range],
+  )
+  const weekday = useMemo(
+    () => weekdayBuckets(tickets ?? [], range),
+    [tickets, range],
+  )
+  const categories = useMemo(
+    () => categoryBreakdown(tickets ?? [], range),
+    [tickets, range],
+  )
+  const repeat = useMemo(
+    () => repeatRate(tickets ?? [], range),
+    [tickets, range],
+  )
+  const topTechs = useMemo(
+    () => topTechnicians(tickets ?? [], range),
+    [tickets, range],
+  )
+  const exportData = useMemo(
+    () => ticketsToExport(tickets ?? [], range),
+    [tickets, range],
+  )
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
+  if (isError)
+    return (
+      <ErrorMessage
+        message={error.message || t('dashboard.error_loading')}
+        retry={refresh}
+      />
+    )
 
   return (
     <motion.div
@@ -85,22 +120,20 @@ function AdminOverview() {
     >
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-text-secondary">
-            System overview and performance metrics
-          </p>
+          <h1 className="text-3xl font-bold">{t('dashboard.admin_title')}</h1>
+          <p className="text-text-secondary">{t('dashboard.admin_subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-          <DateRangePicker 
-            preset={preset} 
-            onPresetChange={setPreset} 
-            custom={custom} 
-            onCustomChange={setCustom} 
-            range={range} 
+          <DateRangePicker
+            preset={preset}
+            onPresetChange={setPreset}
+            custom={custom}
+            onCustomChange={setCustom}
+            range={range}
           />
-          <PdfExportButton 
+          <PdfExportButton
             filename="tickets-export.pdf"
-            title="Tickets Export"
+            title={t('dashboard.tickets_export')}
             headers={exportData.headers}
             rows={exportData.rows}
           />
@@ -109,8 +142,8 @@ function AdminOverview() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
         {kpis.map((kpi, index) => (
-          <KpiCard 
-            key={kpi.key} 
+          <KpiCard
+            key={kpi.key}
             icon={KPI_ICONS[kpi.key]}
             label={kpi.label}
             value={kpi.value}
@@ -122,7 +155,7 @@ function AdminOverview() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2 mb-6">
-        <ChartCard title="Daily Ticket Trend">
+        <ChartCard title={t('dashboard.daily_ticket_trend')}>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={daily}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -146,7 +179,7 @@ function AdminOverview() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Tickets by Weekday">
+        <ChartCard title={t('dashboard.tickets_by_weekday')}>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={weekday}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -160,7 +193,7 @@ function AdminOverview() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <ChartCard title="Category Breakdown">
+        <ChartCard title={t('dashboard.category_breakdown')}>
           <ResponsiveContainer width="100%" height={300}>
             <RadialBarChart
               cx="50%"
@@ -179,7 +212,7 @@ function AdminOverview() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Top Technicians">
+        <ChartCard title={t('dashboard.top_technicians')}>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={topTechs} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
@@ -194,8 +227,8 @@ function AdminOverview() {
 
       <div className="mt-6 p-4 bg-card rounded-lg border border-border">
         <p className="text-sm text-text-secondary">
-          <strong>Repeat Rate:</strong> {repeat.rate}% of
-          customers have multiple tickets.
+          <strong>{t('dashboard.repeat_rate_label')}:</strong> {repeat.rate}%{' '}
+          {t('dashboard.repeat_rate_suffix')}
         </p>
       </div>
     </motion.div>
@@ -203,8 +236,15 @@ function AdminOverview() {
 }
 
 function TechnicianOverview() {
+  const { t } = useTranslation()
   const { user } = useAuth()
-  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = api.Tickets.getAll.useQuery()
+  const {
+    data: tickets,
+    isLoading: loading,
+    isError,
+    error,
+    refetch: refresh,
+  } = api.Tickets.getAll.useQuery()
 
   const myTickets = useMemo(
     () => (tickets ?? []).filter((t) => t.technicianId === user?.id),
@@ -215,19 +255,29 @@ function TechnicianOverview() {
     const open = myTickets.filter(
       (t) => t.status === 'OPEN' || t.status === 'ASSIGNED',
     ).length
-    const inProgress = myTickets.filter((t) => t.status === 'IN_PROGRESS').length
+    const inProgress = myTickets.filter(
+      (t) => t.status === 'IN_PROGRESS',
+    ).length
     const resolved = myTickets.filter((t) => t.status === 'RESOLVED').length
-    
+
     const ratedTickets = myTickets.filter((t) => t.review?.rating)
-    const avgRating = ratedTickets.length > 0
-      ? ratedTickets.reduce((sum, t) => sum + (t.review?.rating || 0), 0) / ratedTickets.length
-      : 0
+    const avgRating =
+      ratedTickets.length > 0
+        ? ratedTickets.reduce((sum, t) => sum + (t.review?.rating || 0), 0) /
+          ratedTickets.length
+        : 0
 
     return { open, inProgress, resolved, avgRating }
   }, [myTickets])
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
+  if (isError)
+    return (
+      <ErrorMessage
+        message={error.message || t('dashboard.error_loading')}
+        retry={refresh}
+      />
+    )
 
   return (
     <motion.div
@@ -237,37 +287,39 @@ function TechnicianOverview() {
       transition={{ duration: 0.6 }}
     >
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Technician Dashboard</h1>
+        <h1 className="text-3xl font-bold">
+          {t('dashboard.technician_title')}
+        </h1>
         <p className="text-text-secondary">
-          Your assigned tickets and performance
+          {t('dashboard.technician_subtitle')}
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={AlertCircle}
-          label="Open"
+          label={t('dashboard.open')}
           value={stats.open}
           color="text-blue-600"
           bgColor="bg-blue-100"
         />
         <StatCard
           icon={Clock}
-          label="In Progress"
+          label={t('dashboard.in_progress')}
           value={stats.inProgress}
           color="text-yellow-600"
           bgColor="bg-yellow-100"
         />
         <StatCard
           icon={CheckCircle2}
-          label="Resolved"
+          label={t('dashboard.resolved')}
           value={stats.resolved}
           color="text-green-600"
           bgColor="bg-green-100"
         />
         <StatCard
           icon={Star}
-          label="Avg Rating"
+          label={t('dashboard.avg_rating')}
           value={stats.avgRating.toFixed(1)}
           color="text-purple-600"
           bgColor="bg-purple-100"
@@ -279,7 +331,7 @@ function TechnicianOverview() {
           to="/tickets"
           className="inline-block px-4 py-2 bg-primary-blue text-white rounded-lg hover:bg-primary-blue/90 transition-colors"
         >
-          View All Tickets
+          {t('dashboard.view_all_tickets')}
         </Link>
       </div>
     </motion.div>
@@ -287,8 +339,15 @@ function TechnicianOverview() {
 }
 
 function CustomerOverview() {
+  const { t } = useTranslation()
   const { user } = useAuth()
-  const { data: tickets, isLoading: loading, isError, error, refetch: refresh } = api.Tickets.getAll.useQuery()
+  const {
+    data: tickets,
+    isLoading: loading,
+    isError,
+    error,
+    refetch: refresh,
+  } = api.Tickets.getAll.useQuery()
 
   const myTickets = useMemo(
     () => (tickets ?? []).filter((t) => t.customerId === user?.id),
@@ -299,7 +358,9 @@ function CustomerOverview() {
     const open = myTickets.filter(
       (t) => t.status === 'OPEN' || t.status === 'ASSIGNED',
     ).length
-    const inProgress = myTickets.filter((t) => t.status === 'IN_PROGRESS').length
+    const inProgress = myTickets.filter(
+      (t) => t.status === 'IN_PROGRESS',
+    ).length
     const resolved = myTickets.filter(
       (t) => t.status === 'RESOLVED' || t.status === 'CLOSED',
     ).length
@@ -309,7 +370,13 @@ function CustomerOverview() {
   }, [myTickets])
 
   if (loading) return <LoadingSpinner size="lg" />
-  if (isError) return <ErrorMessage message={error.message || 'Failed to load tickets'} retry={refresh} />
+  if (isError)
+    return (
+      <ErrorMessage
+        message={error.message || t('dashboard.error_loading')}
+        retry={refresh}
+      />
+    )
 
   return (
     <motion.div
@@ -319,37 +386,37 @@ function CustomerOverview() {
       transition={{ duration: 0.6 }}
     >
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">My Dashboard</h1>
+        <h1 className="text-3xl font-bold">{t('dashboard.customer_title')}</h1>
         <p className="text-text-secondary">
-          Overview of your support tickets
+          {t('dashboard.customer_subtitle')}
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={Ticket}
-          label="Total Tickets"
+          label={t('dashboard.total_tickets')}
           value={stats.total}
           color="text-gray-600"
           bgColor="bg-gray-100"
         />
         <StatCard
           icon={AlertCircle}
-          label="Open"
+          label={t('dashboard.open')}
           value={stats.open}
           color="text-blue-600"
           bgColor="bg-blue-100"
         />
         <StatCard
           icon={Clock}
-          label="In Progress"
+          label={t('dashboard.in_progress')}
           value={stats.inProgress}
           color="text-yellow-600"
           bgColor="bg-yellow-100"
         />
         <StatCard
           icon={CheckCircle2}
-          label="Resolved"
+          label={t('dashboard.resolved')}
           value={stats.resolved}
           color="text-green-600"
           bgColor="bg-green-100"
@@ -361,13 +428,13 @@ function CustomerOverview() {
           to="/report"
           className="inline-block px-4 py-2 bg-primary-blue text-white rounded-lg hover:bg-primary-blue/90 transition-colors"
         >
-          Report New Issue
+          {t('dashboard.report_new_issue')}
         </Link>
         <Link
           to="/tickets"
           className="inline-block px-4 py-2 border border-border rounded-lg hover:bg-bg transition-colors"
         >
-          View All Tickets
+          {t('dashboard.view_all_tickets')}
         </Link>
       </div>
     </motion.div>

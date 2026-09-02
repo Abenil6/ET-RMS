@@ -9,6 +9,7 @@ import {
   Wrench,
 } from 'lucide-react'
 import { motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 import { HeroShowcase } from '@/components/HeroShowcase'
 import { LoopingTitle } from '@/components/LoopingTitle'
 import { MiniStat } from '@/components/MiniStat'
@@ -17,6 +18,8 @@ import { FeatureCard } from '@/components/FeatureCard'
 import { StepCard } from '@/components/StepCard'
 
 export function HomePage() {
+  const { t } = useTranslation()
+
   return (
     <main className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
@@ -35,15 +38,13 @@ export function HomePage() {
             transition={{ duration: 0.7, ease: 'easeOut' }}
           >
             <LoopingTitle
-              text="Internet support without the wait."
-              highlight="without the wait."
+              text={t('home.hero_title')}
+              highlight={t('home.hero_highlight')}
               className="text-5xl font-extrabold leading-[1.02] tracking-tight text-text-dark sm:text-6xl lg:text-7xl"
             />
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-text-secondary sm:text-xl">
-              Report service issues, track queue position, and follow ticket
-              progress from one clean dashboard built for customers, admins, and
-              technicians.
+              {t('home.hero_description')}
             </p>
 
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -51,23 +52,31 @@ export function HomePage() {
                 to="/register"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-green px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-primary-green/20 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-primary-green/90"
               >
-                Create Ticket
+                {t('home.create_ticket')}
                 <ArrowRight size={18} />
               </Link>
               <a
                 href="#features"
                 className="inline-flex items-center justify-center rounded-full border border-border bg-card/80 px-6 py-3.5 text-base font-semibold text-text-dark shadow-sm backdrop-blur transition-colors hover:bg-bg"
               >
-                Explore Features
+                {t('home.explore_features')}
               </a>
             </div>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
-              <MiniStat value="24/7" label="Ticket access" icon={Clock3} />
-              <MiniStat value="3 steps" label="Fast reporting" icon={Ticket} />
+              <MiniStat
+                value="24/7"
+                label={t('home.ticket_access')}
+                icon={Clock3}
+              />
+              <MiniStat
+                value="3 steps"
+                label={t('home.fast_reporting')}
+                icon={Ticket}
+              />
               <MiniStat
                 value="Live"
-                label="Queue visibility"
+                label={t('home.queue_visibility')}
                 icon={CheckCircle2}
               />
             </div>
@@ -81,18 +90,18 @@ export function HomePage() {
         <div className="grid gap-4 rounded-4xl border border-border bg-card/90 p-5 shadow-sm backdrop-blur sm:grid-cols-3">
           <TrustPill
             icon={Wrench}
-            title="Built for technicians"
-            description="See workloads, assignments, and ticket state at a glance."
+            title={t('home.built_for_technicians')}
+            description={t('home.built_for_technicians_description')}
           />
           <TrustPill
             icon={Layers3}
-            title="One shared system"
-            description="Customers, admins, and support staff stay on the same flow."
+            title={t('home.one_shared_system')}
+            description={t('home.one_shared_system_description')}
           />
           <TrustPill
             icon={ShieldCheck}
-            title="Clear escalation"
-            description="Status labels keep each ticket stage consistent across the app."
+            title={t('home.clear_escalation')}
+            description={t('home.clear_escalation_description')}
           />
         </div>
       </section>
@@ -103,35 +112,33 @@ export function HomePage() {
       >
         <div className="mb-8 max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-primary-blue">
-            Features
+            {t('home.features_label')}
           </p>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-text-dark sm:text-4xl">
-            A support experience that feels fast, not bureaucratic.
+            {t('home.features_title')}
           </h2>
           <p className="mt-4 text-base leading-7 text-text-secondary">
-            Every screen is designed to reduce friction: ticket intake, status
-            tracking, assignment, and technician workload all stay visually
-            consistent.
+            {t('home.features_description')}
           </p>
         </div>
 
         <div className="grid gap-5 md:grid-cols-3">
           <FeatureCard
             icon={Ticket}
-            title="Report Internet Issues"
-            description="Create a support ticket in a few clear steps with structured service details."
+            title={t('home.report_issues_title')}
+            description={t('home.report_issues_description')}
             accent="primary-green"
           />
           <FeatureCard
             icon={Clock3}
-            title="Track Queue Position"
-            description="See whether your ticket is reported, assigned, in progress, or fixed."
+            title={t('home.track_queue_title')}
+            description={t('home.track_queue_description')}
             accent="primary-blue"
           />
           <FeatureCard
             icon={Wrench}
-            title="Technician Workload"
-            description="Admins can spot open load quickly and rebalance work before delays pile up."
+            title={t('home.technician_workload_title')}
+            description={t('home.technician_workload_description')}
             accent="warning"
           />
         </div>
@@ -142,32 +149,31 @@ export function HomePage() {
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-primary-green">
-                How it works
+                {t('home.how_it_works_label')}
               </p>
               <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-text-dark">
-                Three steps from problem to resolution.
+                {t('home.how_it_works_title')}
               </h2>
               <p className="mt-4 text-base leading-7 text-text-secondary">
-                The flow is intentionally short so users can submit issues
-                quickly and technicians can start working immediately.
+                {t('home.how_it_works_description')}
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
               <StepCard
                 number="01"
-                title="Report"
-                description="Add location, contact, and issue details."
+                title={t('home.step_report')}
+                description={t('home.step_report_description')}
               />
               <StepCard
                 number="02"
-                title="Assign"
-                description="Admin routes the ticket to an available technician."
+                title={t('home.step_assign')}
+                description={t('home.step_assign_description')}
               />
               <StepCard
                 number="03"
-                title="Resolve"
-                description="Track progress until the connection is fixed."
+                title={t('home.step_resolve')}
+                description={t('home.step_resolve_description')}
               />
             </div>
           </div>
@@ -179,14 +185,13 @@ export function HomePage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.28em] text-white/80">
-                Ready to submit a ticket?
+                {t('home.cta_label')}
               </p>
               <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-                Start with a clean dashboard and get routed faster.
+                {t('home.cta_title')}
               </h2>
               <p className="mt-4 max-w-2xl text-white/85">
-                Create a ticket now, or sign in if you already have one in the
-                system.
+                {t('home.cta_description')}
               </p>
             </div>
 
@@ -195,13 +200,13 @@ export function HomePage() {
                 to="/register"
                 className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3.5 font-semibold text-primary-green transition-transform hover:-translate-y-0.5"
               >
-                Get Started
+                {t('home.get_started')}
               </Link>
               <Link
                 to="/login"
                 className="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3.5 font-semibold text-white transition-colors hover:bg-white/10"
               >
-                Login
+                {t('home.login')}
               </Link>
             </div>
           </div>

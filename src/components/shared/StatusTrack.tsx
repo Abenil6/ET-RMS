@@ -1,15 +1,17 @@
 import { motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 import type { TicketStatus } from '@/lib/types'
 
-const STAGES: { status: TicketStatus; label: string }[] = [
-  { status: 'OPEN', label: 'Open' },
-  { status: 'ASSIGNED', label: 'Assigned' },
-  { status: 'IN_PROGRESS', label: 'In Progress' },
-  { status: 'RESOLVED', label: 'Resolved' },
-  { status: 'CLOSED', label: 'Closed' },
+const STAGES: { status: TicketStatus; key: string }[] = [
+  { status: 'OPEN', key: 'open' },
+  { status: 'ASSIGNED', key: 'assigned' },
+  { status: 'IN_PROGRESS', key: 'in_progress' },
+  { status: 'RESOLVED', key: 'resolved' },
+  { status: 'CLOSED', key: 'closed' },
 ]
 
 export function StatusTrack({ status }: { status: TicketStatus }) {
+  const { t } = useTranslation()
   const rawIndex = STAGES.findIndex((s) => s.status === status)
   const currentIndex = rawIndex === -1 ? 0 : rawIndex
 
@@ -17,7 +19,10 @@ export function StatusTrack({ status }: { status: TicketStatus }) {
     <div className="p-6 rounded-xl border border-border bg-card mb-6">
       <div className="flex items-center">
         {STAGES.map((stage, i) => (
-          <div key={stage.status} className="flex items-center flex-1 last:flex-none">
+          <div
+            key={stage.status}
+            className="flex items-center flex-1 last:flex-none"
+          >
             <div className="flex flex-col items-center">
               <motion.div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -36,7 +41,7 @@ export function StatusTrack({ status }: { status: TicketStatus }) {
                   i <= currentIndex ? 'text-text-dark' : 'text-text-secondary'
                 }`}
               >
-                {stage.label}
+                {t(`status.${stage.key}`)}
               </span>
             </div>
 

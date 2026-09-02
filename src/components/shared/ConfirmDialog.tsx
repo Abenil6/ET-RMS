@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle, X } from 'lucide-react'
 
 interface ConfirmDialogProps {
@@ -27,6 +28,7 @@ export default function ConfirmDialog({
   variant = 'danger',
   loading = false,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation()
   const cancelRef = useRef<HTMLButtonElement>(null)
 
   // Focus the cancel button when dialog opens (safe default)
@@ -49,6 +51,10 @@ export default function ConfirmDialog({
   }, [open, onCancel])
 
   const isDanger = variant === 'danger'
+  const resolvedTitle = title ?? t('common.are_you_sure')
+  const resolvedDescription = description ?? t('common.action_cannot_undo')
+  const resolvedConfirmLabel = confirmLabel ?? t('common.confirm')
+  const resolvedCancelLabel = cancelLabel ?? t('common.cancel')
 
   return (
     <AnimatePresence>
@@ -88,7 +94,7 @@ export default function ConfirmDialog({
               <button
                 onClick={onCancel}
                 className="absolute top-3 right-3 p-1.5 rounded-full text-text-secondary hover:bg-bg hover:text-text-dark transition-colors"
-                aria-label="Close dialog"
+                aria-label={t('common.close_dialog')}
               >
                 <X size={18} />
               </button>
@@ -121,7 +127,7 @@ export default function ConfirmDialog({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.12 }}
                 >
-                  {title}
+                  {resolvedTitle}
                 </motion.h2>
 
                 <motion.p
@@ -131,7 +137,7 @@ export default function ConfirmDialog({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.16 }}
                 >
-                  {description}
+                  {resolvedDescription}
                 </motion.p>
               </div>
 
@@ -148,7 +154,7 @@ export default function ConfirmDialog({
                   disabled={loading}
                   className="px-5 py-2.5 rounded-xl border border-border bg-bg text-text-dark text-sm font-semibold hover:bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary-green disabled:opacity-50"
                 >
-                  {cancelLabel}
+                  {resolvedCancelLabel}
                 </button>
 
                 <button
@@ -163,7 +169,7 @@ export default function ConfirmDialog({
                   {loading && (
                     <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   )}
-                  {confirmLabel}
+                  {resolvedConfirmLabel}
                 </button>
               </motion.div>
             </motion.div>

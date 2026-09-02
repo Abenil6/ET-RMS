@@ -8,11 +8,12 @@ import api from '@/apis'
 import { HeroShowcase } from '@/components/HeroShowcase'
 import { resetPasswordSchema } from '@/types/user'
 import type { ResetPasswordInput } from '@/types/user'
-
+import { useTranslation } from 'react-i18next'
 const routeApi = getRouteApi('/reset-password')
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const search = routeApi.useSearch()
   const token = search.token || ''
   const [submitted, setSubmitted] = useState(false)
@@ -65,10 +66,12 @@ export function ResetPasswordPage() {
               <KeyRound size={24} className="text-success" />
             </div>
 
-            <h1 className="text-2xl font-bold text-text-dark mb-2">Password Reset</h1>
+            <h1 className="text-2xl font-bold text-text-dark mb-2">
+              {t('reset_password.title')}
+            </h1>
 
             <div className="mb-6 p-4 bg-success/10 text-success rounded-lg text-sm">
-              Your password has been successfully updated. Redirecting to login...
+              {t('reset_password.password_updated')}
             </div>
           </motion.div>
         </div>
@@ -93,18 +96,27 @@ export function ResetPasswordPage() {
             <KeyRound size={24} className="text-primary-blue" />
           </div>
 
-          <h1 className="text-2xl font-bold text-text-dark mb-2">Reset Password</h1>
+          <h1 className="text-2xl font-bold text-text-dark mb-2">
+            {t('reset_password.title')}
+          </h1>
 
-          <p className="text-text-secondary mb-6">Enter your new password below.</p>
+          <p className="text-text-secondary mb-6">
+            {t('reset_password.subtitle')}
+          </p>
 
           {errors.root && (
-            <div className="mb-4 p-3 rounded-lg bg-error/10 text-error text-sm">{errors.root.message}</div>
+            <div className="mb-4 p-3 rounded-lg bg-error/10 text-error text-sm">
+              {errors.root.message}
+            </div>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-text-secondary mb-2">
-                New Password
+              <label
+                htmlFor="password"
+                className="block text-sm font-semibold text-text-secondary mb-2"
+              >
+                {t('reset_password.password_label')}
               </label>
               <input
                 id="password"
@@ -113,7 +125,11 @@ export function ResetPasswordPage() {
                 autoComplete="new-password"
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
-              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             <div>
@@ -121,7 +137,7 @@ export function ResetPasswordPage() {
                 htmlFor="confirmPassword"
                 className="block text-sm font-semibold text-text-secondary mb-2"
               >
-                Confirm Password
+                {t('reset_password.confirm_password_label')}
               </label>
               <input
                 id="confirmPassword"
@@ -131,7 +147,9 @@ export function ResetPasswordPage() {
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               />
               {errors.confirmPassword && (
-                <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
 
@@ -140,7 +158,9 @@ export function ResetPasswordPage() {
               disabled={isSubmitting}
               className="w-full py-2.5 px-4 rounded-lg bg-primary-blue text-white font-medium hover:bg-primary-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Resetting...' : 'Reset Password'}
+              {isSubmitting
+                ? t('reset_password.submit_loading')
+                : t('reset_password.submit_button')}
             </button>
           </form>
         </motion.div>

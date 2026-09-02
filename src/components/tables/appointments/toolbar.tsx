@@ -12,6 +12,7 @@ import {
 } from '../../ui/select'
 import type { AppointmentStatus } from '../../../lib/types'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { useTranslation } from 'react-i18next'
 
 interface AppointmentsToolbarProps<TData> {
   table: Table<TData>
@@ -46,6 +47,7 @@ function getTextFilterValue(value: unknown) {
 export function AppointmentsToolbar<TData>({
   table,
 }: AppointmentsToolbarProps<TData>) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const isFiltered = table.getState().columnFilters.length > 0
 
@@ -54,14 +56,14 @@ export function AppointmentsToolbar<TData>({
       <div className="flex items-center justify-between">
         <div className="flex flex-1 items-center space-x-2">
           <Input
-            placeholder="Search by notes..."
+            placeholder={t('table.search_notes')}
             value={getTextFilterValue(
               table.getColumn('notes')?.getFilterValue(),
             )}
             onChange={(event) =>
               table.getColumn('notes')?.setFilterValue(event.target.value)
             }
-            className="h-10 w-[200px] lg:w-[250px]"
+            className="h-10 w-50 lg:w-62.5"
           />
 
           {/* Status Filter */}
@@ -78,8 +80,8 @@ export function AppointmentsToolbar<TData>({
               }
             }}
           >
-            <SelectTrigger className="h-10 w-[140px]">
-              <SelectValue placeholder="Status" />
+            <SelectTrigger className="h-10 w-35">
+              <SelectValue placeholder={t('table.status')} />
             </SelectTrigger>
             <SelectContent>
               {STATUS_OPTIONS.map((option) => (
@@ -104,8 +106,8 @@ export function AppointmentsToolbar<TData>({
               }
             }}
           >
-            <SelectTrigger className="h-10 w-[150px]">
-              <SelectValue placeholder="Branch" />
+            <SelectTrigger className="h-10 w-37.5">
+              <SelectValue placeholder={t('appointments.branch_label')} />
             </SelectTrigger>
             <SelectContent>
               {BRANCH_OPTIONS.map((branch) => (
@@ -122,7 +124,7 @@ export function AppointmentsToolbar<TData>({
               onClick={() => table.resetColumnFilters()}
               className="h-10 px-2 lg:px-3"
             >
-              Reset
+              {t('common.reset')}
               <X className="ml-2 h-4 w-4" />
             </Button>
           )}
@@ -133,7 +135,7 @@ export function AppointmentsToolbar<TData>({
             <Button asChild size="sm" className="h-10">
               <Link to="/appointments/new">
                 <CalendarPlus className="h-4 w-4 mr-2" />
-                Book Appointment
+                {t('appointments.book_button')}
               </Link>
             </Button>
           )}
@@ -145,8 +147,10 @@ export function AppointmentsToolbar<TData>({
         <div className="flex items-center gap-2 text-sm text-text-secondary">
           <Filter className="h-4 w-4" />
           <span>
-            Showing {table.getFilteredRowModel().rows.length} of{' '}
-            {table.getCoreRowModel().rows.length} appointments
+            {t('table.showing_appointments', {
+              filtered: table.getFilteredRowModel().rows.length,
+              total: table.getCoreRowModel().rows.length,
+            })}
           </span>
         </div>
       )}

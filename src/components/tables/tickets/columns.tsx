@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu'
 import { cn } from '../../../lib/utils'
+import i18n from '../../../lib/i18n'
 
 export const createTicketsColumns = (
   userRole: 'CUSTOMER' | 'TECHNICIAN' | 'ADMIN',
@@ -33,14 +34,14 @@ export const createTicketsColumns = (
             (table.getIsSomePageRowsSelected() && 'indeterminate')
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={i18n.t('table.select_all')}
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label={i18n.t('table.select_row')}
         />
       ),
       enableSorting: false,
@@ -54,7 +55,7 @@ export const createTicketsColumns = (
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           >
-            Ticket #
+            {i18n.t('table.ticket_number')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         )
@@ -71,13 +72,15 @@ export const createTicketsColumns = (
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: i18n.t('table.status'),
       cell: ({ row }) => {
         const status = row.original.status
         const config = STATUS_CONFIG[status]
         return (
           <Badge className={cn(config.bg, config.color, 'border-0')}>
-            {config.label}
+            {i18n.t(`status.${status.toLowerCase()}`, {
+              defaultValue: config.label,
+            })}
           </Badge>
         )
       },
@@ -87,7 +90,7 @@ export const createTicketsColumns = (
     },
     {
       accessorKey: 'subject',
-      header: 'Subject',
+      header: i18n.t('table.subject'),
       cell: ({ row }) => (
         <div className="max-w-[300px]">
           <Link
@@ -105,13 +108,15 @@ export const createTicketsColumns = (
     },
     {
       accessorKey: 'priority',
-      header: 'Priority',
+      header: i18n.t('table.priority'),
       cell: ({ row }) => {
         const priority = row.original.priority
         const config = PRIORITY_CONFIG[priority]
         return (
           <Badge className={cn(config.bg, config.color, 'border-0')}>
-            {config.label}
+            {i18n.t(`priority.${priority.toLowerCase()}`, {
+              defaultValue: config.label,
+            })}
           </Badge>
         )
       },
@@ -121,12 +126,14 @@ export const createTicketsColumns = (
     },
     {
       accessorKey: 'category',
-      header: 'Category',
+      header: i18n.t('table.category'),
       cell: ({ row }) => {
         const category = row.original.category
         return (
           <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600">
-            {CATEGORY_LABELS[category] || category}
+            {i18n.t(`category.${category.toLowerCase()}`, {
+              defaultValue: CATEGORY_LABELS[category] || category,
+            })}
           </span>
         )
       },
@@ -136,20 +143,24 @@ export const createTicketsColumns = (
     },
     {
       accessorKey: 'serviceNumber',
-      header: 'Service',
+      header: i18n.t('table.service'),
       cell: ({ row }) => (
         <span className="text-sm">{row.getValue('serviceNumber')}</span>
       ),
     },
     {
       accessorKey: 'technician',
-      header: 'Assigned To',
+      header: i18n.t('table.assigned_to'),
       cell: ({ row }) => {
         const technician = row.original.technician
         return (
           <span className="text-sm">
-            {technician ? technician.name : (
-              <span className="text-text-secondary italic">Unassigned</span>
+            {technician ? (
+              technician.name
+            ) : (
+              <span className="text-text-secondary italic">
+                {i18n.t('table.unassigned')}
+              </span>
             )}
           </span>
         )
@@ -157,7 +168,7 @@ export const createTicketsColumns = (
     },
     {
       accessorKey: 'queue',
-      header: 'Queue',
+      header: i18n.t('navigation.queue'),
       cell: ({ row }) => {
         const queue = row.original.queue
         const status = row.original.status
@@ -177,7 +188,7 @@ export const createTicketsColumns = (
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           >
-            Created
+            {i18n.t('ticket_detail.created_label')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         )
@@ -205,21 +216,21 @@ export const createTicketsColumns = (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">{i18n.t('table.open_menu')}</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuLabel>{i18n.t('table.actions')}</DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => navigator.clipboard.writeText(ticket.id)}
               >
-                Copy ticket ID
+                {i18n.t('table.copy_ticket_id')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link to="/tickets/$ticketId" params={{ ticketId: ticket.id }}>
-                  View details
+                  {i18n.t('table.view_details')}
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -233,7 +244,7 @@ export const createTicketsColumns = (
   if (userRole === 'ADMIN' || userRole === 'TECHNICIAN') {
     columns.splice(columns.length - 1, 0, {
       accessorKey: 'customer',
-      header: 'Customer',
+      header: i18n.t('table.customer'),
       cell: ({ row }) => (
         <span className="text-sm">{row.original.customer.name}</span>
       ),

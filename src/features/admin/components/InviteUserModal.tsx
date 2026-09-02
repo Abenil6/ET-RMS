@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Modal } from '@/components/shared/Modal'
 import { inviteUserSchema } from '@/types/admin'
 import type { InviteUserInput } from '@/types/admin'
+import { useTranslation } from 'react-i18next'
 
 const ROLE_LABELS = {
   CUSTOMER: 'Customer',
@@ -16,77 +17,98 @@ interface InviteUserModalProps {
 }
 
 export function InviteUserModal({ onSubmit, onCancel }: InviteUserModalProps) {
+  const { t } = useTranslation()
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<InviteUserInput & { password: string }>({
-    resolver: zodResolver(inviteUserSchema.extend({ password: inviteUserSchema.shape.name })),
+    resolver: zodResolver(
+      inviteUserSchema.extend({ password: inviteUserSchema.shape.name }),
+    ),
     defaultValues: {
       role: 'CUSTOMER',
     },
   })
 
   return (
-    <Modal onClose={onCancel} title="Invite User">
+    <Modal onClose={onCancel} title={t('admin_users.invite_user')}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-text-secondary mb-2">Name</label>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">
+            {t('admin_users.name_column')}
+          </label>
           <input
             type="text"
             {...register('name')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
           />
-          {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
+          {errors.name && (
+            <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>
+          )}
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-text-secondary mb-2">Email</label>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">
+            {t('admin_users.email_column')}
+          </label>
           <input
             type="email"
             {...register('email')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
           />
-          {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+          {errors.email && (
+            <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-text-secondary mb-2">
-            Phone (optional)
+            {t('admin_users.phone_optional')}
           </label>
           <input
             type="tel"
             {...register('phone')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
           />
-          {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>}
+          {errors.phone && (
+            <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-text-secondary mb-2">
-            Temporary Password
+            {t('admin_users.temporary_password')}
           </label>
           <input
             type="password"
             {...register('password')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
           />
-          {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+          {errors.password && (
+            <p className="mt-1 text-xs text-red-500">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-text-secondary mb-2">Role</label>
+          <label className="block text-sm font-semibold text-text-secondary mb-2">
+            {t('admin_users.role_column')}
+          </label>
           <select
             {...register('role')}
             className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
           >
             {Object.entries(ROLE_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
-                {label}
+                {t(`admin_users.roles.${value}`, { defaultValue: label })}
               </option>
             ))}
           </select>
-          {errors.role && <p className="mt-1 text-xs text-red-500">{errors.role.message}</p>}
+          {errors.role && (
+            <p className="mt-1 text-xs text-red-500">{errors.role.message}</p>
+          )}
         </div>
 
         <div className="flex gap-2 pt-2">
@@ -95,14 +117,14 @@ export function InviteUserModal({ onSubmit, onCancel }: InviteUserModalProps) {
             disabled={isSubmitting}
             className="flex-1 px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition disabled:opacity-50"
           >
-            {isSubmitting ? 'Inviting...' : 'Invite'}
+            {isSubmitting ? t('admin_users.inviting') : t('admin_users.invite')}
           </button>
           <button
             type="button"
             onClick={onCancel}
             className="flex-1 px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
         </div>
       </form>
