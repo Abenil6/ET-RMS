@@ -136,6 +136,7 @@ function Nav() {
   const { t } = useTranslation()
   const { user, loading, logout } = useAuth()
   const { pathname } = useLocation()
+  const { language } = useLanguage()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
@@ -195,7 +196,7 @@ function Nav() {
               {t('navigation.home')}
             </NavLink>
             <a
-              href="/#features"
+              href={`/#features${language !== 'en' ? `?lang=${language}` : ''}`}
               className="rounded-full px-4 py-2 text-sm font-semibold text-text-secondary transition-colors hover:bg-bg hover:text-text-dark"
             >
               {t('navigation.features')}
