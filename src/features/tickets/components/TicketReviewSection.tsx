@@ -1,4 +1,5 @@
 import type { Ticket } from '@/lib/types'
+import { useTranslation } from 'react-i18next'
 
 interface TicketReviewSectionProps {
   ticket: Ticket
@@ -23,11 +24,14 @@ export function TicketReviewSection({
   setShowReviewForm,
   onSubmit,
 }: TicketReviewSectionProps) {
+  const { t } = useTranslation()
   // If ticket has a review, display it
   if (ticket.review) {
     return (
       <div className="bg-card rounded-xl border border-border p-6 shadow-sm mb-6">
-        <h3 className="text-lg font-bold mb-4">Customer Review</h3>
+        <h3 className="text-lg font-bold mb-4">
+          {t('ticket_review.customer_review')}
+        </h3>
         <div className="flex items-center gap-2 mb-3">
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
@@ -58,19 +62,21 @@ export function TicketReviewSection({
   if (canReview) {
     return (
       <div className="bg-card rounded-xl border border-border p-6 shadow-sm mb-6">
-        <h3 className="text-lg font-bold mb-4">Leave a Review</h3>
+        <h3 className="text-lg font-bold mb-4">
+          {t('ticket_review.leave_review')}
+        </h3>
         {!showReviewForm ? (
           <button
             onClick={() => setShowReviewForm(true)}
             className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors"
           >
-            Write Review
+            {t('ticket_review.write_review')}
           </button>
         ) : (
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-text-secondary mb-2">
-                Rating
+                {t('ticket_review.rating')}
               </label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -89,12 +95,12 @@ export function TicketReviewSection({
             </div>
             <div>
               <label className="block text-sm font-semibold text-text-secondary mb-2">
-                Comment
+                {t('ticket_review.comment')}
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="Share your experience..."
+                placeholder={t('ticket_review.comment_placeholder')}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
                 rows={4}
                 required
@@ -105,7 +111,7 @@ export function TicketReviewSection({
                 type="submit"
                 className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors"
               >
-                Submit Review
+                {t('ticket_review.submit_review')}
               </button>
               <button
                 type="button"
@@ -116,7 +122,7 @@ export function TicketReviewSection({
                 }}
                 className="px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           </form>

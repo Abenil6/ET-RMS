@@ -1,6 +1,7 @@
 import { getRouteApi } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorMessage } from '@/components/shared/ErrorMessage'
 import { InfoField } from '@/components/shared/InfoField'
@@ -18,6 +19,7 @@ import type { TicketPriority } from '@/lib/types'
 const routeApi = getRouteApi('/_dashboard/tickets/$ticketId')
 
 export function TicketDetailPage() {
+  const { t } = useTranslation()
   const { ticketId } = routeApi.useParams()
 
   const {
@@ -88,11 +90,12 @@ export function TicketDetailPage() {
   if (isError)
     return (
       <ErrorMessage
-        message={loadError?.message || 'Failed to load ticket'}
+        message={loadError?.message || t('ticket_detail.error_loading')}
         retry={loadTicket}
       />
     )
-  if (!ticket) return <ErrorMessage message="Ticket not found" />
+  if (!ticket)
+    return <ErrorMessage message={t('ticket_detail.error_not_found')} />
 
   const priorityConfig = PRIORITY_CONFIG[ticket.priority]
   const categoryLabel = CATEGORY_LABELS[ticket.category]
@@ -128,19 +131,28 @@ export function TicketDetailPage() {
       {/* Main Card */}
       <div className="bg-card rounded-xl border border-border p-6 shadow-sm mb-6">
         {/* Subject */}
-        <InfoField label="Subject" value={ticket.subject} />
+        <InfoField
+          label={t('ticket_detail.subject_label')}
+          value={ticket.subject}
+        />
 
         {/* Service Number */}
-        <InfoField label="Service Number" value={ticket.serviceNumber} />
+        <InfoField
+          label={t('ticket_detail.service_number_label')}
+          value={ticket.serviceNumber}
+        />
 
         {/* Category */}
-        <InfoField label="Category" value={categoryLabel} />
+        <InfoField
+          label={t('ticket_detail.category_label')}
+          value={categoryLabel}
+        />
 
         {/* Priority with Edit */}
         {isAdmin ? (
           <div className="mb-4">
             <label className="block text-sm font-semibold text-text-secondary mb-2">
-              Priority
+              {t('ticket_detail.priority_label')}
             </label>
             <div className="flex items-center gap-3">
               <select
@@ -150,20 +162,20 @@ export function TicketDetailPage() {
                 }
                 className="px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               >
-                {(
-                  ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as TicketPriority[]
-                ).map((p) => (
-                  <option key={p} value={p}>
-                    {PRIORITY_CONFIG[p].label}
-                  </option>
-                ))}
+                {(['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as TicketPriority[]).map(
+                  (p) => (
+                    <option key={p} value={p}>
+                      {PRIORITY_CONFIG[p].label}
+                    </option>
+                  ),
+                )}
               </select>
               {priorityDraft !== ticket.priority && (
                 <button
                   onClick={handleSavePriority}
                   className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors"
                 >
-                  Save
+                  {t('ticket_detail.save_button')}
                 </button>
               )}
             </div>
@@ -171,7 +183,7 @@ export function TicketDetailPage() {
         ) : (
           <div className="mb-4">
             <p className="text-sm font-semibold text-text-secondary mb-2">
-              Priority
+              {t('ticket_detail.priority_label')}
             </p>
             <div
               className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${priorityConfig.bg} ${priorityConfig.color}`}
@@ -203,7 +215,7 @@ export function TicketDetailPage() {
         {ticket.resolution && (
           <div className="mb-4 p-4 bg-success/10 rounded-lg border border-success/20">
             <p className="text-sm font-semibold text-success mb-2">
-              Resolution
+              {t('ticket_detail.resolution_label')}
             </p>
             <p className="text-text-dark whitespace-pre-wrap">
               {ticket.resolution}
@@ -215,7 +227,7 @@ export function TicketDetailPage() {
         {isAdmin && (
           <div className="mb-4">
             <p className="text-sm font-semibold text-text-secondary mb-2">
-              Assign Technician
+              {t('ticket_detail.assign_technician_label')}
             </p>
             <div className="flex items-center gap-3">
               <select
@@ -224,7 +236,8 @@ export function TicketDetailPage() {
                 className="flex-1 px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
               >
                 <option value="">
-                  {ticket.technician?.name || 'Select Technician'}
+                  {ticket.technician?.name ||
+                    t('ticket_detail.select_technician_placeholder')}
                 </option>
                 {technicians.map((tech) => (
                   <option key={tech.id} value={tech.id}>
@@ -237,7 +250,7 @@ export function TicketDetailPage() {
                   onClick={handleAssign}
                   className="px-4 py-2 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors"
                 >
-                  Assign
+                  {t('ticket_detail.assign_button')}
                 </button>
               )}
             </div>
@@ -246,13 +259,18 @@ export function TicketDetailPage() {
 
         {/* Assigned Technician Display */}
         {ticket.technician && (
-          <InfoField label="Assigned To" value={ticket.technician.name} />
+          <InfoField
+            label={t('ticket_detail.assigned_to_label')}
+            value={ticket.technician.name}
+          />
         )}
 
         {/* Timestamps */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-text-secondary mb-1">Created</p>
+            <p className="text-text-secondary mb-1">
+              {t('ticket_detail.created_label')}
+            </p>
             <p className="text-text-dark">
               {new Date(ticket.createdAt).toLocaleString('en-ET', {
                 dateStyle: 'medium',
@@ -262,7 +280,9 @@ export function TicketDetailPage() {
           </div>
           {ticket.resolvedAt && (
             <div>
-              <p className="text-text-secondary mb-1">Resolved</p>
+              <p className="text-text-secondary mb-1">
+                {t('ticket_detail.resolved_label')}
+              </p>
               <p className="text-text-dark">
                 {new Date(ticket.resolvedAt).toLocaleString('en-ET', {
                   dateStyle: 'medium',

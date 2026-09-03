@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   flexRender,
   getCoreRowModel,
@@ -38,6 +39,7 @@ export function DataTable<TData, TValue>({
   emptyMessage = 'No results found.',
   initialSorting = [],
 }: DataTableProps<TData, TValue>) {
+  const { t } = useTranslation()
   const [sorting, setSorting] = React.useState<SortingState>(initialSorting)
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -65,10 +67,13 @@ export function DataTable<TData, TValue>({
     },
   })
 
+  const resolvedEmptyMessage =
+    emptyMessage === 'No results found.' ? t('table.no_results') : emptyMessage
+
   return (
     <div className="space-y-4">
       {toolbar && toolbar(table)}
-      <div className="rounded-xl border border-gray-200 bg-white">
+      <div className="rounded-xl border border-border bg-card">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -111,7 +116,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  {emptyMessage}
+                  {resolvedEmptyMessage}
                 </TableCell>
               </TableRow>
             )}
@@ -120,14 +125,16 @@ export function DataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-between px-2">
         <div className="flex-1 text-sm text-text-secondary">
-          {table.getFilteredSelectedRowModel().rows.length} of{' '}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {t('table.rows_selected', {
+            selected: table.getFilteredSelectedRowModel().rows.length,
+            total: table.getFilteredRowModel().rows.length,
+          })}
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">{t('table.rows_per_page')}</p>
             <select
-              className="h-8 w-[70px] rounded-md border border-border bg-transparent px-2 text-sm"
+              className="h-8 w-17.5 rounded-md border border-border bg-transparent px-2 text-sm"
               value={table.getState().pagination.pageSize}
               onChange={(e) => {
                 table.setPageSize(Number(e.target.value))
@@ -140,9 +147,11 @@ export function DataTable<TData, TValue>({
               ))}
             </select>
           </div>
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page {table.getState().pagination.pageIndex + 1} of{' '}
-            {table.getPageCount()}
+          <div className="flex w-25 items-center justify-center text-sm font-medium">
+            {t('table.page', {
+              page: table.getState().pagination.pageIndex + 1,
+              totalPages: table.getPageCount(),
+            })}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -151,7 +160,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              Previous
+              {t('common.previous')}
             </Button>
             <Button
               variant="outline"
@@ -159,7 +168,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              Next
+              {t('common.next')}
             </Button>
           </div>
         </div>

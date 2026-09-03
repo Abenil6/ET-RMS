@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 import type { LucideIcon } from 'lucide-react'
 import {
   Home,
@@ -33,7 +34,10 @@ function SidebarLink({ to, icon: Icon, label }: SidebarLinkProps) {
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
+  },
 }
 
 const itemVariants = {
@@ -46,6 +50,7 @@ interface SidebarNavProps {
 }
 
 export function SidebarNav({ role }: SidebarNavProps) {
+  const { t } = useTranslation()
   const iconMap: Record<string, LucideIcon> = {
     Home,
     FileText,
@@ -58,31 +63,48 @@ export function SidebarNav({ role }: SidebarNavProps) {
   }
 
   const customerLinks = [
-    { to: '/dashboard', icon: 'Home', label: 'Overview' },
-    { to: '/report', icon: 'FileText', label: 'Report Issue' },
-    { to: '/tickets', icon: 'Ticket', label: 'My Tickets' },
-    { to: '/appointments', icon: 'Calendar', label: 'Appointments' },
-    { to: '/profile', icon: 'User', label: 'My Profile' },
+    { to: '/dashboard', icon: 'Home', label: t('navigation.overview') },
+    { to: '/report', icon: 'FileText', label: t('navigation.report_issue') },
+    { to: '/tickets', icon: 'Ticket', label: t('navigation.my_tickets') },
+    {
+      to: '/appointments',
+      icon: 'Calendar',
+      label: t('navigation.appointments'),
+    },
+    { to: '/profile', icon: 'User', label: t('navigation.my_profile') },
   ]
 
   const adminLinks = [
-    { to: '/dashboard', icon: 'Home', label: 'Overview' },
-    { to: '/technicians', icon: 'Wrench', label: 'Technicians' },
-    { to: '/tickets', icon: 'Ticket', label: 'Tickets' },
-    { to: '/appointments', icon: 'Calendar', label: 'Appointments' },
-    { to: '/queue', icon: 'FileText', label: 'Queue' },
-    { to: '/admin/users', icon: 'Users', label: 'Users' },
-    { to: '/admin/audit', icon: 'ScrollText', label: 'Audit Log' },
-    { to: '/profile', icon: 'User', label: 'My Profile' },
+    { to: '/dashboard', icon: 'Home', label: t('navigation.overview') },
+    { to: '/technicians', icon: 'Wrench', label: t('navigation.technicians') },
+    { to: '/tickets', icon: 'Ticket', label: t('navigation.tickets') },
+    {
+      to: '/appointments',
+      icon: 'Calendar',
+      label: t('navigation.appointments'),
+    },
+    { to: '/queue', icon: 'FileText', label: t('navigation.queue') },
+    { to: '/admin/users', icon: 'Users', label: t('navigation.users') },
+    {
+      to: '/admin/audit',
+      icon: 'ScrollText',
+      label: t('navigation.audit_log'),
+    },
+    { to: '/profile', icon: 'User', label: t('navigation.my_profile') },
   ]
 
   const techLinks = [
-    { to: '/dashboard', icon: 'Home', label: 'Overview' },
-    { to: '/tickets', icon: 'Ticket', label: 'Assigned Tickets' },
-    { to: '/profile', icon: 'User', label: 'My Profile' },
+    { to: '/dashboard', icon: 'Home', label: t('navigation.overview') },
+    { to: '/tickets', icon: 'Ticket', label: t('navigation.assigned_tickets') },
+    { to: '/profile', icon: 'User', label: t('navigation.my_profile') },
   ]
 
-  const links = role === 'ADMIN' ? adminLinks : role === 'TECHNICIAN' ? techLinks : customerLinks
+  const links =
+    role === 'ADMIN'
+      ? adminLinks
+      : role === 'TECHNICIAN'
+        ? techLinks
+        : customerLinks
 
   return (
     <motion.nav
@@ -93,7 +115,11 @@ export function SidebarNav({ role }: SidebarNavProps) {
     >
       {links.map((link) => (
         <motion.div key={link.to} variants={itemVariants}>
-          <SidebarLink to={link.to} icon={iconMap[link.icon]} label={link.label} />
+          <SidebarLink
+            to={link.to}
+            icon={iconMap[link.icon]}
+            label={link.label}
+          />
         </motion.div>
       ))}
     </motion.nav>

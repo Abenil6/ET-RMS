@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu'
 import { cn } from '../../../lib/utils'
+import i18n from '../../../lib/i18n'
 
 const STATUS_BADGE: Record<AppointmentStatus, string> = {
   RESERVED: 'bg-primary-blue/10 text-primary-blue',
@@ -56,14 +57,14 @@ export const createAppointmentsColumns = (
             (table.getIsSomePageRowsSelected() && 'indeterminate')
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={i18n.t('table.select_all')}
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label={i18n.t('table.select_row')}
         />
       ),
       enableSorting: false,
@@ -71,7 +72,7 @@ export const createAppointmentsColumns = (
     },
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: i18n.t('table.id'),
       cell: ({ row }) => (
         <span className="font-mono text-xs">
           #{row.original.id.slice(0, 8)}
@@ -80,7 +81,7 @@ export const createAppointmentsColumns = (
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: i18n.t('table.status'),
       cell: ({ row }) => {
         const status = row.original.status
         return (
@@ -95,7 +96,7 @@ export const createAppointmentsColumns = (
     },
     {
       accessorKey: 'branch',
-      header: 'Branch',
+      header: i18n.t('appointments.branch_label'),
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5">
           <MapPin className="h-4 w-4 text-text-secondary" />
@@ -114,7 +115,7 @@ export const createAppointmentsColumns = (
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           >
-            Date & Time
+            {i18n.t('table.date_time')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         )
@@ -138,13 +139,15 @@ export const createAppointmentsColumns = (
     },
     {
       accessorKey: 'notes',
-      header: 'Notes',
+      header: i18n.t('table.notes'),
       cell: ({ row }) => {
         const notes = row.original.notes
         return (
           <span className="text-sm">
             {notes || (
-              <span className="text-text-secondary italic">No notes</span>
+              <span className="text-text-secondary italic">
+                {i18n.t('table.no_notes')}
+              </span>
             )}
           </span>
         )
@@ -158,7 +161,7 @@ export const createAppointmentsColumns = (
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           >
-            Created
+            {i18n.t('ticket_detail.created_label')}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         )
@@ -187,16 +190,16 @@ export const createAppointmentsColumns = (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
+                <span className="sr-only">{i18n.t('table.open_menu')}</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuLabel>{i18n.t('table.actions')}</DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => navigator.clipboard.writeText(appointment.id)}
               >
-                Copy appointment ID
+                {i18n.t('table.copy_appointment_id')}
               </DropdownMenuItem>
               {canManage && (
                 <>
@@ -206,20 +209,20 @@ export const createAppointmentsColumns = (
                       onClick={() => onCancel?.(appointment.id)}
                       className="text-error"
                     >
-                      Cancel appointment
+                      {i18n.t('table.cancel_appointment')}
                     </DropdownMenuItem>
                   ) : (
                     <>
                       <DropdownMenuItem
                         onClick={() => onComplete?.(appointment.id)}
                       >
-                        Mark as completed
+                        {i18n.t('table.mark_completed')}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onCancel?.(appointment.id)}
                         className="text-error"
                       >
-                        Cancel appointment
+                        {i18n.t('table.cancel_appointment')}
                       </DropdownMenuItem>
                     </>
                   )}
@@ -236,7 +239,7 @@ export const createAppointmentsColumns = (
   if (userRole === 'ADMIN' || userRole === 'TECHNICIAN') {
     columns.splice(columns.length - 1, 0, {
       accessorKey: 'user',
-      header: 'Customer',
+      header: i18n.t('table.customer'),
       cell: ({ row }) => (
         <span className="text-sm font-medium">{row.original.user.name}</span>
       ),

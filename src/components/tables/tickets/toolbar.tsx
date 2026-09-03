@@ -10,9 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../ui/select'
-import { STATUS_CONFIG, PRIORITY_CONFIG, CATEGORY_LABELS } from '../../../data/tickets'
+import {
+  STATUS_CONFIG,
+  PRIORITY_CONFIG,
+  CATEGORY_LABELS,
+} from '../../../data/tickets'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface TicketsToolbarProps<TData> {
   table: Table<TData>
@@ -23,6 +28,7 @@ export function TicketsToolbar<TData>({
   table,
   onRefresh,
 }: TicketsToolbarProps<TData>) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [refreshing, setRefreshing] = useState(false)
   const isFiltered = table.getState().columnFilters.length > 0
@@ -48,17 +54,21 @@ export function TicketsToolbar<TData>({
       <div className="flex items-center justify-between">
         <div className="flex flex-1 items-center space-x-2">
           <Input
-            placeholder="Search tickets..."
+            placeholder={t('table.search_tickets')}
             value={String(subjectColumn.getFilterValue() ?? '')}
             onChange={(event) =>
               subjectColumn.setFilterValue(event.target.value)
             }
             className="h-10 w-[200px] lg:w-[300px]"
           />
-          
+
           {/* Status Filter */}
           <Select
-            value={(statusColumn.getFilterValue() as string[] | undefined)?.join(',') ?? ''}
+            value={
+              (statusColumn.getFilterValue() as string[] | undefined)?.join(
+                ',',
+              ) ?? ''
+            }
             onValueChange={(value) => {
               if (value) {
                 statusColumn.setFilterValue([value])
@@ -68,7 +78,7 @@ export function TicketsToolbar<TData>({
             }}
           >
             <SelectTrigger className="h-10 w-[150px]">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t('table.status')} />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(STATUS_CONFIG).map(([status, config]) => (
@@ -81,7 +91,11 @@ export function TicketsToolbar<TData>({
 
           {/* Priority Filter */}
           <Select
-            value={(priorityColumn.getFilterValue() as string[] | undefined)?.join(',') ?? ''}
+            value={
+              (priorityColumn.getFilterValue() as string[] | undefined)?.join(
+                ',',
+              ) ?? ''
+            }
             onValueChange={(value) => {
               if (value) {
                 priorityColumn.setFilterValue([value])
@@ -91,7 +105,7 @@ export function TicketsToolbar<TData>({
             }}
           >
             <SelectTrigger className="h-10 w-[150px]">
-              <SelectValue placeholder="Priority" />
+              <SelectValue placeholder={t('table.priority')} />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(PRIORITY_CONFIG).map(([priority, config]) => (
@@ -104,7 +118,11 @@ export function TicketsToolbar<TData>({
 
           {/* Category Filter */}
           <Select
-            value={(categoryColumn.getFilterValue() as string[] | undefined)?.join(',') ?? ''}
+            value={
+              (categoryColumn.getFilterValue() as string[] | undefined)?.join(
+                ',',
+              ) ?? ''
+            }
             onValueChange={(value) => {
               if (value) {
                 categoryColumn.setFilterValue([value])
@@ -114,7 +132,7 @@ export function TicketsToolbar<TData>({
             }}
           >
             <SelectTrigger className="h-10 w-[150px]">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder={t('table.category')} />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(CATEGORY_LABELS).map(([category, label]) => (
@@ -131,7 +149,7 @@ export function TicketsToolbar<TData>({
               onClick={() => table.resetColumnFilters()}
               className="h-10 px-2 lg:px-3"
             >
-              Reset
+              {t('common.reset')}
               <X className="ml-2 h-4 w-4" />
             </Button>
           )}
@@ -146,7 +164,9 @@ export function TicketsToolbar<TData>({
               disabled={refreshing}
               className="h-10"
             >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`}
+              />
             </Button>
           )}
 
@@ -154,7 +174,7 @@ export function TicketsToolbar<TData>({
             <Button asChild size="sm" className="h-10">
               <Link to="/report">
                 <Plus className="h-4 w-4 mr-2" />
-                New Ticket
+                {t('table.new_ticket')}
               </Link>
             </Button>
           )}
@@ -166,8 +186,10 @@ export function TicketsToolbar<TData>({
         <div className="flex items-center gap-2 text-sm text-text-secondary">
           <Filter className="h-4 w-4" />
           <span>
-            Showing {table.getFilteredRowModel().rows.length} of{' '}
-            {table.getCoreRowModel().rows.length} tickets
+            {t('table.showing_tickets', {
+              filtered: table.getFilteredRowModel().rows.length,
+              total: table.getCoreRowModel().rows.length,
+            })}
           </span>
         </div>
       )}

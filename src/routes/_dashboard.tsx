@@ -12,13 +12,24 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useState } from 'react'
 import { LogOut, Bell, CheckCheck } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
-import logo from '../assets/Ethio-Tele.jpeg'
+import logo from '../assets/Et-logo.png'
 import { useNotifications } from '@/features/notifications/hooks/useNotifications'
 import { SidebarNav } from '@/components/layouts/Sidebar'
+import { useTranslation } from 'react-i18next'
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
 
 export const Route = createFileRoute('/_dashboard')({
   beforeLoad: () => {
-    if (!getAccessToken()) {
+    // Check if we're in the browser before checking tokens
+    if (typeof window === 'undefined') {
+      // On server, allow the route and let client-side handle auth
+      return
+    }
+    
+    // Force load from localStorage on route navigation
+    const token = window.localStorage.getItem('access_token')
+    
+    if (!token) {
       throw redirect({ to: '/login' })
     }
   },
@@ -26,6 +37,7 @@ export const Route = createFileRoute('/_dashboard')({
 })
 
 function DashboardLayout() {
+  const { t } = useTranslation()
   const { user, loading, logout } = useAuth()
   const navigate = useNavigate()
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
@@ -97,7 +109,7 @@ function DashboardLayout() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            Menu
+            {t('navigation.menu')}
           </motion.p>
 
           <SidebarNav role={user.role} />
@@ -113,7 +125,7 @@ function DashboardLayout() {
           whileTap={{ scale: 0.98 }}
         >
           <LogOut size={18} />
-          Log Out
+          {t('navigation.log_out')}
         </motion.button>
       </motion.aside>
 
@@ -128,7 +140,7 @@ function DashboardLayout() {
             <motion.button
               onClick={() => setIsNotifOpen(!isNotifOpen)}
               className="relative p-2 rounded-full hover:bg-bg text-text-secondary hover:text-text-dark transition-colors"
-              aria-label="Notifications"
+              aria-label={t('notifications.title')}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
@@ -156,7 +168,7 @@ function DashboardLayout() {
                 >
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg/50">
                     <h3 className="text-sm font-bold text-text-dark">
-                      Notifications
+                      {t('notifications.title')}
                     </h3>
                     {unreadCount > 0 && (
                       <button
@@ -164,7 +176,7 @@ function DashboardLayout() {
                         className="text-xs text-primary-green hover:underline flex items-center gap-1 font-medium"
                       >
                         <CheckCheck size={14} />
-                        Mark all read
+                        {t('notifications.mark_all_read')}
                       </button>
                     )}
                   </div>
@@ -172,21 +184,21 @@ function DashboardLayout() {
                   <div className="max-h-80 overflow-y-auto divide-y divide-border">
                     {notifLoading ? (
                       <p className="p-4 text-xs text-center text-text-secondary">
-                        Loading...
+                        {t('notifications.loading')}
                       </p>
                     ) : notifError ? (
                       <div className="p-4 text-xs text-center text-error">
-                        Failed to load notifications{' '}
+                        {t('notifications.error_loading')}{' '}
                         <button
                           className="underline"
                           onClick={() => loadNotifications()}
                         >
-                          Retry
+                          {t('common.retry')}
                         </button>
                       </div>
                     ) : notifications.length === 0 ? (
                       <p className="p-4 text-xs text-center text-text-secondary">
-                        No notifications available.
+                        {t('notifications.empty')}
                       </p>
                     ) : (
                       notifications.map((n, index) => (
@@ -230,6 +242,8 @@ function DashboardLayout() {
             </AnimatePresence>
           </div>
 
+          <LanguageSwitcher />
+
           <Link
             to="/profile"
             className="flex items-center gap-2.5 rounded-full border border-border bg-bg px-2 py-1.5 pr-3 shadow-sm transition-colors hover:bg-card"
@@ -237,7 +251,7 @@ function DashboardLayout() {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-green/10 overflow-hidden">
               <img
                 src={getAvatarUrl(user.avatarStyle, user.avatarSeed)}
-                alt="Avatar"
+                alt={t('profile.avatar')}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -261,9 +275,11 @@ function DashboardLayout() {
         open={logoutConfirmOpen}
         onConfirm={handleLogout}
         onCancel={() => setLogoutConfirmOpen(false)}
-        title="Log out?"
-        description="Are you sure you want to log out of your account?"
-        confirmLabel={logoutLoading ? 'Logging out...' : 'Log Out'}
+        title={t('navigation.log_out_confirm_title')}
+        description={t('navigation.log_out_confirm_description')}
+        confirmLabel={
+          logoutLoading ? t('navigation.logging_out') : t('navigation.log_out')
+        }
       />
     </motion.div>
   )

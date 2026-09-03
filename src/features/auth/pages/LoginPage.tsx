@@ -8,10 +8,14 @@ import { HeroShowcase } from '@/components/HeroShowcase'
 import { loginSchema } from '@/types/user'
 import type { LoginInput } from '@/types/user'
 import api from '@/apis'
-
+import { useTranslation } from 'react-i18next'
+import { useQueryClient } from '@tanstack/react-query'
+import { saveTokens } from '#/apis/core'
 export function LoginPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [showPassword, setShowPassword] = useState(false)
+  const queryClient = useQueryClient()
 
   const {
     register,
@@ -23,12 +27,15 @@ export function LoginPage() {
   })
 
   const { mutate: login } = api.Auth.login.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      saveTokens(data.accessToken, data.refreshToken)
+      // Set user data in query cache immediately after successful login
+      queryClient.setQueryData(['auth', 'me'], data.user)
       navigate({ to: '/dashboard' })
     },
     onError: (error) => {
       setFormError('root', {
-        message: error.message || 'Invalid email or password',
+        message: error.message || t('login.default_error'),
       })
     },
   })
@@ -46,38 +53,52 @@ export function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
-          <h1 className="text-2xl font-bold text-text-dark mb-1">Welcome back</h1>
-          <p className="text-sm text-text-secondary mb-6">Log in to track your support tickets.</p>
+          <h1 className="text-2xl font-bold text-text-dark mb-1">
+            {t('login.title')}
+          </h1>
+          <p className="text-sm text-text-secondary mb-6">
+            {t('login.subtitle')}
+          </p>
 
-          {errors.root && <p className="text-sm text-red-500 mb-4">{errors.root.message}</p>}
+          {errors.root && (
+            <p className="text-sm text-red-500 mb-4">{errors.root.message}</p>
+          )}
 
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <div>
-              <label className="block text-sm font-medium text-text-dark mb-1">Email</label>
+              <label className="block text-sm font-medium text-text-dark mb-1">
+                {t('login.email_label')}
+              </label>
               <input
                 type="email"
                 {...register('email')}
-                placeholder="you@example.com"
+                placeholder={t('login.email_placeholder')}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green"
               />
-              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             <div>
               <div className="mb-1 flex items-center justify-between gap-3">
-                <label className="block text-sm font-medium text-text-dark">Password</label>
+                <label className="block text-sm font-medium text-text-dark">
+                  {t('login.password_label')}
+                </label>
                 <Link
                   to="/forgotPassword"
                   className="text-xs font-semibold text-primary-green hover:underline"
                 >
-                  Forgot password?
+                  {t('login.forgot_password')}
                 </Link>
               </div>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   {...register('password')}
-                  placeholder="••••••••"
+                  placeholder={t('login.password_placeholder')}
                   className="w-full px-3 py-2 pr-10 rounded-lg border border-border bg-bg text-text-dark focus:outline-none focus:ring-2 focus:ring-primary-green"
                 />
                 <button
@@ -89,7 +110,11 @@ export function LoginPage() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             <button
@@ -97,14 +122,19 @@ export function LoginPage() {
               disabled={isSubmitting}
               className="w-full py-2.5 rounded-lg bg-primary-green text-white font-semibold hover:bg-primary-green/90 disabled:opacity-50 transition"
             >
-              {isSubmitting ? 'Signing in...' : 'Log In'}
+              {isSubmitting
+                ? t('login.submit_loading')
+                : t('login.submit_button')}
             </button>
           </form>
 
           <p className="mt-6 text-sm text-center text-text-secondary">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-primary-green font-semibold hover:underline">
-              Sign up
+            {t('login.no_account')}{' '}
+            <Link
+              to="/register"
+              className="text-primary-green font-semibold hover:underline"
+            >
+              {t('login.signup_link')}
             </Link>
           </p>
         </motion.div>

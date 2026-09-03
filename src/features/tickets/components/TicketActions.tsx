@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
+import { useTranslation } from 'react-i18next'
 
 interface TicketActionsProps {
   canStartWork: boolean
@@ -29,6 +30,7 @@ export function TicketActions({
   onReopen,
   onCancel,
 }: TicketActionsProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-wrap gap-3">
       {canStartWork && (
@@ -36,7 +38,7 @@ export function TicketActions({
           onClick={onStartWork}
           className="px-6 py-3 rounded-lg bg-primary-blue text-white font-medium hover:bg-primary-blue/90 transition-colors"
         >
-          Start Work
+          {t('ticket_actions.start_work')}
         </button>
       )}
 
@@ -47,7 +49,7 @@ export function TicketActions({
               onClick={() => setShowResolveForm(true)}
               className="px-6 py-3 rounded-lg bg-success text-white font-medium hover:bg-success/90 transition-colors"
             >
-              Mark as Resolved
+              {t('ticket_actions.mark_resolved')}
             </button>
           ) : (
             <AnimatePresence>
@@ -61,11 +63,13 @@ export function TicketActions({
                   onSubmit={onResolve}
                   className="bg-card rounded-xl border border-border p-6 shadow-sm space-y-4"
                 >
-                  <h3 className="text-lg font-bold">Resolution Notes</h3>
+                  <h3 className="text-lg font-bold">
+                    {t('ticket_actions.resolution_notes')}
+                  </h3>
                   <textarea
                     value={resolutionNotes}
                     onChange={(e) => setResolutionNotes(e.target.value)}
-                    placeholder="Describe how the issue was resolved..."
+                    placeholder={t('ticket_actions.resolution_placeholder')}
                     className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
                     rows={4}
                     required
@@ -75,7 +79,7 @@ export function TicketActions({
                       type="submit"
                       className="px-4 py-2 rounded-lg bg-success text-white text-sm font-medium hover:bg-success/90 transition-colors"
                     >
-                      Confirm Resolution
+                      {t('ticket_actions.confirm_resolution')}
                     </button>
                     <button
                       type="button"
@@ -85,7 +89,7 @@ export function TicketActions({
                       }}
                       className="px-4 py-2 rounded-lg border border-border text-text-dark text-sm font-medium hover:bg-bg transition-colors"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </form>
@@ -100,7 +104,7 @@ export function TicketActions({
           onClick={onReopen}
           className="px-6 py-3 rounded-lg bg-warning text-white font-medium hover:bg-warning/90 transition-colors"
         >
-          Reopen Ticket
+          {t('ticket_actions.reopen_ticket')}
         </button>
       )}
 
@@ -109,7 +113,7 @@ export function TicketActions({
           onClick={onCancel}
           className="px-6 py-3 rounded-lg border border-error text-error font-medium hover:bg-error/10 transition-colors"
         >
-          Cancel Ticket
+          {t('ticket_actions.cancel_ticket')}
         </button>
       )}
     </div>

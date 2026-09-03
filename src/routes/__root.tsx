@@ -6,13 +6,16 @@ import {
   useNavigate,
   HeadContent,
   Scripts,
+  retainSearchParams,
 } from '@tanstack/react-router'
+import { z } from 'zod'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { AuthBootstrap } from '@/features/auth/components/AuthBootstrap'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '../apis/queryClient'
+import '../lib/i18n'
 import logo from '../assets/Et-logo.png'
 import { ChevronDown, LogOut, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -21,24 +24,36 @@ import { getAvatarUrl } from '#/lib/avatars'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { ThemeToggle } from '@/features/ui/components/ThemeToggle'
 import { ThemeBootstrap } from '@/features/ui/components/ThemeBootstrap'
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+import { useLanguage } from '@/hooks/useLanguage'
+import { useTranslation } from 'react-i18next'
 import '../styles.css'
 
 function NotFoundComponent() {
+  const { t } = useTranslation()
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
       <h1 className="text-4xl font-extrabold text-text-dark">404</h1>
-      <p className="mt-2 text-lg text-text-secondary">Page not found</p>
+      <p className="mt-2 text-lg text-text-secondary">
+        {t('navigation.page_not_found')}
+      </p>
       <Link
         to="/"
         className="mt-4 rounded-full bg-primary-green px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-green/90"
       >
-        Go Home
+        {t('navigation.go_home')}
       </Link>
     </div>
   )
 }
 
 export const Route = createRootRoute({
+  validateSearch: z.object({
+    lang: z.enum(['en', 'am', 'ar', 'om']).default('en').catch('en'),
+  }),
+  search: {
+    middlewares: [retainSearchParams(['lang'])],
+  },
   head: () => ({
     title: 'NetCare - Internet Support Ticket System',
     links: [{ rel: 'icon', href: logo }],
@@ -49,12 +64,34 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
     ],
+    scripts: [
+      {
+        children: `
+(function() {
+  try {
+    var theme = localStorage.getItem('theme') || 'system';
+    var resolvedTheme = theme;
+    
+    if (theme === 'system') {
+      resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    
+    if (resolvedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+    document.documentElement.dataset.theme = resolvedTheme;
+  } catch (e) {}
+})();
+        `,
+      },
+    ],
   }),
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
 })
 
 function RootComponent() {
+  const { language } = useLanguage()
   const location = useLocation()
   const isDashboard =
     location.pathname.startsWith('/dashboard') ||
@@ -67,7 +104,7 @@ function RootComponent() {
     location.pathname.startsWith('/admin')
 
   return (
-    <html lang="en">
+    <html lang={language} dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <head>
         <HeadContent />
       </head>
@@ -96,8 +133,10 @@ function RootComponent() {
 }
 
 function Nav() {
+  const { t } = useTranslation()
   const { user, loading, logout } = useAuth()
   const { pathname } = useLocation()
+  const { language } = useLanguage()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
@@ -142,7 +181,7 @@ function Nav() {
           <img
             src={logo}
             alt="Ethio Telecom NetCare"
-            className="h-9 w-auto flex-shrink-0 object-contain"
+            className="h-9 w-auto shrink-0 object-contain"
           />
           <span className="text-lg font-extrabold tracking-tight text-text-dark">
             NetCare
@@ -152,24 +191,25 @@ function Nav() {
         {!loading && !user && !isAuthPage && (
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
+            <LanguageSwitcher />
             <NavLink to="/" active={pathname === '/'}>
-              Home
+              {t('navigation.home')}
             </NavLink>
             <a
-              href="/#features"
+              href={language !== 'en' ? `/?lang=${language}#features` : '/#features'}
               className="rounded-full px-4 py-2 text-sm font-semibold text-text-secondary transition-colors hover:bg-bg hover:text-text-dark"
             >
-              Features
+              {t('navigation.features')}
             </a>
             <NavLink to="/login" variant="ghost" active={pathname === '/login'}>
-              Login
+              {t('navigation.login')}
             </NavLink>
             <NavLink
               to="/register"
               variant="solid"
               active={pathname === '/register'}
             >
-              Sign Up
+              {t('navigation.sign_up')}
             </NavLink>
           </div>
         )}
@@ -208,7 +248,7 @@ function Nav() {
                       className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-text-dark transition-colors hover:bg-bg"
                     >
                       <User size={16} />
-                      My Profile
+                      {t('navigation.my_profile')}
                     </Link>
                     <button
                       onClick={() => {
@@ -218,7 +258,7 @@ function Nav() {
                       className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-error transition-colors hover:bg-error/10"
                     >
                       <LogOut size={16} />
-                      Log Out
+                      {t('navigation.log_out')}
                     </button>
                   </div>
                 </motion.div>
@@ -235,9 +275,11 @@ function Nav() {
         open={logoutConfirmOpen}
         onConfirm={handleLogout}
         onCancel={() => setLogoutConfirmOpen(false)}
-        title="Log out?"
-        description="Are you sure you want to log out of your account?"
-        confirmLabel={logoutLoading ? 'Logging out...' : 'Log Out'}
+        title={t('navigation.log_out_confirm_title')}
+        description={t('navigation.log_out_confirm_description')}
+        confirmLabel={
+          logoutLoading ? t('navigation.logging_out') : t('navigation.log_out')
+        }
       />
     </>
   )
@@ -275,9 +317,10 @@ function NavLink({
 }
 
 function Footer() {
+  const { t } = useTranslation()
   return (
     <footer className="border-t border-border bg-card px-6 py-8 text-center text-sm text-text-secondary sm:px-8">
-      <p>© {new Date().getFullYear()} Ethio Telecom. All rights reserved.</p>
+      <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
     </footer>
   )
 }

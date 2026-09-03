@@ -8,10 +8,11 @@ import api from '@/apis'
 import { HeroShowcase } from '@/components/HeroShowcase'
 import { forgotPasswordSchema } from '@/types/user'
 import type { ForgotPasswordInput } from '@/types/user'
+import { useTranslation } from 'react-i18next'
 
 export function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false)
-
+  const { t } = useTranslation()
   const {
     register,
     handleSubmit,
@@ -43,32 +44,42 @@ export function ForgotPasswordPage() {
             <MailCheck size={24} className="text-primary-green" />
           </div>
 
-          <h1 className="text-2xl font-bold text-text-dark mb-2">Forgot Password?</h1>
+          <h1 className="text-2xl font-bold text-text-dark mb-2">
+            {t('forgot_password.title')}
+          </h1>
 
           {!submitted ? (
             <p className="text-text-secondary mb-6">
-              Enter your email address and we'll send you a link to reset your password.
+              {t('forgot_password.subtitle')}
             </p>
           ) : (
             <div className="mb-6 p-4 bg-success/10 text-success rounded-lg text-sm">
-              If an account with that email exists, you will receive a password reset link shortly.
+              {t('forgot_password.reset_link_sent')}
             </div>
           )}
 
           {!submitted && (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-text-secondary mb-2">
-                  Email Address
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-semibold text-text-secondary mb-2"
+                >
+                  {t('forgot_password.email_label')}
                 </label>
                 <input
                   id="email"
                   type="email"
                   {...register('email')}
+                  placeholder={t('forgot_password.email_placeholder')}
                   autoComplete="email"
                   className="w-full px-3 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
                 />
-                {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+                {errors.email && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
 
               <button
@@ -76,7 +87,9 @@ export function ForgotPasswordPage() {
                 disabled={isSubmitting}
                 className="w-full py-2.5 px-4 rounded-lg bg-primary-blue text-white font-medium hover:bg-primary-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Sending...' : 'Send Reset Link'}
+                {isSubmitting
+                  ? t('forgot_password.submit_loading')
+                  : t('forgot_password.submit_button')}
               </button>
             </form>
           )}
@@ -87,7 +100,7 @@ export function ForgotPasswordPage() {
               className="flex items-center justify-center gap-2 text-sm text-text-secondary hover:text-primary-blue transition-colors"
             >
               <ArrowLeft size={16} />
-              Back to Login
+              {t('forgot_password.back_to_login')}
             </Link>
           </div>
         </motion.div>

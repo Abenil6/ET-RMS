@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   Users as UsersIcon,
@@ -36,6 +37,7 @@ type ModalState =
   { kind: 'invite' } | { kind: 'edit'; user: AdminUserType } | null
 
 export function AdminUsersPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
 
   // Fetch users using TanStack Query
@@ -120,7 +122,7 @@ export function AdminUsersPage() {
   if (!user || user.role !== 'ADMIN') {
     return (
       <div className="p-8 text-center text-text-secondary">
-        Unauthorized access.
+        {t('admin_users.unauthorized')}
       </div>
     )
   }
@@ -129,7 +131,7 @@ export function AdminUsersPage() {
   if (isError)
     return (
       <ErrorMessage
-        message={error.message || 'Failed to load users'}
+        message={error.message || t('admin_users.error_loading')}
         retry={loadUsers}
       />
     )
@@ -145,11 +147,9 @@ export function AdminUsersPage() {
         <div className="flex items-start justify-between gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-text-dark mb-1">
-              User Management
+              {t('admin_users.title')}
             </h1>
-            <p className="text-text-secondary">
-              Invite staff and manage every account on the platform.
-            </p>
+            <p className="text-text-secondary">{t('admin_users.subtitle')}</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -157,7 +157,7 @@ export function AdminUsersPage() {
               onClick={() => loadUsers()}
               className="p-2 rounded-lg border border-border text-text-dark hover:bg-bg transition"
               type="button"
-              title="Refresh"
+              title={t('admin_users.refresh')}
             >
               <RefreshCw size={18} />
             </button>
@@ -168,7 +168,7 @@ export function AdminUsersPage() {
               type="button"
             >
               <Plus size={18} />
-              Invite User
+              {t('admin_users.invite_user')}
             </button>
           </div>
         </div>
@@ -182,7 +182,7 @@ export function AdminUsersPage() {
               setQuery(e.target.value)
               setPage(1)
             }}
-            placeholder="Search by name, email, or phone..."
+            placeholder={t('admin_users.search_placeholder')}
             className="w-full px-4 py-2 rounded-lg border border-border bg-bg text-text-dark text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
           />
         </div>
@@ -191,13 +191,13 @@ export function AdminUsersPage() {
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="p-4 rounded-lg border border-border bg-card">
             <p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
-              Total Users
+              {t('admin_users.total_users')}
             </p>
             <p className="text-2xl font-bold text-text-dark">{users.length}</p>
           </div>
           <div className="p-4 rounded-lg border border-border bg-card">
             <p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
-              Active
+              {t('admin_users.active')}
             </p>
             <p className="text-2xl font-bold text-success">
               {users.filter((u: AdminUserType) => !u.banned).length}
@@ -205,7 +205,7 @@ export function AdminUsersPage() {
           </div>
           <div className="p-4 rounded-lg border border-border bg-card">
             <p className="text-xs text-text-secondary uppercase tracking-wide mb-1">
-              Banned
+              {t('admin_users.banned')}
             </p>
             <p className="text-2xl font-bold text-error">
               {users.filter((u: AdminUserType) => u.banned).length}
@@ -219,22 +219,22 @@ export function AdminUsersPage() {
             <thead className="bg-bg border-b border-border">
               <tr>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                  Name
+                  {t('admin_users.name_column')}
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                  Email
+                  {t('admin_users.email_column')}
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                  Phone
+                  {t('admin_users.phone_column')}
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                  Role
+                  {t('admin_users.role_column')}
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                  Status
+                  {t('admin_users.status_column')}
                 </th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                  Actions
+                  {t('admin_users.actions_column')}
                 </th>
               </tr>
             </thead>
@@ -259,17 +259,19 @@ export function AdminUsersPage() {
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${ROLE_STYLES[u.role]}`}
                     >
-                      {ROLE_LABELS[u.role]}
+                      {t(`admin_users.roles.${u.role}`, {
+                        defaultValue: ROLE_LABELS[u.role],
+                      })}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     {u.banned ? (
                       <span className="px-2 py-1 rounded-full text-xs font-semibold bg-error/10 text-error">
-                        Banned
+                        {t('admin_users.banned')}
                       </span>
                     ) : (
                       <span className="px-2 py-1 rounded-full text-xs font-semibold bg-success/10 text-success">
-                        Active
+                        {t('admin_users.active')}
                       </span>
                     )}
                   </td>
@@ -277,30 +279,30 @@ export function AdminUsersPage() {
                     <div className="flex items-center justify-end gap-2">
                       <IconButton
                         icon={Pencil}
-                        title="Edit"
+                        title={t('admin_users.edit')}
                         onClick={() => setModal({ kind: 'edit', user: u })}
                       />
                       {u.banned ? (
                         <IconButton
                           icon={ShieldCheck}
-                          title="Unban"
+                          title={t('admin_users.unban')}
                           onClick={() => setConfirm({ kind: 'unban', user: u })}
                         />
                       ) : (
                         <IconButton
                           icon={Ban}
-                          title="Ban"
+                          title={t('admin_users.ban')}
                           onClick={() => setConfirm({ kind: 'ban', user: u })}
                         />
                       )}
                       <IconButton
                         icon={KeyRound}
-                        title="Reset Password"
+                        title={t('admin_users.reset_password')}
                         onClick={() => setConfirm({ kind: 'reset', user: u })}
                       />
                       <IconButton
                         icon={Trash2}
-                        title="Delete"
+                        title={t('admin_users.delete')}
                         onClick={() => setConfirm({ kind: 'delete', user: u })}
                         className="text-error hover:bg-error/10"
                       />
@@ -316,9 +318,11 @@ export function AdminUsersPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-text-secondary">
-              Showing {(safePage - 1) * PAGE_SIZE + 1} to{' '}
-              {Math.min(safePage * PAGE_SIZE, filtered.length)} of{' '}
-              {filtered.length} users
+              {t('admin_users.showing', {
+                from: (safePage - 1) * PAGE_SIZE + 1,
+                to: Math.min(safePage * PAGE_SIZE, filtered.length),
+                total: filtered.length,
+              })}
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -327,10 +331,10 @@ export function AdminUsersPage() {
                 className="px-3 py-1.5 rounded-lg border border-border text-sm text-text-dark hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
-                Previous
+                {t('admin_users.previous')}
               </button>
               <span className="text-sm text-text-secondary">
-                Page {safePage} of {totalPages}
+                {t('admin_users.page', { page: safePage, totalPages })}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -338,7 +342,7 @@ export function AdminUsersPage() {
                 className="px-3 py-1.5 rounded-lg border border-border text-sm text-text-dark hover:bg-bg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
-                Next
+                {t('admin_users.next')}
               </button>
             </div>
           </div>
@@ -381,30 +385,38 @@ export function AdminUsersPage() {
           onCancel={() => setConfirm(null)}
           title={
             confirm.kind === 'ban'
-              ? 'Ban User?'
+              ? t('admin_users.confirm_titles.ban')
               : confirm.kind === 'unban'
-                ? 'Unban User?'
+                ? t('admin_users.confirm_titles.unban')
                 : confirm.kind === 'reset'
-                  ? 'Reset Password?'
-                  : 'Delete User?'
+                  ? t('admin_users.confirm_titles.reset')
+                  : t('admin_users.confirm_titles.delete')
           }
           description={
             confirm.kind === 'ban'
-              ? `Are you sure you want to ban ${confirm.user.name}?`
+              ? t('admin_users.confirm_descriptions.ban', {
+                  name: confirm.user.name,
+                })
               : confirm.kind === 'unban'
-                ? `Are you sure you want to unban ${confirm.user.name}?`
+                ? t('admin_users.confirm_descriptions.unban', {
+                    name: confirm.user.name,
+                  })
                 : confirm.kind === 'reset'
-                  ? `This will send a password reset email to ${confirm.user.email}.`
-                  : `Are you sure you want to permanently delete ${confirm.user.name}?`
+                  ? t('admin_users.confirm_descriptions.reset', {
+                      email: confirm.user.email,
+                    })
+                  : t('admin_users.confirm_descriptions.delete', {
+                      name: confirm.user.name,
+                    })
           }
           confirmLabel={
             confirm.kind === 'ban'
-              ? 'Ban'
+              ? t('admin_users.ban')
               : confirm.kind === 'unban'
-                ? 'Unban'
+                ? t('admin_users.unban')
                 : confirm.kind === 'reset'
-                  ? 'Reset'
-                  : 'Delete'
+                  ? t('admin_users.reset')
+                  : t('admin_users.delete')
           }
         />
       )}

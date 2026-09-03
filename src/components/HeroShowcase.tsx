@@ -1,6 +1,7 @@
 import { ShieldCheck } from 'lucide-react'
 import { motion } from 'motion/react'
 import heroImage from '../assets/hero.webp'
+import i18n from '../lib/i18n'
 
 export function HeroShowcase({ compact = false }: { compact?: boolean }) {
   const outerClass = compact
@@ -20,9 +21,11 @@ export function HeroShowcase({ compact = false }: { compact?: boolean }) {
     >
       <div className="absolute -left-4 top-8 hidden rounded-2xl border border-border bg-card px-4 py-3 shadow-xl shadow-black/5 lg:block">
         <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-          Queue status
+          {i18n.t('hero.queue_status')}
         </p>
-        <p className="mt-1 text-lg font-extrabold text-text-dark">4 ahead</p>
+        <p className="mt-1 text-lg font-extrabold text-text-dark">
+          {i18n.t('hero.ahead', { count: 4 })}
+        </p>
       </div>
 
       <div className="absolute -right-3 bottom-8 hidden rounded-2xl border border-border bg-card px-4 py-3 shadow-xl shadow-black/5 lg:block">
@@ -32,10 +35,10 @@ export function HeroShowcase({ compact = false }: { compact?: boolean }) {
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-              Verified routing
+              {i18n.t('hero.verified_routing')}
             </p>
             <p className="text-sm font-bold text-text-dark">
-              Assigned to the right team
+              {i18n.t('hero.assigned_team')}
             </p>
           </div>
         </div>
@@ -53,14 +56,14 @@ export function HeroShowcase({ compact = false }: { compact?: boolean }) {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-                  Current ticket
+                  {i18n.t('hero.current_ticket')}
                 </p>
                 <p className="text-base font-bold text-text-dark">
-                  No internet connection
+                  {i18n.t('hero.no_internet')}
                 </p>
               </div>
               <span className="rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">
-                In Progress
+                {i18n.t('status.in_progress')}
               </span>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { DateRange } from '@/lib/dashboardStats'
+import i18n from '@/lib/i18n'
 
 export type RangePreset =
   | 'today'
@@ -46,7 +47,7 @@ export function rangeForPreset(
 }
 
 export function formatRange(range: DateRange): string {
-  if (!range) return 'All time'
+  if (!range) return i18n.t('date_range.all')
   const fmt = (d: Date) =>
     d.toLocaleDateString('en-US', {
       month: 'short',

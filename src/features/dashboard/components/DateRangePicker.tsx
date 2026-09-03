@@ -2,6 +2,7 @@ import { CalendarRange } from 'lucide-react'
 import { PRESET_OPTIONS, formatRange } from '@/hooks/useDateRange'
 import type { RangePreset } from '@/hooks/useDateRange'
 import type { DateRange } from '@/lib/dashboardStats'
+import { useTranslation } from 'react-i18next'
 
 type Props = {
   preset: RangePreset
@@ -24,6 +25,7 @@ export function DateRangePicker({
   onCustomChange,
   range,
 }: Props) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card">
@@ -35,7 +37,7 @@ export function DateRangePicker({
         >
           {PRESET_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
-              {o.label}
+              {t(`date_range.${o.value}`, { defaultValue: o.label })}
             </option>
           ))}
         </select>
