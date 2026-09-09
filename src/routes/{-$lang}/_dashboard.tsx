@@ -7,31 +7,34 @@ import {
 } from '@tanstack/react-router'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { getAvatarUrl } from '#/lib/avatars'
-import { getAccessToken } from '@/apis/core'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useState } from 'react'
 import { LogOut, Bell, CheckCheck } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
-import logo from '../assets/Et-logo.png'
+import logo from '../../assets/Et-logo.png'
 import { useNotifications } from '@/features/notifications/hooks/useNotifications'
 import { SidebarNav } from '@/components/layouts/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
 import { ThemeToggle } from '@/features/ui/components/ThemeToggle'
+import { useLanguage } from '@/hooks/useLanguage'
 
-export const Route = createFileRoute('/_dashboard')({
-  beforeLoad: () => {
+export const Route = createFileRoute('/{-$lang}/_dashboard')({
+  beforeLoad: ({ params }) => {
     // Check if we're in the browser before checking tokens
     if (typeof window === 'undefined') {
       // On server, allow the route and let client-side handle auth
       return
     }
-    
+
     // Force load from localStorage on route navigation
     const token = window.localStorage.getItem('access_token')
-    
+
     if (!token) {
-      throw redirect({ to: '/login' })
+      throw redirect({
+        to: '/{-$lang}/login',
+        params: { lang: params.lang },
+      })
     }
   },
   component: DashboardLayout,
@@ -39,6 +42,7 @@ export const Route = createFileRoute('/_dashboard')({
 
 function DashboardLayout() {
   const { t } = useTranslation()
+  const { language } = useLanguage()
   const { user, loading, logout } = useAuth()
   const navigate = useNavigate()
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
@@ -62,7 +66,10 @@ function DashboardLayout() {
     setLogoutLoading(true)
     try {
       await logout()
-      navigate({ to: '/login' })
+      navigate({
+        to: '/{-$lang}/login',
+        params: { lang: language },
+      })
     } finally {
       setLogoutLoading(false)
       setLogoutConfirmOpen(false)
@@ -247,7 +254,8 @@ function DashboardLayout() {
           <LanguageSwitcher />
 
           <Link
-            to="/profile"
+            to="/{-$lang}/profile"
+            params={{ lang: language }}
             className="flex items-center gap-2.5 rounded-full border border-border bg-bg px-2 py-1.5 pr-3 shadow-sm transition-colors hover:bg-card"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-green/10 overflow-hidden">

@@ -5,7 +5,7 @@ type ResetPasswordSearch = {
   token?: string
 }
 
-export const Route = createFileRoute('/reset-password')({
+export const Route = createFileRoute('/{-$lang}/reset-password')({
   validateSearch: (search: Record<string, unknown>): ResetPasswordSearch => {
     return {
       token: typeof search.token === 'string' ? search.token : '',
