@@ -17,6 +17,7 @@ import { useNotifications } from '@/features/notifications/hooks/useNotification
 import { SidebarNav } from '@/components/layouts/Sidebar'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+import { ThemeToggle } from '@/features/ui/components/ThemeToggle'
 
 export const Route = createFileRoute('/_dashboard')({
   beforeLoad: () => {
@@ -242,6 +243,7 @@ function DashboardLayout() {
             </AnimatePresence>
           </div>
 
+          <ThemeToggle />
           <LanguageSwitcher />
 
           <Link

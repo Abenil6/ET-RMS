@@ -48,12 +48,9 @@ function NotFoundComponent() {
 }
 
 export const Route = createRootRoute({
-  validateSearch: z.object({
-    lang: z.enum(['en', 'am', 'ar', 'om']).default('en').catch('en'),
-  }),
-  search: {
-    middlewares: [retainSearchParams(['lang'])],
-  },
+ validateSearch: z.object({
+  token: z.string().optional(),
+}),
   head: () => ({
     title: 'NetCare - Internet Support Ticket System',
     links: [{ rel: 'icon', href: logo }],
@@ -93,15 +90,19 @@ export const Route = createRootRoute({
 function RootComponent() {
   const { language } = useLanguage()
   const location = useLocation()
+  
+  // Remove language prefix from pathname for dashboard detection
+  const pathWithoutLang = location.pathname.replace(/^\/(en|am|ar|om)/, '')
+  
   const isDashboard =
-    location.pathname.startsWith('/dashboard') ||
-    location.pathname.startsWith('/tickets') ||
-    location.pathname.startsWith('/appointments') ||
-    location.pathname.startsWith('/profile') ||
-    location.pathname.startsWith('/report') ||
-    location.pathname.startsWith('/queue') ||
-    location.pathname.startsWith('/technicians') ||
-    location.pathname.startsWith('/admin')
+    pathWithoutLang.startsWith('/dashboard') ||
+    pathWithoutLang.startsWith('/tickets') ||
+    pathWithoutLang.startsWith('/appointments') ||
+    pathWithoutLang.startsWith('/profile') ||
+    pathWithoutLang.startsWith('/report') ||
+    pathWithoutLang.startsWith('/queue') ||
+    pathWithoutLang.startsWith('/technicians') ||
+    pathWithoutLang.startsWith('/admin')
 
   return (
     <html lang={language} dir={language === 'ar' ? 'rtl' : 'ltr'}>
@@ -142,7 +143,10 @@ function Nav() {
   const menuRef = useRef<HTMLDivElement | null>(null)
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [logoutLoading, setLogoutLoading] = useState(false)
-  const isAuthPage = pathname === '/login' || pathname === '/register'
+  
+  // Remove language prefix for auth page detection
+  const pathWithoutLang = pathname.replace(/^\/(en|am|ar|om)/, '')
+  const isAuthPage = pathWithoutLang === '/login' || pathWithoutLang === '/register'
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -192,22 +196,22 @@ function Nav() {
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             <LanguageSwitcher />
-            <NavLink to="/" active={pathname === '/'}>
+            <NavLink to="/" active={pathname === '/' || pathname === `/${language}`}>
               {t('navigation.home')}
             </NavLink>
             <a
-              href={language !== 'en' ? `/?lang=${language}#features` : '/#features'}
+              href={language !== 'en' ? `/${language}#features` : '/#features'}
               className="rounded-full px-4 py-2 text-sm font-semibold text-text-secondary transition-colors hover:bg-bg hover:text-text-dark"
             >
               {t('navigation.features')}
             </a>
-            <NavLink to="/login" variant="ghost" active={pathname === '/login'}>
+            <NavLink to="/login" variant="ghost" active={pathname === '/login' || pathname === `/${language}/login`}>
               {t('navigation.login')}
             </NavLink>
             <NavLink
               to="/register"
               variant="solid"
-              active={pathname === '/register'}
+              active={pathname === '/register' || pathname === `/${language}/register`}
             >
               {t('navigation.sign_up')}
             </NavLink>
