@@ -6,7 +6,6 @@ import {
   useNavigate,
   HeadContent,
   Scripts,
-  retainSearchParams,
 } from '@tanstack/react-router'
 import { z } from 'zod'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
@@ -48,9 +47,9 @@ function NotFoundComponent() {
 }
 
 export const Route = createRootRoute({
- validateSearch: z.object({
-  token: z.string().optional(),
-}),
+  validateSearch: z.object({
+    token: z.string().optional(),
+  }),
   head: () => ({
     title: 'NetCare - Internet Support Ticket System',
     links: [{ rel: 'icon', href: logo }],
@@ -90,10 +89,10 @@ export const Route = createRootRoute({
 function RootComponent() {
   const { language } = useLanguage()
   const location = useLocation()
-  
+
   // Remove language prefix from pathname for dashboard detection
   const pathWithoutLang = location.pathname.replace(/^\/(en|am|ar|om)/, '')
-  
+
   const isDashboard =
     pathWithoutLang.startsWith('/dashboard') ||
     pathWithoutLang.startsWith('/tickets') ||
@@ -143,10 +142,11 @@ function Nav() {
   const menuRef = useRef<HTMLDivElement | null>(null)
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [logoutLoading, setLogoutLoading] = useState(false)
-  
+
   // Remove language prefix for auth page detection
   const pathWithoutLang = pathname.replace(/^\/(en|am|ar|om)/, '')
-  const isAuthPage = pathWithoutLang === '/login' || pathWithoutLang === '/register'
+  const isAuthPage =
+    pathWithoutLang === '/login' || pathWithoutLang === '/register'
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -171,7 +171,10 @@ function Nav() {
     try {
       await logout()
       setMenuOpen(false)
-      navigate({ to: '/login' })
+      navigate({
+        to: '/{-$lang}/login',
+        params: { lang: language },
+      })
     } finally {
       setLogoutLoading(false)
       setLogoutConfirmOpen(false)
@@ -181,7 +184,11 @@ function Nav() {
   return (
     <>
       <nav className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-card/90 px-6 py-4 backdrop-blur sm:px-8">
-        <Link to="/" className="flex items-center gap-2">
+        <Link
+          to="/{-$lang}"
+          params={{ lang: language }}
+          className="flex items-center gap-2"
+        >
           <img
             src={logo}
             alt="Ethio Telecom NetCare"
@@ -196,7 +203,11 @@ function Nav() {
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             <LanguageSwitcher />
-            <NavLink to="/" active={pathname === '/' || pathname === `/${language}`}>
+            <NavLink
+              to="/{-$lang}"
+              params={{ lang: language }}
+              active={pathname === '/' || pathname === `/${language}`}
+            >
               {t('navigation.home')}
             </NavLink>
             <a
@@ -205,13 +216,23 @@ function Nav() {
             >
               {t('navigation.features')}
             </a>
-            <NavLink to="/login" variant="ghost" active={pathname === '/login' || pathname === `/${language}/login`}>
+            <NavLink
+              to="/{-$lang}/login"
+              params={{ lang: language }}
+              variant="ghost"
+              active={
+                pathname === '/login' || pathname === `/${language}/login`
+              }
+            >
               {t('navigation.login')}
             </NavLink>
             <NavLink
-              to="/register"
+              to="/{-$lang}/register"
+              params={{ lang: language }}
               variant="solid"
-              active={pathname === '/register' || pathname === `/${language}/register`}
+              active={
+                pathname === '/register' || pathname === `/${language}/register`
+              }
             >
               {t('navigation.sign_up')}
             </NavLink>
@@ -248,7 +269,8 @@ function Nav() {
                 >
                   <div className="p-2">
                     <Link
-                      to="/profile"
+                      to="/{-$lang}/profile"
+                      params={{ lang: language }}
                       className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-text-dark transition-colors hover:bg-bg"
                     >
                       <User size={16} />
@@ -291,11 +313,13 @@ function Nav() {
 
 function NavLink({
   to,
+  params,
   children,
   active,
   variant = 'ghost',
 }: {
-  to: '/' | '/login' | '/register'
+  to: '/{-$lang}' | '/{-$lang}/login' | '/{-$lang}/register'
+  params: { lang: string }
   children: React.ReactNode
   active: boolean
   variant?: 'ghost' | 'solid'
@@ -314,7 +338,11 @@ function NavLink({
       : 'bg-primary-green/10 text-primary-green'
 
   return (
-    <Link to={to} className={`${base} ${active ? activeClass : inactive}`}>
+    <Link
+      to={to}
+      params={params}
+      className={`${base} ${active ? activeClass : inactive}`}
+    >
       {children}
     </Link>
   )

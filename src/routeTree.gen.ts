@@ -10,232 +10,260 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardRouteImport } from './routes/_dashboard'
-import { Route as ForgotPasswordRouteImport } from './routes/forgotPassword'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as DashboardDashboardRouteImport } from './routes/_dashboard/dashboard'
-import { Route as DashboardProfileRouteImport } from './routes/_dashboard/profile'
-import { Route as DashboardQueueRouteImport } from './routes/_dashboard/queue'
-import { Route as DashboardReportRouteImport } from './routes/_dashboard/report'
-import { Route as DashboardTechniciansRouteImport } from './routes/_dashboard/technicians'
-import { Route as DashboardAdminAuditRouteImport } from './routes/_dashboard/admin/audit'
-import { Route as DashboardAdminUsersRouteImport } from './routes/_dashboard/admin/users'
-import { Route as DashboardAppointmentsIndexRouteImport } from './routes/_dashboard/appointments/index'
-import { Route as DashboardAppointmentsNewRouteImport } from './routes/_dashboard/appointments/new'
-import { Route as DashboardTicketsIndexRouteImport } from './routes/_dashboard/tickets/index'
-import { Route as DashboardTicketsTicketIdRouteImport } from './routes/_dashboard/tickets/$ticketId'
+import { Route as Char123LangChar125IndexRouteImport } from './routes/{-$lang}/index'
+import { Route as Char123LangChar125DashboardRouteImport } from './routes/{-$lang}/_dashboard'
+import { Route as Char123LangChar125ForgotPasswordRouteImport } from './routes/{-$lang}/forgotPassword'
+import { Route as Char123LangChar125LoginRouteImport } from './routes/{-$lang}/login'
+import { Route as Char123LangChar125RegisterRouteImport } from './routes/{-$lang}/register'
+import { Route as Char123LangChar125ResetPasswordRouteImport } from './routes/{-$lang}/reset-password'
+import { Route as Char123LangChar125DashboardDashboardRouteImport } from './routes/{-$lang}/_dashboard/dashboard'
+import { Route as Char123LangChar125DashboardProfileRouteImport } from './routes/{-$lang}/_dashboard/profile'
+import { Route as Char123LangChar125DashboardQueueRouteImport } from './routes/{-$lang}/_dashboard/queue'
+import { Route as Char123LangChar125DashboardReportRouteImport } from './routes/{-$lang}/_dashboard/report'
+import { Route as Char123LangChar125DashboardTechniciansRouteImport } from './routes/{-$lang}/_dashboard/technicians'
+import { Route as Char123LangChar125DashboardAdminAuditRouteImport } from './routes/{-$lang}/_dashboard/admin/audit'
+import { Route as Char123LangChar125DashboardAdminUsersRouteImport } from './routes/{-$lang}/_dashboard/admin/users'
+import { Route as Char123LangChar125DashboardAppointmentsIndexRouteImport } from './routes/{-$lang}/_dashboard/appointments/index'
+import { Route as Char123LangChar125DashboardAppointmentsNewRouteImport } from './routes/{-$lang}/_dashboard/appointments/new'
+import { Route as Char123LangChar125DashboardTicketsIndexRouteImport } from './routes/{-$lang}/_dashboard/tickets/index'
+import { Route as Char123LangChar125DashboardTicketsTicketIdRouteImport } from './routes/{-$lang}/_dashboard/tickets/$ticketId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/_dashboard',
+const Char123LangChar125IndexRoute = Char123LangChar125IndexRouteImport.update({
+  id: '/{-$lang}/',
+  path: '/{-$lang}/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgotPassword',
-  path: '/forgotPassword',
+const Char123LangChar125DashboardRoute =
+  Char123LangChar125DashboardRouteImport.update({
+    id: '/{-$lang}/_dashboard',
+    path: '/{-$lang}',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char123LangChar125ForgotPasswordRoute =
+  Char123LangChar125ForgotPasswordRouteImport.update({
+    id: '/{-$lang}/forgotPassword',
+    path: '/{-$lang}/forgotPassword',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char123LangChar125LoginRoute = Char123LangChar125LoginRouteImport.update({
+  id: '/{-$lang}/login',
+  path: '/{-$lang}/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardDashboardRoute = DashboardDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardProfileRoute = DashboardProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardQueueRoute = DashboardQueueRouteImport.update({
-  id: '/queue',
-  path: '/queue',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardReportRoute = DashboardReportRouteImport.update({
-  id: '/report',
-  path: '/report',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardTechniciansRoute = DashboardTechniciansRouteImport.update({
-  id: '/technicians',
-  path: '/technicians',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardAdminAuditRoute = DashboardAdminAuditRouteImport.update({
-  id: '/admin/audit',
-  path: '/admin/audit',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardAdminUsersRoute = DashboardAdminUsersRouteImport.update({
-  id: '/admin/users',
-  path: '/admin/users',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardAppointmentsIndexRoute =
-  DashboardAppointmentsIndexRouteImport.update({
+const Char123LangChar125RegisterRoute =
+  Char123LangChar125RegisterRouteImport.update({
+    id: '/{-$lang}/register',
+    path: '/{-$lang}/register',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char123LangChar125ResetPasswordRoute =
+  Char123LangChar125ResetPasswordRouteImport.update({
+    id: '/{-$lang}/reset-password',
+    path: '/{-$lang}/reset-password',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char123LangChar125DashboardDashboardRoute =
+  Char123LangChar125DashboardDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => Char123LangChar125DashboardRoute,
+  } as any)
+const Char123LangChar125DashboardProfileRoute =
+  Char123LangChar125DashboardProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => Char123LangChar125DashboardRoute,
+  } as any)
+const Char123LangChar125DashboardQueueRoute =
+  Char123LangChar125DashboardQueueRouteImport.update({
+    id: '/queue',
+    path: '/queue',
+    getParentRoute: () => Char123LangChar125DashboardRoute,
+  } as any)
+const Char123LangChar125DashboardReportRoute =
+  Char123LangChar125DashboardReportRouteImport.update({
+    id: '/report',
+    path: '/report',
+    getParentRoute: () => Char123LangChar125DashboardRoute,
+  } as any)
+const Char123LangChar125DashboardTechniciansRoute =
+  Char123LangChar125DashboardTechniciansRouteImport.update({
+    id: '/technicians',
+    path: '/technicians',
+    getParentRoute: () => Char123LangChar125DashboardRoute,
+  } as any)
+const Char123LangChar125DashboardAdminAuditRoute =
+  Char123LangChar125DashboardAdminAuditRouteImport.update({
+    id: '/admin/audit',
+    path: '/admin/audit',
+    getParentRoute: () => Char123LangChar125DashboardRoute,
+  } as any)
+const Char123LangChar125DashboardAdminUsersRoute =
+  Char123LangChar125DashboardAdminUsersRouteImport.update({
+    id: '/admin/users',
+    path: '/admin/users',
+    getParentRoute: () => Char123LangChar125DashboardRoute,
+  } as any)
+const Char123LangChar125DashboardAppointmentsIndexRoute =
+  Char123LangChar125DashboardAppointmentsIndexRouteImport.update({
     id: '/appointments/',
     path: '/appointments/',
-    getParentRoute: () => DashboardRoute,
+    getParentRoute: () => Char123LangChar125DashboardRoute,
   } as any)
-const DashboardAppointmentsNewRoute =
-  DashboardAppointmentsNewRouteImport.update({
+const Char123LangChar125DashboardAppointmentsNewRoute =
+  Char123LangChar125DashboardAppointmentsNewRouteImport.update({
     id: '/appointments/new',
     path: '/appointments/new',
-    getParentRoute: () => DashboardRoute,
+    getParentRoute: () => Char123LangChar125DashboardRoute,
   } as any)
-const DashboardTicketsIndexRoute = DashboardTicketsIndexRouteImport.update({
-  id: '/tickets/',
-  path: '/tickets/',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardTicketsTicketIdRoute =
-  DashboardTicketsTicketIdRouteImport.update({
+const Char123LangChar125DashboardTicketsIndexRoute =
+  Char123LangChar125DashboardTicketsIndexRouteImport.update({
+    id: '/tickets/',
+    path: '/tickets/',
+    getParentRoute: () => Char123LangChar125DashboardRoute,
+  } as any)
+const Char123LangChar125DashboardTicketsTicketIdRoute =
+  Char123LangChar125DashboardTicketsTicketIdRouteImport.update({
     id: '/tickets/$ticketId',
     path: '/tickets/$ticketId',
-    getParentRoute: () => DashboardRoute,
+    getParentRoute: () => Char123LangChar125DashboardRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/forgotPassword': typeof ForgotPasswordRoute
-  '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/dashboard': typeof DashboardDashboardRoute
-  '/profile': typeof DashboardProfileRoute
-  '/queue': typeof DashboardQueueRoute
-  '/report': typeof DashboardReportRoute
-  '/technicians': typeof DashboardTechniciansRoute
-  '/admin/audit': typeof DashboardAdminAuditRoute
-  '/admin/users': typeof DashboardAdminUsersRoute
-  '/appointments/new': typeof DashboardAppointmentsNewRoute
-  '/tickets/$ticketId': typeof DashboardTicketsTicketIdRoute
-  '/appointments/': typeof DashboardAppointmentsIndexRoute
-  '/tickets/': typeof DashboardTicketsIndexRoute
+  '/{-$lang}': typeof Char123LangChar125DashboardRouteWithChildren
+  '/{-$lang}/forgotPassword': typeof Char123LangChar125ForgotPasswordRoute
+  '/{-$lang}/login': typeof Char123LangChar125LoginRoute
+  '/{-$lang}/register': typeof Char123LangChar125RegisterRoute
+  '/{-$lang}/reset-password': typeof Char123LangChar125ResetPasswordRoute
+  '/{-$lang}/': typeof Char123LangChar125IndexRoute
+  '/{-$lang}/dashboard': typeof Char123LangChar125DashboardDashboardRoute
+  '/{-$lang}/profile': typeof Char123LangChar125DashboardProfileRoute
+  '/{-$lang}/queue': typeof Char123LangChar125DashboardQueueRoute
+  '/{-$lang}/report': typeof Char123LangChar125DashboardReportRoute
+  '/{-$lang}/technicians': typeof Char123LangChar125DashboardTechniciansRoute
+  '/{-$lang}/admin/audit': typeof Char123LangChar125DashboardAdminAuditRoute
+  '/{-$lang}/admin/users': typeof Char123LangChar125DashboardAdminUsersRoute
+  '/{-$lang}/appointments/new': typeof Char123LangChar125DashboardAppointmentsNewRoute
+  '/{-$lang}/tickets/$ticketId': typeof Char123LangChar125DashboardTicketsTicketIdRoute
+  '/{-$lang}/appointments/': typeof Char123LangChar125DashboardAppointmentsIndexRoute
+  '/{-$lang}/tickets/': typeof Char123LangChar125DashboardTicketsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/forgotPassword': typeof ForgotPasswordRoute
-  '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/dashboard': typeof DashboardDashboardRoute
-  '/profile': typeof DashboardProfileRoute
-  '/queue': typeof DashboardQueueRoute
-  '/report': typeof DashboardReportRoute
-  '/technicians': typeof DashboardTechniciansRoute
-  '/admin/audit': typeof DashboardAdminAuditRoute
-  '/admin/users': typeof DashboardAdminUsersRoute
-  '/appointments/new': typeof DashboardAppointmentsNewRoute
-  '/tickets/$ticketId': typeof DashboardTicketsTicketIdRoute
-  '/appointments': typeof DashboardAppointmentsIndexRoute
-  '/tickets': typeof DashboardTicketsIndexRoute
+  '/{-$lang}': typeof Char123LangChar125IndexRoute
+  '/{-$lang}/forgotPassword': typeof Char123LangChar125ForgotPasswordRoute
+  '/{-$lang}/login': typeof Char123LangChar125LoginRoute
+  '/{-$lang}/register': typeof Char123LangChar125RegisterRoute
+  '/{-$lang}/reset-password': typeof Char123LangChar125ResetPasswordRoute
+  '/{-$lang}/dashboard': typeof Char123LangChar125DashboardDashboardRoute
+  '/{-$lang}/profile': typeof Char123LangChar125DashboardProfileRoute
+  '/{-$lang}/queue': typeof Char123LangChar125DashboardQueueRoute
+  '/{-$lang}/report': typeof Char123LangChar125DashboardReportRoute
+  '/{-$lang}/technicians': typeof Char123LangChar125DashboardTechniciansRoute
+  '/{-$lang}/admin/audit': typeof Char123LangChar125DashboardAdminAuditRoute
+  '/{-$lang}/admin/users': typeof Char123LangChar125DashboardAdminUsersRoute
+  '/{-$lang}/appointments/new': typeof Char123LangChar125DashboardAppointmentsNewRoute
+  '/{-$lang}/tickets/$ticketId': typeof Char123LangChar125DashboardTicketsTicketIdRoute
+  '/{-$lang}/appointments': typeof Char123LangChar125DashboardAppointmentsIndexRoute
+  '/{-$lang}/tickets': typeof Char123LangChar125DashboardTicketsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_dashboard': typeof DashboardRouteWithChildren
-  '/forgotPassword': typeof ForgotPasswordRoute
-  '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/_dashboard/dashboard': typeof DashboardDashboardRoute
-  '/_dashboard/profile': typeof DashboardProfileRoute
-  '/_dashboard/queue': typeof DashboardQueueRoute
-  '/_dashboard/report': typeof DashboardReportRoute
-  '/_dashboard/technicians': typeof DashboardTechniciansRoute
-  '/_dashboard/admin/audit': typeof DashboardAdminAuditRoute
-  '/_dashboard/admin/users': typeof DashboardAdminUsersRoute
-  '/_dashboard/appointments/new': typeof DashboardAppointmentsNewRoute
-  '/_dashboard/tickets/$ticketId': typeof DashboardTicketsTicketIdRoute
-  '/_dashboard/appointments/': typeof DashboardAppointmentsIndexRoute
-  '/_dashboard/tickets/': typeof DashboardTicketsIndexRoute
+  '/{-$lang}/_dashboard': typeof Char123LangChar125DashboardRouteWithChildren
+  '/{-$lang}/forgotPassword': typeof Char123LangChar125ForgotPasswordRoute
+  '/{-$lang}/login': typeof Char123LangChar125LoginRoute
+  '/{-$lang}/register': typeof Char123LangChar125RegisterRoute
+  '/{-$lang}/reset-password': typeof Char123LangChar125ResetPasswordRoute
+  '/{-$lang}/': typeof Char123LangChar125IndexRoute
+  '/{-$lang}/_dashboard/dashboard': typeof Char123LangChar125DashboardDashboardRoute
+  '/{-$lang}/_dashboard/profile': typeof Char123LangChar125DashboardProfileRoute
+  '/{-$lang}/_dashboard/queue': typeof Char123LangChar125DashboardQueueRoute
+  '/{-$lang}/_dashboard/report': typeof Char123LangChar125DashboardReportRoute
+  '/{-$lang}/_dashboard/technicians': typeof Char123LangChar125DashboardTechniciansRoute
+  '/{-$lang}/_dashboard/admin/audit': typeof Char123LangChar125DashboardAdminAuditRoute
+  '/{-$lang}/_dashboard/admin/users': typeof Char123LangChar125DashboardAdminUsersRoute
+  '/{-$lang}/_dashboard/appointments/new': typeof Char123LangChar125DashboardAppointmentsNewRoute
+  '/{-$lang}/_dashboard/tickets/$ticketId': typeof Char123LangChar125DashboardTicketsTicketIdRoute
+  '/{-$lang}/_dashboard/appointments/': typeof Char123LangChar125DashboardAppointmentsIndexRoute
+  '/{-$lang}/_dashboard/tickets/': typeof Char123LangChar125DashboardTicketsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/forgotPassword'
-    | '/login'
-    | '/register'
-    | '/reset-password'
-    | '/dashboard'
-    | '/profile'
-    | '/queue'
-    | '/report'
-    | '/technicians'
-    | '/admin/audit'
-    | '/admin/users'
-    | '/appointments/new'
-    | '/tickets/$ticketId'
-    | '/appointments/'
-    | '/tickets/'
+    | '/{-$lang}'
+    | '/{-$lang}/forgotPassword'
+    | '/{-$lang}/login'
+    | '/{-$lang}/register'
+    | '/{-$lang}/reset-password'
+    | '/{-$lang}/'
+    | '/{-$lang}/dashboard'
+    | '/{-$lang}/profile'
+    | '/{-$lang}/queue'
+    | '/{-$lang}/report'
+    | '/{-$lang}/technicians'
+    | '/{-$lang}/admin/audit'
+    | '/{-$lang}/admin/users'
+    | '/{-$lang}/appointments/new'
+    | '/{-$lang}/tickets/$ticketId'
+    | '/{-$lang}/appointments/'
+    | '/{-$lang}/tickets/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/forgotPassword'
-    | '/login'
-    | '/register'
-    | '/reset-password'
-    | '/dashboard'
-    | '/profile'
-    | '/queue'
-    | '/report'
-    | '/technicians'
-    | '/admin/audit'
-    | '/admin/users'
-    | '/appointments/new'
-    | '/tickets/$ticketId'
-    | '/appointments'
-    | '/tickets'
+    | '/{-$lang}'
+    | '/{-$lang}/forgotPassword'
+    | '/{-$lang}/login'
+    | '/{-$lang}/register'
+    | '/{-$lang}/reset-password'
+    | '/{-$lang}/dashboard'
+    | '/{-$lang}/profile'
+    | '/{-$lang}/queue'
+    | '/{-$lang}/report'
+    | '/{-$lang}/technicians'
+    | '/{-$lang}/admin/audit'
+    | '/{-$lang}/admin/users'
+    | '/{-$lang}/appointments/new'
+    | '/{-$lang}/tickets/$ticketId'
+    | '/{-$lang}/appointments'
+    | '/{-$lang}/tickets'
   id:
     | '__root__'
     | '/'
-    | '/_dashboard'
-    | '/forgotPassword'
-    | '/login'
-    | '/register'
-    | '/reset-password'
-    | '/_dashboard/dashboard'
-    | '/_dashboard/profile'
-    | '/_dashboard/queue'
-    | '/_dashboard/report'
-    | '/_dashboard/technicians'
-    | '/_dashboard/admin/audit'
-    | '/_dashboard/admin/users'
-    | '/_dashboard/appointments/new'
-    | '/_dashboard/tickets/$ticketId'
-    | '/_dashboard/appointments/'
-    | '/_dashboard/tickets/'
+    | '/{-$lang}/_dashboard'
+    | '/{-$lang}/forgotPassword'
+    | '/{-$lang}/login'
+    | '/{-$lang}/register'
+    | '/{-$lang}/reset-password'
+    | '/{-$lang}/'
+    | '/{-$lang}/_dashboard/dashboard'
+    | '/{-$lang}/_dashboard/profile'
+    | '/{-$lang}/_dashboard/queue'
+    | '/{-$lang}/_dashboard/report'
+    | '/{-$lang}/_dashboard/technicians'
+    | '/{-$lang}/_dashboard/admin/audit'
+    | '/{-$lang}/_dashboard/admin/users'
+    | '/{-$lang}/_dashboard/appointments/new'
+    | '/{-$lang}/_dashboard/tickets/$ticketId'
+    | '/{-$lang}/_dashboard/appointments/'
+    | '/{-$lang}/_dashboard/tickets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRouteWithChildren
-  ForgotPasswordRoute: typeof ForgotPasswordRoute
-  LoginRoute: typeof LoginRoute
-  RegisterRoute: typeof RegisterRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
+  Char123LangChar125DashboardRoute: typeof Char123LangChar125DashboardRouteWithChildren
+  Char123LangChar125ForgotPasswordRoute: typeof Char123LangChar125ForgotPasswordRoute
+  Char123LangChar125LoginRoute: typeof Char123LangChar125LoginRoute
+  Char123LangChar125RegisterRoute: typeof Char123LangChar125RegisterRoute
+  Char123LangChar125ResetPasswordRoute: typeof Char123LangChar125ResetPasswordRoute
+  Char123LangChar125IndexRoute: typeof Char123LangChar125IndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -247,160 +275,182 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_dashboard': {
-      id: '/_dashboard'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/{-$lang}/': {
+      id: '/{-$lang}/'
+      path: '/{-$lang}'
+      fullPath: '/{-$lang}/'
+      preLoaderRoute: typeof Char123LangChar125IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/forgotPassword': {
-      id: '/forgotPassword'
-      path: '/forgotPassword'
-      fullPath: '/forgotPassword'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
+    '/{-$lang}/_dashboard': {
+      id: '/{-$lang}/_dashboard'
+      path: '/{-$lang}'
+      fullPath: '/{-$lang}'
+      preLoaderRoute: typeof Char123LangChar125DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/{-$lang}/forgotPassword': {
+      id: '/{-$lang}/forgotPassword'
+      path: '/{-$lang}/forgotPassword'
+      fullPath: '/{-$lang}/forgotPassword'
+      preLoaderRoute: typeof Char123LangChar125ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
+    '/{-$lang}/login': {
+      id: '/{-$lang}/login'
+      path: '/{-$lang}/login'
+      fullPath: '/{-$lang}/login'
+      preLoaderRoute: typeof Char123LangChar125LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/{-$lang}/register': {
+      id: '/{-$lang}/register'
+      path: '/{-$lang}/register'
+      fullPath: '/{-$lang}/register'
+      preLoaderRoute: typeof Char123LangChar125RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_dashboard/dashboard': {
-      id: '/_dashboard/dashboard'
+    '/{-$lang}/reset-password': {
+      id: '/{-$lang}/reset-password'
+      path: '/{-$lang}/reset-password'
+      fullPath: '/{-$lang}/reset-password'
+      preLoaderRoute: typeof Char123LangChar125ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/{-$lang}/_dashboard/dashboard': {
+      id: '/{-$lang}/_dashboard/dashboard'
       path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardDashboardRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/dashboard'
+      preLoaderRoute: typeof Char123LangChar125DashboardDashboardRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
-    '/_dashboard/profile': {
-      id: '/_dashboard/profile'
+    '/{-$lang}/_dashboard/profile': {
+      id: '/{-$lang}/_dashboard/profile'
       path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof DashboardProfileRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/profile'
+      preLoaderRoute: typeof Char123LangChar125DashboardProfileRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
-    '/_dashboard/queue': {
-      id: '/_dashboard/queue'
+    '/{-$lang}/_dashboard/queue': {
+      id: '/{-$lang}/_dashboard/queue'
       path: '/queue'
-      fullPath: '/queue'
-      preLoaderRoute: typeof DashboardQueueRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/queue'
+      preLoaderRoute: typeof Char123LangChar125DashboardQueueRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
-    '/_dashboard/report': {
-      id: '/_dashboard/report'
+    '/{-$lang}/_dashboard/report': {
+      id: '/{-$lang}/_dashboard/report'
       path: '/report'
-      fullPath: '/report'
-      preLoaderRoute: typeof DashboardReportRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/report'
+      preLoaderRoute: typeof Char123LangChar125DashboardReportRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
-    '/_dashboard/technicians': {
-      id: '/_dashboard/technicians'
+    '/{-$lang}/_dashboard/technicians': {
+      id: '/{-$lang}/_dashboard/technicians'
       path: '/technicians'
-      fullPath: '/technicians'
-      preLoaderRoute: typeof DashboardTechniciansRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/technicians'
+      preLoaderRoute: typeof Char123LangChar125DashboardTechniciansRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
-    '/_dashboard/admin/audit': {
-      id: '/_dashboard/admin/audit'
+    '/{-$lang}/_dashboard/admin/audit': {
+      id: '/{-$lang}/_dashboard/admin/audit'
       path: '/admin/audit'
-      fullPath: '/admin/audit'
-      preLoaderRoute: typeof DashboardAdminAuditRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/admin/audit'
+      preLoaderRoute: typeof Char123LangChar125DashboardAdminAuditRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
-    '/_dashboard/admin/users': {
-      id: '/_dashboard/admin/users'
+    '/{-$lang}/_dashboard/admin/users': {
+      id: '/{-$lang}/_dashboard/admin/users'
       path: '/admin/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof DashboardAdminUsersRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/admin/users'
+      preLoaderRoute: typeof Char123LangChar125DashboardAdminUsersRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
-    '/_dashboard/appointments/': {
-      id: '/_dashboard/appointments/'
+    '/{-$lang}/_dashboard/appointments/': {
+      id: '/{-$lang}/_dashboard/appointments/'
       path: '/appointments'
-      fullPath: '/appointments/'
-      preLoaderRoute: typeof DashboardAppointmentsIndexRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/appointments/'
+      preLoaderRoute: typeof Char123LangChar125DashboardAppointmentsIndexRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
-    '/_dashboard/appointments/new': {
-      id: '/_dashboard/appointments/new'
+    '/{-$lang}/_dashboard/appointments/new': {
+      id: '/{-$lang}/_dashboard/appointments/new'
       path: '/appointments/new'
-      fullPath: '/appointments/new'
-      preLoaderRoute: typeof DashboardAppointmentsNewRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/appointments/new'
+      preLoaderRoute: typeof Char123LangChar125DashboardAppointmentsNewRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
-    '/_dashboard/tickets/': {
-      id: '/_dashboard/tickets/'
+    '/{-$lang}/_dashboard/tickets/': {
+      id: '/{-$lang}/_dashboard/tickets/'
       path: '/tickets'
-      fullPath: '/tickets/'
-      preLoaderRoute: typeof DashboardTicketsIndexRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/tickets/'
+      preLoaderRoute: typeof Char123LangChar125DashboardTicketsIndexRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
-    '/_dashboard/tickets/$ticketId': {
-      id: '/_dashboard/tickets/$ticketId'
+    '/{-$lang}/_dashboard/tickets/$ticketId': {
+      id: '/{-$lang}/_dashboard/tickets/$ticketId'
       path: '/tickets/$ticketId'
-      fullPath: '/tickets/$ticketId'
-      preLoaderRoute: typeof DashboardTicketsTicketIdRouteImport
-      parentRoute: typeof DashboardRoute
+      fullPath: '/{-$lang}/tickets/$ticketId'
+      preLoaderRoute: typeof Char123LangChar125DashboardTicketsTicketIdRouteImport
+      parentRoute: typeof Char123LangChar125DashboardRoute
     }
   }
 }
 
-interface DashboardRouteChildren {
-  DashboardDashboardRoute: typeof DashboardDashboardRoute
-  DashboardProfileRoute: typeof DashboardProfileRoute
-  DashboardQueueRoute: typeof DashboardQueueRoute
-  DashboardReportRoute: typeof DashboardReportRoute
-  DashboardTechniciansRoute: typeof DashboardTechniciansRoute
-  DashboardAdminAuditRoute: typeof DashboardAdminAuditRoute
-  DashboardAdminUsersRoute: typeof DashboardAdminUsersRoute
-  DashboardAppointmentsNewRoute: typeof DashboardAppointmentsNewRoute
-  DashboardTicketsTicketIdRoute: typeof DashboardTicketsTicketIdRoute
-  DashboardAppointmentsIndexRoute: typeof DashboardAppointmentsIndexRoute
-  DashboardTicketsIndexRoute: typeof DashboardTicketsIndexRoute
+interface Char123LangChar125DashboardRouteChildren {
+  Char123LangChar125DashboardDashboardRoute: typeof Char123LangChar125DashboardDashboardRoute
+  Char123LangChar125DashboardProfileRoute: typeof Char123LangChar125DashboardProfileRoute
+  Char123LangChar125DashboardQueueRoute: typeof Char123LangChar125DashboardQueueRoute
+  Char123LangChar125DashboardReportRoute: typeof Char123LangChar125DashboardReportRoute
+  Char123LangChar125DashboardTechniciansRoute: typeof Char123LangChar125DashboardTechniciansRoute
+  Char123LangChar125DashboardAdminAuditRoute: typeof Char123LangChar125DashboardAdminAuditRoute
+  Char123LangChar125DashboardAdminUsersRoute: typeof Char123LangChar125DashboardAdminUsersRoute
+  Char123LangChar125DashboardAppointmentsNewRoute: typeof Char123LangChar125DashboardAppointmentsNewRoute
+  Char123LangChar125DashboardTicketsTicketIdRoute: typeof Char123LangChar125DashboardTicketsTicketIdRoute
+  Char123LangChar125DashboardAppointmentsIndexRoute: typeof Char123LangChar125DashboardAppointmentsIndexRoute
+  Char123LangChar125DashboardTicketsIndexRoute: typeof Char123LangChar125DashboardTicketsIndexRoute
 }
 
-const DashboardRouteChildren: DashboardRouteChildren = {
-  DashboardDashboardRoute: DashboardDashboardRoute,
-  DashboardProfileRoute: DashboardProfileRoute,
-  DashboardQueueRoute: DashboardQueueRoute,
-  DashboardReportRoute: DashboardReportRoute,
-  DashboardTechniciansRoute: DashboardTechniciansRoute,
-  DashboardAdminAuditRoute: DashboardAdminAuditRoute,
-  DashboardAdminUsersRoute: DashboardAdminUsersRoute,
-  DashboardAppointmentsNewRoute: DashboardAppointmentsNewRoute,
-  DashboardTicketsTicketIdRoute: DashboardTicketsTicketIdRoute,
-  DashboardAppointmentsIndexRoute: DashboardAppointmentsIndexRoute,
-  DashboardTicketsIndexRoute: DashboardTicketsIndexRoute,
-}
+const Char123LangChar125DashboardRouteChildren: Char123LangChar125DashboardRouteChildren =
+  {
+    Char123LangChar125DashboardDashboardRoute:
+      Char123LangChar125DashboardDashboardRoute,
+    Char123LangChar125DashboardProfileRoute:
+      Char123LangChar125DashboardProfileRoute,
+    Char123LangChar125DashboardQueueRoute:
+      Char123LangChar125DashboardQueueRoute,
+    Char123LangChar125DashboardReportRoute:
+      Char123LangChar125DashboardReportRoute,
+    Char123LangChar125DashboardTechniciansRoute:
+      Char123LangChar125DashboardTechniciansRoute,
+    Char123LangChar125DashboardAdminAuditRoute:
+      Char123LangChar125DashboardAdminAuditRoute,
+    Char123LangChar125DashboardAdminUsersRoute:
+      Char123LangChar125DashboardAdminUsersRoute,
+    Char123LangChar125DashboardAppointmentsNewRoute:
+      Char123LangChar125DashboardAppointmentsNewRoute,
+    Char123LangChar125DashboardTicketsTicketIdRoute:
+      Char123LangChar125DashboardTicketsTicketIdRoute,
+    Char123LangChar125DashboardAppointmentsIndexRoute:
+      Char123LangChar125DashboardAppointmentsIndexRoute,
+    Char123LangChar125DashboardTicketsIndexRoute:
+      Char123LangChar125DashboardTicketsIndexRoute,
+  }
 
-const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
-  DashboardRouteChildren,
-)
+const Char123LangChar125DashboardRouteWithChildren =
+  Char123LangChar125DashboardRoute._addFileChildren(
+    Char123LangChar125DashboardRouteChildren,
+  )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRouteWithChildren,
-  ForgotPasswordRoute: ForgotPasswordRoute,
-  LoginRoute: LoginRoute,
-  RegisterRoute: RegisterRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
+  Char123LangChar125DashboardRoute:
+    Char123LangChar125DashboardRouteWithChildren,
+  Char123LangChar125ForgotPasswordRoute: Char123LangChar125ForgotPasswordRoute,
+  Char123LangChar125LoginRoute: Char123LangChar125LoginRoute,
+  Char123LangChar125RegisterRoute: Char123LangChar125RegisterRoute,
+  Char123LangChar125ResetPasswordRoute: Char123LangChar125ResetPasswordRoute,
+  Char123LangChar125IndexRoute: Char123LangChar125IndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
